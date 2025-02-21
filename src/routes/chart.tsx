@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import theme from "./theme";
+import theme from "../theme";
 
 const HeaderTextDiv = styled.div`
   background-color: ${theme.primary};
@@ -21,14 +21,12 @@ const ChartTitleDiv = styled.div`
   font-size: large;
 `;
 
-export default function Home() {
-  return (
-    <div>
-      <HeaderDiv>
-        <HeaderTextDiv>ID:asldkasjdlaskd</HeaderTextDiv>
+export default function Chart() {
+   return <div>
+    <HeaderDiv>
+      <HeaderTextDiv>ID:asldkasjdlaskd</HeaderTextDiv>
 
-        <HeaderTextDiv>test hospital</HeaderTextDiv>
-      </HeaderDiv>
-    </div>
-  );
+      <HeaderTextDiv>test hospital</HeaderTextDiv>
+    </HeaderDiv>
+  </div>
 }
