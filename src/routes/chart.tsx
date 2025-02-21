@@ -22,11 +22,13 @@ const ChartTitleDiv = styled.div`
 `;
 
 export default function Chart() {
-   return <div>
-    <HeaderDiv>
-      <HeaderTextDiv>ID:asldkasjdlaskd</HeaderTextDiv>
+  return (
+    <div>
+      <HeaderDiv>
+        <HeaderTextDiv>ID:asldkasjdlaskd</HeaderTextDiv>
 
-      <HeaderTextDiv>test hospital</HeaderTextDiv>
-    </HeaderDiv>
-  </div>
+        <HeaderTextDiv>test hospital</HeaderTextDiv>
+      </HeaderDiv>
+    </div>
+  );
 }

@@ -3,6 +3,9 @@ import logo from "../assets/logo.svg";
 
 import { PrimaryButton } from "./button";
 import { useNavigate } from "react-router";
+import { useContext } from "react";
+import { UserContext } from "../App";
+import { logout } from "../api/auth";
 
 const HeaderTextButton = styled.span`
   color: #333;
@@ -10,6 +13,17 @@ const HeaderTextButton = styled.span`
 `;
 
 export default function Header() {
+  const handleLogout = () => {
+    logout()
+      .then(() => setUser(null))
+      .catch(() => {
+        alert("Logout failed");
+      })
+      .finally(() => {
+        navigate("/");
+      });
+  };
+  const { user, setUser } = useContext(UserContext);
   const navigate = useNavigate();
   return (
     <div
@@ -38,10 +52,20 @@ export default function Header() {
         <HeaderTextButton>Axial length growth</HeaderTextButton>
         <HeaderTextButton>Newstand</HeaderTextButton>
         <HeaderTextButton>Who we are</HeaderTextButton>
-        <HeaderTextButton>My profile</HeaderTextButton>
-        <PrimaryButton onClick={() => navigate("/login")}>
-          Sign in
-        </PrimaryButton>
+        <HeaderTextButton onClick={() => navigate("/profile_choice")}>
+          My profile
+        </HeaderTextButton>
+        {user ? (
+          <PrimaryButton onClick={handleLogout}>Logout</PrimaryButton>
+        ) : (
+          <PrimaryButton
+            onClick={() => {
+              navigate("/login");
+            }}
+          >
+            Login
+          </PrimaryButton>
+        )}
       </div>
     </div>
   );

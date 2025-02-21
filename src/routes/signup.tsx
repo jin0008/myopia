@@ -4,13 +4,28 @@ import { PrimaryButton } from "../components/button";
 import { VerticalDivider } from "../components/divider";
 import { LoginInput } from "../components/input";
 import { ButtonsDiv, LoginDiv } from "./login";
+import { signup } from "../api/auth";
+import { HttpError } from "../lib/fetch";
 
 export default function Signup() {
   const username = useRef("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const email = useRef("");
   const navigate = useNavigate();
+
+  function handleSignup() {
+    if (password !== confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+    signup(username.current, password)
+      .then(() => navigate("/login"))
+      .catch((e: HttpError) => {
+        console.error(e);
+        alert("Signup failed\n" + e.message);
+      });
+  }
+
   return (
     <div
       style={{
@@ -53,14 +68,8 @@ export default function Signup() {
                   : undefined
               }
             />
-            <LoginInput
-              defaultValue={""}
-              placeholder="Email(optional)"
-              type="email"
-              onChange={(e) => (email.current = e.target.value)}
-            />
           </div>
-          <PrimaryButton>Sign up</PrimaryButton>
+          <PrimaryButton onClick={handleSignup}>Sign up</PrimaryButton>
         </LoginDiv>
         <VerticalDivider />
         <ButtonsDiv>
