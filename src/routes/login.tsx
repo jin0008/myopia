@@ -1,12 +1,12 @@
 import styled from "styled-components";
 import { PrimaryButton } from "../components/button";
-import { useContext, useRef } from "react";
+import { useRef } from "react";
 import { LoginInput } from "../components/input";
 import { useNavigate } from "react-router";
 import { VerticalDivider } from "../components/divider";
-import { getUser, login } from "../api/auth";
+import { login } from "../api/auth";
 import { HttpError } from "../lib/fetch";
-import { UserContext } from "../App";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const LoginDiv = styled.div`
   display: flex;
@@ -27,16 +27,12 @@ export default function Login() {
   const username = useRef("");
   const password = useRef("");
   const navigate = useNavigate();
-
-  const { setUser } = useContext(UserContext);
+  const queryClient = useQueryClient();
 
   function handleLogin() {
     login(username.current, password.current)
-      .then(getUser)
-      .then((user) => {
-        setUser(user);
-        navigate("/");
-      })
+      .then(() => navigate("/"))
+      .then(() => queryClient.invalidateQueries({ queryKey: ["currentUser"] }))
       .catch((e: HttpError) => {
         console.error(e);
         alert("Login failed\n" + e.message);

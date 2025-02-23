@@ -1,4 +1,8 @@
-import { jsonFetch, jsonFetchWithSession } from "../lib/fetch";
+import {
+  AuthorizationError,
+  jsonFetch,
+  jsonFetchWithSession,
+} from "../lib/fetch";
 import { API_ROOT } from "./root";
 
 export function login(username: string, password: string) {
@@ -44,6 +48,8 @@ export function logout() {
   });
 }
 
-export function getUser() {
-  return jsonFetchWithSession(API_ROOT + "/auth/user");
+export function getCurrentUser() {
+  return jsonFetchWithSession(API_ROOT + "/auth/user").catch((err) => {
+    if (err instanceof AuthorizationError) return null;
+  });
 }

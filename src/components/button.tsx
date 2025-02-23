@@ -9,3 +9,7 @@ export const PrimaryButton = styled.button`
   border: none;
   cursor: pointer;
 `;
+
+export const PrimaryNagativeButton = styled(PrimaryButton)`
+  background-color: ${theme.secondary};
+`;

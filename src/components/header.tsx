@@ -6,6 +6,7 @@ import { useNavigate } from "react-router";
 import { useContext } from "react";
 import { UserContext } from "../App";
 import { logout } from "../api/auth";
+import { useQueryClient } from "@tanstack/react-query";
 
 const HeaderTextButton = styled.span`
   color: #333;
@@ -13,9 +14,10 @@ const HeaderTextButton = styled.span`
 `;
 
 export default function Header() {
+  const queryClient = useQueryClient();
   const handleLogout = () => {
     logout()
-      .then(() => setUser(null))
+      .then(() => queryClient.invalidateQueries({ queryKey: ["currentUser"] }))
       .catch(() => {
         alert("Logout failed");
       })
@@ -23,7 +25,7 @@ export default function Header() {
         navigate("/");
       });
   };
-  const { user, setUser } = useContext(UserContext);
+  const { user } = useContext(UserContext);
   const navigate = useNavigate();
   return (
     <div

@@ -31,7 +31,7 @@ export default function ProfileChoice() {
         <ProfileCard
           title="Healthcare professional"
           description="Manage your patients. Register their axial length growth and treatment data"
-          onClick={() => {}}
+          onClick={() => navigate("/profile/healthcare_professional")}
         />
       </div>
     </div>
