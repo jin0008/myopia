@@ -1,9 +1,12 @@
 import styled from "styled-components";
 import theme from "../theme";
 import { useNavigate } from "react-router";
+import { useContext } from "react";
+import { UserContext } from "../App";
 
 export default function ProfileChoice() {
   const navigate = useNavigate();
+  const { setRole } = useContext(UserContext);
   return (
     <div
       style={{
@@ -15,7 +18,7 @@ export default function ProfileChoice() {
         height: "100%",
       }}
     >
-      <h1>Choose your profile</h1>
+      <h1>Choose user type</h1>
       <div
         style={{
           display: "flex",
@@ -26,12 +29,18 @@ export default function ProfileChoice() {
         <ProfileCard
           title="Regular user"
           description="Register your children and track their axial length growth and treatment."
-          onClick={() => {}}
+          onClick={() => {
+            setRole("regular_user");
+            navigate("/");
+          }}
         />
         <ProfileCard
           title="Healthcare professional"
           description="Manage your patients. Register their axial length growth and treatment data"
-          onClick={() => navigate("/profile/healthcare_professional")}
+          onClick={() => {
+            setRole("healthcare_professional");
+            navigate("/");
+          }}
         />
       </div>
     </div>

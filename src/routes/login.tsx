@@ -4,9 +4,10 @@ import { useRef } from "react";
 import { LoginInput } from "../components/input";
 import { useNavigate } from "react-router";
 import { VerticalDivider } from "../components/divider";
-import { login } from "../api/auth";
+import { googleLogin, passwordLogin } from "../api/auth";
 import { HttpError } from "../lib/fetch";
 import { useQueryClient } from "@tanstack/react-query";
+import { GoogleLogin } from "@react-oauth/google";
 
 export const LoginDiv = styled.div`
   display: flex;
@@ -30,9 +31,25 @@ export default function Login() {
   const queryClient = useQueryClient();
 
   function handleLogin() {
-    login(username.current, password.current)
-      .then(() => navigate("/"))
-      .then(() => queryClient.invalidateQueries({ queryKey: ["currentUser"] }))
+    passwordLogin(username.current, password.current)
+      .then(() => navigate("/choose_profile"))
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+        queryClient.invalidateQueries({ queryKey: ["hospital"] });
+      })
+      .catch((e: HttpError) => {
+        console.error(e);
+        alert("Login failed\n" + e.message);
+      });
+  }
+
+  function handleGoogleLogin(token: string) {
+    googleLogin(token)
+      .then(() => navigate("/choose_profile"))
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+        queryClient.invalidateQueries({ queryKey: ["hospital"] });
+      })
       .catch((e: HttpError) => {
         console.error(e);
         alert("Login failed\n" + e.message);
@@ -72,6 +89,14 @@ export default function Login() {
             />
           </div>
           <PrimaryButton onClick={() => handleLogin()}>Sign in</PrimaryButton>
+          <GoogleLogin
+            shape="pill"
+            text="signin_with"
+            useOneTap={true}
+            onSuccess={(response) => {
+              if (response.credential) handleGoogleLogin(response.credential);
+            }}
+          />
         </LoginDiv>
         <VerticalDivider />
         <ButtonsDiv>

@@ -2,7 +2,7 @@ import styled from "styled-components";
 import logo from "../assets/logo.svg";
 
 import { PrimaryButton } from "./button";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useContext } from "react";
 import { UserContext } from "../App";
 import { logout } from "../api/auth";
@@ -22,10 +22,10 @@ export default function Header() {
         alert("Logout failed");
       })
       .finally(() => {
-        navigate("/");
+        navigate("/login");
       });
   };
-  const { user } = useContext(UserContext);
+  const { user, role } = useContext(UserContext);
   const navigate = useNavigate();
   return (
     <div
@@ -51,10 +51,33 @@ export default function Header() {
           gap: "36px",
         }}
       >
-        <HeaderTextButton>Axial length growth</HeaderTextButton>
+        {user && (
+          <div
+            style={{
+              fontSize: "small",
+              color: "#333",
+            }}
+          >
+            Logged in as : {role} (
+            <Link
+              style={{
+                textDecoration: "underline",
+              }}
+              to="/choose_profile"
+            >
+              change
+            </Link>
+            )
+          </div>
+        )}
+        <HeaderTextButton
+          onClick={() => navigate(`/axial_length_growth/${role}`)}
+        >
+          Axial length growth
+        </HeaderTextButton>
         <HeaderTextButton>Newstand</HeaderTextButton>
         <HeaderTextButton>Who we are</HeaderTextButton>
-        <HeaderTextButton onClick={() => navigate("/profile_choice")}>
+        <HeaderTextButton onClick={() => navigate("/profile")}>
           My profile
         </HeaderTextButton>
         {user ? (

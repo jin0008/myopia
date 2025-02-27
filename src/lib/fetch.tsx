@@ -37,9 +37,11 @@ export async function jsonFetch<T = any>(
     if (!result.ok) {
       if (result.body) {
         const body = await result.json().catch(() => ({}));
-        reject(new HttpError(result.status, body.message));
+        reject(new HttpError(result.status, body?.message));
+      } else {
+        reject(new HttpError(result.status));
       }
-      reject(new HttpError(result.status));
+      return;
     }
     if (!getResponse) {
       resolve(null);
@@ -76,12 +78,20 @@ export async function jsonFetchWithSession<T = any>(
     );
     if (result.status === 401) {
       reject(new AuthorizationError("Authorization error"));
+      return;
     }
     if (result.status === 403) {
       reject(new AuthorizationError("Authorization error"));
+      return;
     }
     if (!result.ok) {
-      reject(new HttpError(result.status));
+      if (result.body) {
+        const body = await result.json().catch(() => ({}));
+        reject(new HttpError(result.status, body?.message));
+      } else {
+        reject(new HttpError(result.status));
+      }
+      return;
     }
     if (!getResponse) {
       resolve(null);

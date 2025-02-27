@@ -4,8 +4,9 @@ import { PrimaryButton } from "../components/button";
 import { VerticalDivider } from "../components/divider";
 import { LoginInput } from "../components/input";
 import { ButtonsDiv, LoginDiv } from "./login";
-import { signup } from "../api/auth";
+import { signupWithGoogleAuth, signupWithPasswordAuth } from "../api/auth";
 import { HttpError } from "../lib/fetch";
+import { GoogleLogin } from "@react-oauth/google";
 
 export default function Signup() {
   const username = useRef("");
@@ -18,7 +19,16 @@ export default function Signup() {
       alert("Passwords do not match");
       return;
     }
-    signup(username.current, password)
+    signupWithPasswordAuth(username.current, password)
+      .then(() => navigate("/login"))
+      .catch((e: HttpError) => {
+        console.error(e);
+        alert("Signup failed\n" + e.message);
+      });
+  }
+
+  function handleGoogleSignup(token: string) {
+    signupWithGoogleAuth(token)
       .then(() => navigate("/login"))
       .catch((e: HttpError) => {
         console.error(e);
@@ -55,12 +65,14 @@ export default function Signup() {
               defaultValue={""}
               placeholder="Password"
               type="password"
+              autoComplete="new-password"
               onChange={(e) => setPassword(e.target.value)}
             />
             <LoginInput
               defaultValue={""}
               placeholder="Confirm Password"
               type="password"
+              autoComplete="new-password"
               onChange={(e) => setConfirmPassword(e.target.value)}
               style={
                 password !== confirmPassword
@@ -70,6 +82,13 @@ export default function Signup() {
             />
           </div>
           <PrimaryButton onClick={handleSignup}>Sign up</PrimaryButton>
+          <GoogleLogin
+            text="signup_with"
+            width={200}
+            onSuccess={(response) => {
+              if (response.credential) handleGoogleSignup(response.credential);
+            }}
+          />
         </LoginDiv>
         <VerticalDivider />
         <ButtonsDiv>

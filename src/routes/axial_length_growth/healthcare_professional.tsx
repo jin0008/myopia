@@ -18,9 +18,11 @@ import {
 } from "../../api/static";
 import { getHospitalList } from "../../api/hospital";
 import { registerProfessional } from "../../api/healthcare_professional";
-import PatientList from "../../components/patient_list";
-import { registerPatient } from "../../api/patient";
+import { deletePatient, getPatients, registerPatient } from "../../api/patient";
 import { useNavigate } from "react-router";
+import ConfirmDialog from "../../components/dialog";
+import { PatientCard } from "../../components/patient_card";
+import NotLoggedIn from "../../components/not_logged_in";
 
 const CenteredDivWithGap = styled(CenteredDiv)`
   gap: 32px;
@@ -37,17 +39,8 @@ const PatientSearchDiv = styled.div`
 export default function ProfessionalProfile() {
   const { user } = useContext(UserContext);
   const [registerDialogOpen, setRegisterDialogOpen] = useState(false);
-  const navtigate = useNavigate();
-  if (user == null) {
-    return (
-      <CenteredDivWithGap>
-        You are not logged in
-        <PrimaryButton onClick={() => navtigate("/login")}>
-          Log in
-        </PrimaryButton>
-      </CenteredDivWithGap>
-    );
-  } else if (user.healthcare_professional == null) {
+  if (user == null) return <NotLoggedIn />;
+  else if (user.healthcare_professional == null) {
     return (
       <>
         <CenteredDivWithGap>
@@ -67,6 +60,8 @@ export default function ProfessionalProfile() {
       <CenteredDiv>
         Your healthcare professional registration is pending. Please wait until
         it is approved.
+        <br />
+        Your user id is <strong>{user.id}</strong>
       </CenteredDiv>
     );
   } else {
@@ -103,6 +98,9 @@ function PatientSearch({
 function PatientManage() {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
+  const { user } = useContext(UserContext);
+
+  const hospital = user.healthcare_professional.hospital;
   return (
     <>
       <TopDiv
@@ -112,6 +110,8 @@ function PatientManage() {
       >
         <PatientSearchDiv>
           <PatientSearch value={search} onChange={setSearch} />
+          <h2>{hospital.name}</h2>
+          <div></div>
           <PrimaryButton onClick={() => setOpen(true)}>
             new patient
           </PrimaryButton>
@@ -160,15 +160,22 @@ function ProfessionalRegisterDialog({
 
   const mutation = useMutation({
     mutationFn: registerProfessional,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["currentUser"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      onClose();
+      if (createNewHospital)
+        alert(
+          "You are now admin of the hospital.\nYou can visit My profile to approve others to join"
+        );
+      else alert("Please wait for approval by hospital admin to join");
+    },
     onError: () => alert("An error occured"),
   });
 
   const name = useRef("");
   const [countryId, setCountryId] = useState("");
 
-  const [hospitalId, setHospitalId] = useState("");
+  const [hospitalCode, setHospitalCode] = useState("");
   const hospitalName = useRef("");
   const [hospitalCountryId, setHospitalCountryId] = useState("");
 
@@ -183,22 +190,47 @@ function ProfessionalRegisterDialog({
     }
   }, [countryQuery.isSuccess]);
 
+  const [createNewHospital, setCreateNewHospital] = useState(false);
+
+  const hospitalId = hospitalQuery.data?.find(
+    (e: any) => e.code === hospitalCode
+  )?.id;
+
   const handleSubmit = () => {
     if (!name.current) {
       alert("Missing field: name");
       return;
     }
-    if (!hospitalId && !hospitalName.current) {
-      alert("Missing field: hospital name");
-      return;
+
+    if (createNewHospital) {
+      if (!/^[a-zA-Z0-9]{1,10}$/.test(hospitalCode)) {
+        alert("Invalid hospital code");
+        return;
+      }
+      if (!hospitalName.current) {
+        alert("Missing field: hospital name");
+        return;
+      }
+      if (hospitalId != null) {
+        alert("Hospital code already exists");
+        return;
+      }
     }
-    const hospitalData = hospitalId
+
+    if (!createNewHospital) {
+      if (hospitalId == null) {
+        alert("Hospital not found");
+        return;
+      }
+    }
+    const hospitalData = createNewHospital
       ? {
-          id: hospitalId,
-        }
-      : {
           name: hospitalName.current,
           country_id: hospitalCountryId,
+          code: hospitalCode,
+        }
+      : {
+          id: hospitalQuery.data.find((e: any) => e.code === hospitalCode)?.id,
         };
     const data = {
       name: name.current,
@@ -242,28 +274,25 @@ function ProfessionalRegisterDialog({
           </label>
 
           <label>
-            Hospital:
-            <TextInput
-              as="select"
-              value={hospitalId}
-              onChange={(e) => setHospitalId(e.target.value)}
-            >
-              <option key={""} value={""}>
-                (Not in the list)
-              </option>
-              {hospitalQuery.data?.map((e: any) => (
-                <option key={e.id} value={e.id}>
-                  {e.name}({e.country.code})
-                </option>
-              ))}
-            </TextInput>
+            Join existing hospital
+            <input
+              type="radio"
+              checked={!createNewHospital}
+              onChange={(e) => setCreateNewHospital(e.target.checked)}
+            />
           </label>
-          {hospitalId ? null : (
-            <div
-              style={{
-                marginLeft: "5%",
-              }}
-            >
+          <label>
+            Register new hospital
+            <input
+              type="radio"
+              checked={createNewHospital}
+              onChange={(e) => setCreateNewHospital(e.target.checked)}
+            />
+          </label>
+          <div style={{ height: "16px" }}></div>
+
+          {createNewHospital ? (
+            <div>
               <label>
                 Hospital name:
                 <TextInput
@@ -285,7 +314,21 @@ function ProfessionalRegisterDialog({
                 </TextInput>
               </label>
             </div>
-          )}
+          ) : null}
+          <label>
+            Hospital code:
+            <TextInput
+              value={hospitalCode}
+              onChange={(e) => setHospitalCode(e.target.value)}
+              style={{
+                borderColor:
+                  (createNewHospital && hospitalId != null) ||
+                  (!createNewHospital && hospitalId == null)
+                    ? "red"
+                    : undefined,
+              }}
+            ></TextInput>
+          </label>
           <label>
             Default ethnicity(Optional)
             <TextInput
@@ -297,7 +340,7 @@ function ProfessionalRegisterDialog({
               </option>
               {ethnicityQuery.data?.map((e: any) => (
                 <option key={e.id} value={e.id}>
-                  {e.ethnicity}
+                  {e.name}
                 </option>
               ))}
             </TextInput>
@@ -360,12 +403,19 @@ function PatientRegisterDialog({
   const dateOfBirth = useRef("");
   const [isMale, setIsMale] = useState(true);
 
+  const { user } = useContext(UserContext);
   useEffect(() => {
     if (ethnicityQuery.isSuccess) {
       const first = ethnicityQuery.data?.[0];
-      setEthnicityId(first.id);
+      setEthnicityId(
+        user?.healthcare_professional?.default_ethnicity_id ?? first.id
+      );
     }
   }, [ethnicityQuery.isSuccess]);
+  useEffect(() => {
+    if (user?.healthcare_professional?.default_ethnicity_id)
+      setEthnicityId(user?.healthcare_professional?.default_ethnicity_id);
+  }, [open]);
 
   const handleSubmit = () => {
     if (!registration.current) {
@@ -411,7 +461,7 @@ function PatientRegisterDialog({
             >
               {ethnicityQuery.data?.map((e: any) => (
                 <option key={e.id} value={e.id}>
-                  {e.ethnicity}
+                  {e.name}
                 </option>
               ))}
             </TextInput>
@@ -453,5 +503,78 @@ function PatientRegisterDialog({
         <PrimaryButton onClick={handleSubmit}>Confirm</PrimaryButton>
       </DialogActions>
     </Dialog>
+  );
+}
+
+const GridDiv = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  padding: 16px;
+  width: 100%;
+`;
+
+function PatientList({ search }: { search: string }) {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const patientQuery = useQuery({
+    queryKey: ["patient"],
+    queryFn: getPatients,
+  });
+  const deletePatientMutation = useMutation({
+    mutationFn: deletePatient,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["patient"] });
+      setIsDeleteConfirmDialogOpen(false);
+    },
+    onError: () => alert("An error occured"),
+  });
+
+  const [isDeleteConfirmDialogOpen, setIsDeleteConfirmDialogOpen] =
+    useState(false);
+  const [deleteTargetPatient, setDeleteTargetPatient] = useState<any>();
+
+  return (
+    <>
+      <GridDiv>
+        {patientQuery.data
+          ?.filter((patient: any) =>
+            patient.registration_number.includes(search)
+          )
+          ?.map((patient: any) => (
+            <PatientCard
+              key={patient.id}
+              registration={patient.registration_number}
+              dateOfBirth={patient.date_of_birth.split("T")[0]}
+              sex={patient.sex === "male" ? "M" : "F"}
+              onClick={() => navigate(`/chart/${patient.id}?edit=true`)}
+              onDelete={() => {
+                setDeleteTargetPatient(patient);
+                setIsDeleteConfirmDialogOpen(true);
+              }}
+            />
+          ))}
+      </GridDiv>
+      {deleteTargetPatient && (
+        <ConfirmDialog
+          title="Confirm deletion"
+          content={
+            <>
+              Are you sure you want to delete patient with registration number:
+              <br />
+              {deleteTargetPatient.registration_number}
+              <br />
+              <br />
+              All records associated with the patient will be gone forever!
+            </>
+          }
+          open={isDeleteConfirmDialogOpen}
+          onClose={() => setIsDeleteConfirmDialogOpen(false)}
+          onConfirm={() => {
+            deletePatientMutation.mutate(deleteTargetPatient.id);
+          }}
+        />
+      )}
+    </>
   );
 }
