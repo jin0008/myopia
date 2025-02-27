@@ -472,7 +472,7 @@ function ChangeHospitalDialog({
   useEffect(() => {
     if (countryQuery.isSuccess) {
       const first = countryQuery.data?.[0];
-      setHospitalCountryId(first.id);
+      setHospitalCountryId(first?.id);
     }
   }, [countryQuery.isSuccess]);
 

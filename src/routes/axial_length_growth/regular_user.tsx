@@ -151,7 +151,7 @@ function PatientRegisterDialog({
   useEffect(() => {
     if (hospitalQuery.isSuccess) {
       const first = hospitalQuery.data[0];
-      setHospitalId(first.id);
+      setHospitalId(first?.id);
     }
   }, [hospitalQuery.isSuccess]);
 

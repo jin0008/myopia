@@ -185,8 +185,8 @@ function ProfessionalRegisterDialog({
   useEffect(() => {
     if (countryQuery.isSuccess) {
       const first = countryQuery.data?.[0];
-      setCountryId(first.id);
-      setHospitalCountryId(first.id);
+      setCountryId(first?.id);
+      setHospitalCountryId(first?.id);
     }
   }, [countryQuery.isSuccess]);
 
@@ -408,7 +408,7 @@ function PatientRegisterDialog({
     if (ethnicityQuery.isSuccess) {
       const first = ethnicityQuery.data?.[0];
       setEthnicityId(
-        user?.healthcare_professional?.default_ethnicity_id ?? first.id
+        user?.healthcare_professional?.default_ethnicity_id ?? first?.id
       );
     }
   }, [ethnicityQuery.isSuccess]);

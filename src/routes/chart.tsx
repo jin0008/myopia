@@ -326,6 +326,8 @@ function Chart({
             size: 16,
           },
         },
+        min: 4,
+        max: 18,
       },
       y: {
         grid: {
@@ -384,8 +386,8 @@ function MeasurementList({
   mode: number;
 }) {
   const filteredMeasurement = useMemo(
-    () => measurement.slice(0, 5),
-    [measurement]
+    () => measurement.slice(0, mode === 0 ? 5 : undefined).reverse(),
+    [measurement, mode]
   );
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -433,7 +435,7 @@ function MeasurementList({
         <GridItemDiv>OD</GridItemDiv>
         <GridItemDiv>OS</GridItemDiv>
         <div></div>
-        {(mode === 0 ? filteredMeasurement : measurement).map((m) => (
+        {filteredMeasurement.map((m) => (
           <React.Fragment key={m.id}>
             <GridItemDiv>{m.date.split("T")[0]}</GridItemDiv>
             <GridItemDiv
