@@ -278,7 +278,7 @@ function ProfessionalRegisterDialog({
             <input
               type="radio"
               checked={!createNewHospital}
-              onChange={(e) => setCreateNewHospital(e.target.checked)}
+              onChange={(e) => setCreateNewHospital(!e.target.checked)}
             />
           </label>
           <label>
