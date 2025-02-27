@@ -853,7 +853,7 @@ function TreatmentRegisterDialog({
         </label>
       </DialogContent>
       <DialogActions>
-        <PrimaryNagativeButton>Cancel</PrimaryNagativeButton>
+        <PrimaryNagativeButton onClick={onClose}>Cancel</PrimaryNagativeButton>
         <PrimaryButton onClick={handleConfirm}>Confirm</PrimaryButton>
       </DialogActions>
     </Dialog>
