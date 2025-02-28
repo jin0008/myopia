@@ -31,6 +31,7 @@ import {
   addGoogleAuth,
   addPasswordAuth,
   changePassword,
+  deleteAccount,
   removeGoogleAuth,
   removePasswordAuth,
 } from "../api/auth";
@@ -65,6 +66,8 @@ function UserProfile() {
   const [isChangePasswordDialogOpen, setIsChangePasswordDialogOpen] =
     useState(false);
   const [isAddPasswordAuthDialogOpen, setIsAddPasswordAuthDialogOpen] =
+    useState(false);
+  const [isDeleteAccountDialogOpen, setIsDeleteAccountDialogOpen] =
     useState(false);
 
   const queryClient = useQueryClient();
@@ -200,7 +203,81 @@ function UserProfile() {
           </>
         )}
       </div>
+      <div>
+        <h3>Delete account</h3>
+        <div style={{ display: "flex", justifyContent: "end" }}>
+          <PrimaryNagativeButton
+            style={{
+              backgroundColor: "red",
+            }}
+            onClick={() => setIsDeleteAccountDialogOpen(true)}
+          >
+            Delete account
+          </PrimaryNagativeButton>
+        </div>
+        <DeleteAccountDialog
+          open={isDeleteAccountDialogOpen}
+          onClose={() => setIsDeleteAccountDialogOpen(false)}
+        />
+      </div>
     </ProfileSettingsDiv>
+  );
+}
+
+function DeleteAccountDialog({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: deleteAccount,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [],
+      });
+    },
+  });
+
+  const memberListQuery = useQuery({
+    queryKey: ["hospital", "member"],
+    queryFn: getMembers,
+  });
+
+  const { user } = useContext(UserContext);
+  const shouldDisplayWarning =
+    user.healthcare_professional.is_admin &&
+    memberListQuery.data?.filter((e: any) => e.approved && e.is_admin)
+      .length === 1;
+
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth={true}>
+      <DialogTitle>Delete account</DialogTitle>
+      <DialogContent>
+        <p style={{ color: "red" }}>Warning: This action is irreversible.</p>
+        {shouldDisplayWarning && (
+          <p style={{ color: "red" }}>
+            Warning: You are the only admin in this hospital. If you delete your
+            account, there will be no admin in this hospital.
+            <br />
+            We recommend you to add another admin before deleting your account.
+          </p>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <PrimaryButton onClick={onClose}>Cancel</PrimaryButton>
+        <PrimaryNagativeButton
+          onClick={() => {
+            mutation.mutate();
+            onClose();
+          }}
+        >
+          Delete
+        </PrimaryNagativeButton>
+      </DialogActions>
+    </Dialog>
   );
 }
 
@@ -375,6 +452,16 @@ function ProfessionalProfile() {
   const [isChangeHospitalDialogOpen, setIsChangeHospitalDialogOpen] =
     useState(false);
 
+  const memberListQuery = useQuery({
+    queryKey: ["hospital", "member"],
+    queryFn: getMembers,
+  });
+
+  const shouldDisplayWarning =
+    user.healthcare_professional.is_admin &&
+    memberListQuery.data?.filter((e: any) => e.approved && e.is_admin)
+      .length === 1;
+
   return (
     <ProfileSettingsDiv>
       <h2>Healthcare professional settings</h2>
@@ -389,18 +476,27 @@ function ProfessionalProfile() {
         <p>
           Your hospital is{" "}
           <strong>
-            {user.healthcare_professional.hospital.name}(
+            {user.healthcare_professional.hospital.name}(Code :{" "}
             {user.healthcare_professional.hospital.code})
           </strong>
         </p>
         <PrimaryButton onClick={() => setIsChangeHospitalDialogOpen(true)}>
           Change
         </PrimaryButton>
+
         <ChangeHospitalDialog
           open={isChangeHospitalDialogOpen}
           onClose={() => setIsChangeHospitalDialogOpen(false)}
         />
       </div>
+      {shouldDisplayWarning && (
+        <p style={{ color: "red" }}>
+          Warning: You are the only admin in this hospital. If you change your
+          hospital, there will be no admin in this hospital.
+          <br />
+          We recommend you to add another admin before changing hospital.
+        </p>
+      )}
       <label>
         Default ethnicity:
         <TextInput
@@ -693,11 +789,17 @@ function HospitalAdminProfile() {
                   <></>
                 ) : (
                   <PrimaryButton
-                    onClick={() =>
-                      confirm(
-                        "Admins can approve new member as well as kick/reject non-admin members and can't be kicked.\nAre you sure you want to set this user as admin?"
+                    onClick={() => {
+                      if (
+                        confirm(
+                          "Admins can approve new member as well as kick/reject non-admin members and can't be kicked.\nAre you sure you want to set this user as admin?"
+                        )
                       )
-                    }
+                        editMutation.mutate({
+                          userId: e.user_id,
+                          data: { is_admin: true },
+                        });
+                    }}
                   >
                     Set as admin
                   </PrimaryButton>

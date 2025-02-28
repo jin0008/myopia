@@ -320,6 +320,7 @@ function ProfessionalRegisterDialog({
             <TextInput
               value={hospitalCode}
               onChange={(e) => setHospitalCode(e.target.value)}
+              pattern="^[a-zA-Z0-9]{1,10}$"
               style={{
                 borderColor:
                   (createNewHospital && hospitalId != null) ||

@@ -144,3 +144,17 @@ export function getCurrentUser() {
     if (err instanceof AuthorizationError) return null;
   });
 }
+
+export function deleteAccount() {
+  return jsonFetchWithSession(
+    API_ROOT + "/auth/user",
+    {
+      method: "DELETE",
+    },
+    undefined,
+    false
+  ).then(() => {
+    localStorage.removeItem("session_key");
+    localStorage.removeItem("role");
+  });
+}
