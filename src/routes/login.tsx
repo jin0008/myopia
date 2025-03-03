@@ -104,8 +104,8 @@ export default function Login() {
           <PrimaryButton onClick={() => navigate("/signup")}>
             Sign up
           </PrimaryButton>
-          <p>Forgot your password?</p>
-          <PrimaryButton>Forgot password</PrimaryButton>
+          {/* <p>Forgot your password?</p>
+          <PrimaryButton>Forgot password</PrimaryButton> */}
         </ButtonsDiv>
       </div>
     </div>
