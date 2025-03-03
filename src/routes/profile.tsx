@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { TopDiv } from "../components/div";
 import { UserContext } from "../App";
 import NotLoggedIn from "../components/not_logged_in";
@@ -248,7 +248,7 @@ function DeleteAccountDialog({
 
   const { user } = useContext(UserContext);
   const shouldDisplayWarning =
-    user.healthcare_professional.is_admin &&
+    user.healthcare_professional?.is_admin &&
     memberListQuery.data?.filter((e: any) => e.approved && e.is_admin)
       .length === 1;
 

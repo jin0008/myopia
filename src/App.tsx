@@ -13,6 +13,7 @@ import RegularProfile from "./routes/axial_length_growth/regular_user";
 import Profile from "./routes/profile";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { GOOGLE_CLIENT_ID } from "./lib/google_client_id";
+import Admin from "./routes/admin";
 
 export const UserContext = createContext<{
   user: any | null;
@@ -59,6 +60,7 @@ const App = () => {
               </Route>
               <Route path="/chart/:patientId" element={<ChartRoute />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/admin" element={<Admin />} />
             </Route>
           </Routes>
         </GoogleOAuthProvider>

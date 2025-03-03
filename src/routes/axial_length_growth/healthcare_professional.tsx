@@ -2,7 +2,7 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { UserContext } from "../../App";
 import { PrimaryButton, PrimaryNagativeButton } from "../../components/button";
 import { CenteredDiv, TopDiv } from "../../components/div";
-import { TextInput } from "../../components/input";
+import { SearchInput, TextInput } from "../../components/input";
 import styled from "styled-components";
 import {
   Dialog,
@@ -69,15 +69,6 @@ export default function ProfessionalProfile() {
     return <PatientManage />;
   }
 }
-
-const SearchInput = styled.input`
-  width: 320px;
-  padding: 8px;
-  border-radius: 16px;
-  border: 1px solid #ccc;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-`;
 
 function PatientSearch({
   value,

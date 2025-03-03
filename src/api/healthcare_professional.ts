@@ -1,4 +1,5 @@
 import { jsonFetchWithSession } from "../lib/fetch";
+import { EditMemberData } from "./hospital";
 import { API_ROOT } from "./root";
 
 export type RegisterData = {
@@ -60,6 +61,35 @@ export function updateProfessionalHospital(
       method: "PATCH",
     },
     data,
+    false
+  );
+}
+
+type EditMemberAdminData = {
+  approved?: boolean;
+  is_admin?: boolean;
+};
+export function updateProfessionalStatus(
+  id: string,
+  data: EditMemberAdminData
+) {
+  return jsonFetchWithSession(
+    API_ROOT + `/healthcare_professional/${id}`,
+    {
+      method: "PATCH",
+    },
+    data,
+    false
+  );
+}
+
+export function deleteProfessional(id: string) {
+  return jsonFetchWithSession(
+    API_ROOT + `/healthcare_professional/${id}`,
+    {
+      method: "DELETE",
+    },
+    undefined,
     false
   );
 }

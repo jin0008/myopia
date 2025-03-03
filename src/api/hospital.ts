@@ -9,6 +9,12 @@ export function getMembers() {
   return jsonFetchWithSession(API_ROOT + "/hospital/healthcare_professional");
 }
 
+export function getMembersByHospital(hospitalId: string) {
+  return jsonFetchWithSession(
+    API_ROOT + `/hospital/${hospitalId}/healthcare_professional`
+  );
+}
+
 export function deleteMember(userId: string) {
   return jsonFetchWithSession(
     API_ROOT + `/hospital/healthcare_professional/${userId}`,
@@ -20,8 +26,8 @@ export function deleteMember(userId: string) {
   );
 }
 
-type EditMemberData = {
-  userId?: true;
+export type EditMemberData = {
+  approved?: true;
   is_admin?: true;
 };
 
