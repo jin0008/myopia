@@ -36,6 +36,7 @@ import {
   removePasswordAuth,
 } from "../api/auth";
 import { GoogleLogin } from "@react-oauth/google";
+import { professionalRoleList } from "../lib/constants";
 
 export default function Profile() {
   const { user } = useContext(UserContext);
@@ -497,6 +498,24 @@ function ProfessionalProfile() {
           We recommend you to add another admin before changing hospital.
         </p>
       )}
+      <label>
+        Role:
+        <TextInput
+          as="select"
+          value={user.healthcare_professional.role}
+          onChange={(e) => {
+            updateMutation.mutate({
+              role: e.target.value,
+            });
+          }}
+        >
+          {professionalRoleList.map((e) => (
+            <option key={e} value={e}>
+              {e}
+            </option>
+          ))}
+        </TextInput>
+      </label>
       <label>
         Default ethnicity:
         <TextInput

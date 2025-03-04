@@ -36,6 +36,7 @@ import {
   registerPatientTreatment,
 } from "../api/treatment";
 import { UserContext } from "../App";
+import { upsertPatientK } from "../api/mean_k";
 
 ChartJS.register(
   CategoryScale,
@@ -97,6 +98,63 @@ export default function ChartRoute() {
     queryKey: ["patient", patientId],
     queryFn: () => getPatientDetail(patientId as string),
     enabled: !!patientId,
+  });
+
+  const meanKValue = useMemo(() => {
+    if (!patientQuery.data) return "(No data)";
+    if (patientQuery.data.patient_k.length === 0) return "(No data)";
+
+    let od_count = 0;
+    let os_count = 0;
+    let od_sum = 0;
+    let os_sum = 0;
+    patientQuery.data.patient_k.forEach((k: any) => {
+      if (k.od) {
+        od_count++;
+        od_sum += k.od;
+      }
+      if (k.os) {
+        os_count++;
+        os_sum += k.os;
+      }
+    });
+    const od = od_sum / od_count;
+    const os = os_sum / os_count;
+
+    return `(OD:${od}, OS:${os})`;
+  }, [patientQuery.data?.patient_k]);
+
+  const [kInputDialogOpen, setKInputDialogOpen] = useState(false);
+
+  const queryClient = useQueryClient();
+  const kValueMutation = useMutation({
+    mutationFn: (data: any) => {
+      return Promise.all([
+        upsertPatientK({
+          patient_id: patientId!,
+          k_type: "K1",
+          od: data.K1.od,
+          os: data.K1.os,
+        }),
+        upsertPatientK({
+          patient_id: patientId!,
+          k_type: "K2",
+          od: data.K2.od,
+          os: data.K2.os,
+        }),
+      ]);
+    },
+    onSuccess: () => {
+      alert("K value registered successfully");
+      queryClient.invalidateQueries({
+        queryKey: ["patient", patientId],
+      });
+      setKInputDialogOpen(false);
+    },
+    onError: (e) => {
+      console.log(e);
+      alert("An error has occured");
+    },
   });
 
   const referenceEthnictyListQuery = useQuery({
@@ -172,17 +230,43 @@ export default function ChartRoute() {
             </TextButton>
           </div>
         </ChartTitleDiv>
-        reference data :{" "}
-        <select
-          value={referenceEthnicity}
-          onChange={(e) => setReferenceEthnicity(e.target.value)}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "end",
+            gap: "16px",
+          }}
         >
-          {referenceEthnictyListQuery.data?.map((e: any) => (
-            <option key={e} value={e}>
-              {e}
-            </option>
-          ))}
-        </select>
+          reference data :
+          <select
+            value={referenceEthnicity}
+            onChange={(e) => setReferenceEthnicity(e.target.value)}
+          >
+            {referenceEthnictyListQuery.data?.map((e: any) => (
+              <option key={e} value={e}>
+                {e}
+              </option>
+            ))}
+          </select>
+          <span>meanK(Diopter):</span>
+          {meanKValue}
+          <span
+            style={{
+              textDecoration: "underline",
+              cursor: "pointer",
+            }}
+            onClick={() => setKInputDialogOpen(true)}
+          >
+            register k value
+          </span>
+          <KInputDialog
+            open={kInputDialogOpen}
+            onClose={() => setKInputDialogOpen(false)}
+            onConfirm={(data) => {
+              kValueMutation.mutate(data);
+            }}
+          />
+        </div>
         <div
           style={{
             display: "flex",
@@ -220,6 +304,102 @@ export default function ChartRoute() {
         </div>
       </ContentDiv>
     </div>
+  );
+}
+
+function KInputDialog({
+  open,
+  onClose,
+  onConfirm,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: (data: {
+    K1: { od: number | null; os: number | null };
+    K2: { od: number | null; os: number | null };
+  }) => void;
+}) {
+  const k1_od = useRef("");
+  const k1_os = useRef("");
+
+  const k2_od = useRef("");
+  const k2_os = useRef("");
+
+  return (
+    <Dialog open={open} onClose={onClose}>
+      <DialogTitle>Input K value</DialogTitle>
+      <DialogContent>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: "16px",
+            textAlign: "center",
+          }}
+        >
+          <div></div>
+          <div>OD</div>
+          <div>OS</div>
+          <div>K1</div>
+          <div>
+            <TextInput
+              pattern="[0-9]+(\.[0-9]+){0,1}"
+              placeholder="K1 in Diopter"
+              onChange={(e) => (k1_od.current = e.target.value)}
+            />
+          </div>
+          <div>
+            <TextInput
+              pattern="[0-9]+(\.[0-9]+){0,1}"
+              placeholder="K1 in Diopter"
+              onChange={(e) => (k1_os.current = e.target.value)}
+            />
+          </div>
+          <div>K2</div>
+          <div>
+            <TextInput
+              pattern="[0-9]+(\.[0-9]+){0,1}"
+              placeholder="K2 in Diopter"
+              onChange={(e) => (k2_od.current = e.target.value)}
+            />
+          </div>
+          <div>
+            <TextInput
+              pattern="[0-9]+(\.[0-9]+){0,1}"
+              placeholder="K2 in Diopter"
+              onChange={(e) => (k2_os.current = e.target.value)}
+            />
+          </div>
+        </div>
+      </DialogContent>
+      <DialogActions>
+        <PrimaryNagativeButton onClick={onClose}>Cancel</PrimaryNagativeButton>
+        <PrimaryButton
+          onClick={() => {
+            const K1 = {
+              od: k1_od.current === "" ? null : parseFloat(k1_od.current),
+              os: k1_os.current === "" ? null : parseFloat(k1_os.current),
+            };
+            const K2 = {
+              od: k2_od.current === "" ? null : parseFloat(k2_od.current),
+              os: k2_os.current === "" ? null : parseFloat(k2_os.current),
+            };
+            if (
+              Number.isNaN(K1.od) ||
+              Number.isNaN(K1.os) ||
+              Number.isNaN(K2.od) ||
+              Number.isNaN(K2.os)
+            ) {
+              alert("Invalid value detected");
+              return;
+            }
+            onConfirm({ K1, K2 });
+          }}
+        >
+          Confirm
+        </PrimaryButton>
+      </DialogActions>
+    </Dialog>
   );
 }
 

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getHospitalList, getMembersByHospital } from "../api/hospital";
-import { useMemo, useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import styled from "styled-components";
 import {
   deleteProfessional,
@@ -9,6 +9,7 @@ import {
 import { PrimaryButton, PrimaryNagativeButton } from "../components/button";
 import { TopDiv } from "../components/div";
 import { SearchInput } from "../components/input";
+import { UserContext } from "../App";
 
 const Table = styled.table`
   text-align: center;
@@ -19,11 +20,13 @@ const Table = styled.table`
 `;
 
 export default function Admin() {
+  const { user } = useContext(UserContext);
   const [selectedHospitalId, setSelectedHospitalId] = useState("");
 
   const memberListQuery = useQuery({
     queryKey: ["hospital", selectedHospitalId, "member"],
     queryFn: () => getMembersByHospital(selectedHospitalId),
+    enabled: !!selectedHospitalId,
   });
   const queryClient = useQueryClient();
   const editMutation = useMutation({
@@ -54,6 +57,10 @@ export default function Admin() {
       });
     },
   });
+
+  if (!user?.is_site_admin) {
+    return <div>Not authorized</div>;
+  }
 
   return (
     <TopDiv>
@@ -185,7 +192,9 @@ function HospitalList({ onSelect }: { onSelect: (hospitalId: any) => void }) {
   const filteredData = useMemo(() => {
     if (query.data) {
       return query.data.filter(
-        (e: any) => e.name.includes(search) || e.code.includes(search)
+        (e: any) =>
+          e.name.toLowerCase().includes(search.toLowerCase()) ||
+          e.code.includes(search)
       );
     }
     return [];

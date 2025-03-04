@@ -23,6 +23,7 @@ import { useNavigate } from "react-router";
 import ConfirmDialog from "../../components/dialog";
 import { PatientCard } from "../../components/patient_card";
 import NotLoggedIn from "../../components/not_logged_in";
+import { professionalRoleList } from "../../lib/constants";
 
 const CenteredDivWithGap = styled(CenteredDiv)`
   gap: 32px;
@@ -156,7 +157,7 @@ function ProfessionalRegisterDialog({
       onClose();
       if (createNewHospital)
         alert(
-          "You are now admin of the hospital.\nYou can visit My profile to approve others to join"
+          "You are now admin of the hospital.\nYou can visit 'My profile' to approve others to join"
         );
       else alert("Please wait for approval by hospital admin to join");
     },
@@ -172,6 +173,8 @@ function ProfessionalRegisterDialog({
 
   const defaultEthnicityId = useRef("");
   const defaultInstrumentId = useRef("");
+
+  const [role, setRole] = useState<string>(professionalRoleList[0]);
 
   useEffect(() => {
     if (countryQuery.isSuccess) {
@@ -227,6 +230,7 @@ function ProfessionalRegisterDialog({
       name: name.current,
       country_id: countryId,
       hospital: hospitalData,
+      role,
       default_ethnicity_id: defaultEthnicityId.current || null,
       default_instrument_id: defaultInstrumentId.current || null,
     };
@@ -320,6 +324,16 @@ function ProfessionalRegisterDialog({
                     : undefined,
               }}
             ></TextInput>
+          </label>
+          <label>
+            Role:
+            <TextInput as="select" onChange={(e) => setRole(e.target.value)}>
+              {professionalRoleList.map((e) => (
+                <option key={e} value={e}>
+                  {e}
+                </option>
+              ))}
+            </TextInput>
           </label>
           <label>
             Default ethnicity(Optional)

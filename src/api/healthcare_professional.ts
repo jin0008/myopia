@@ -1,5 +1,4 @@
 import { jsonFetchWithSession } from "../lib/fetch";
-import { EditMemberData } from "./hospital";
 import { API_ROOT } from "./root";
 
 export type RegisterData = {
@@ -14,6 +13,7 @@ export type RegisterData = {
         country_id: string;
         code: string;
       };
+  role: string;
   default_ethnicity_id: string | null;
   default_instrument_id: string | null;
 };
@@ -32,6 +32,7 @@ export function registerProfessional(data: RegisterData) {
 export type UpdateData = {
   default_ethnicity_id?: string | null;
   default_instrument_id?: string | null;
+  role?: string;
 };
 
 export function updateProfessional(data: UpdateData) {
