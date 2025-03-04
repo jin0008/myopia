@@ -37,6 +37,7 @@ import {
 } from "../api/auth";
 import { GoogleLogin } from "@react-oauth/google";
 import { professionalRoleList } from "../lib/constants";
+import HospitalSelector from "../components/hospital_selector";
 
 export default function Profile() {
   const { user } = useContext(UserContext);
@@ -640,6 +641,8 @@ function ChangeHospitalDialog({
     mutation.mutate(hospitalData);
   };
 
+  const [isHospitalSelectorOpen, setIsHospitalSelectorOpen] = useState(false);
+
   return (
     <Dialog open={open} onClose={onClose} fullWidth={true}>
       <DialogTitle>Change hospital</DialogTitle>
@@ -701,6 +704,19 @@ function ChangeHospitalDialog({
             }}
           ></TextInput>
         </label>
+        {!createNewHospital && (
+          <PrimaryButton onClick={() => setIsHospitalSelectorOpen(true)}>
+            Select hospital
+          </PrimaryButton>
+        )}
+        <HospitalSelector
+          open={isHospitalSelectorOpen}
+          onClose={() => setIsHospitalSelectorOpen(false)}
+          onSelect={(hospital) => {
+            setHospitalCode(hospital.code);
+            setIsHospitalSelectorOpen(false);
+          }}
+        />
       </DialogContent>
       <DialogActions>
         <PrimaryButton onClick={handleSubmit}>Confirm</PrimaryButton>

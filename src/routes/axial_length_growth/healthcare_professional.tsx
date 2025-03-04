@@ -24,6 +24,7 @@ import ConfirmDialog from "../../components/dialog";
 import { PatientCard } from "../../components/patient_card";
 import NotLoggedIn from "../../components/not_logged_in";
 import { professionalRoleList } from "../../lib/constants";
+import HospitalSelector from "../../components/hospital_selector";
 
 const CenteredDivWithGap = styled(CenteredDiv)`
   gap: 32px;
@@ -237,6 +238,8 @@ function ProfessionalRegisterDialog({
     mutation.mutate(data);
   };
 
+  const [isHospitalSelectorOpen, setIsHospitalSelectorOpen] = useState(false);
+
   return (
     <Dialog open={open} onClose={onClose}>
       <DialogTitle>Register as healthcare professional</DialogTitle>
@@ -245,6 +248,7 @@ function ProfessionalRegisterDialog({
           style={{
             display: "flex",
             flexDirection: "column",
+            alignItems: "start",
           }}
         >
           <label>
@@ -325,6 +329,19 @@ function ProfessionalRegisterDialog({
               }}
             ></TextInput>
           </label>
+          {!createNewHospital && (
+            <PrimaryButton onClick={() => setIsHospitalSelectorOpen(true)}>
+              Select hospital
+            </PrimaryButton>
+          )}
+          <HospitalSelector
+            open={isHospitalSelectorOpen}
+            onClose={() => setIsHospitalSelectorOpen(false)}
+            onSelect={(hospital) => {
+              setHospitalCode(hospital.code);
+              setIsHospitalSelectorOpen(false);
+            }}
+          />
           <label>
             Role:
             <TextInput as="select" onChange={(e) => setRole(e.target.value)}>
