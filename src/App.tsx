@@ -20,6 +20,7 @@ const RegularProfile = lazy(
 );
 const Profile = lazy(() => import("./routes/profile"));
 const Admin = lazy(() => import("./routes/admin"));
+const WhoWeAre = lazy(() => import("./routes/who_we_are"));
 
 export const UserContext = createContext<{
   user: any | null;
@@ -67,6 +68,7 @@ const App = () => {
               <Route path="/chart/:patientId" element={<ChartRoute />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/who_we_are" element={<WhoWeAre />} />
             </Route>
           </Routes>
         </GoogleOAuthProvider>

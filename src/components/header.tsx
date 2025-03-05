@@ -76,7 +76,9 @@ export default function Header() {
           Axial length growth
         </HeaderTextButton>
         <HeaderTextButton>Newstand</HeaderTextButton>
-        <HeaderTextButton>Who we are</HeaderTextButton>
+        <HeaderTextButton onClick={() => navigate("/who_we_are")}>
+          Who we are
+        </HeaderTextButton>
         <HeaderTextButton onClick={() => navigate("/profile")}>
           My profile
         </HeaderTextButton>
