@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import styled from "styled-components";
 import { UserContext } from "../../App";
 import { PrimaryButton, PrimaryNagativeButton } from "../../components/button";
-import { CenteredDiv, TopDiv } from "../../components/div";
+import { TopDiv } from "../../components/div";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import {
   addUserPatient,

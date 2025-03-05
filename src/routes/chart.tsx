@@ -4,7 +4,7 @@ import theme from "../theme";
 import { useParams, useSearchParams } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getPatientDetail } from "../api/patient";
-import { use, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import autocolors from "chartjs-plugin-autocolors";
 import {
   Chart as ChartJS,
