@@ -1,19 +1,25 @@
-import { createContext, useState } from "react";
+import { createContext, lazy, useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router";
-import Home from "./routes/home";
-import HeaderRoute from "./routes/header";
-import Login from "./routes/login";
-import Signup from "./routes/signup";
-import ProfileChoice from "./routes/choose_profile";
-import ProfessionalProfile from "./routes/axial_length_growth/healthcare_professional";
 import { useQuery } from "@tanstack/react-query";
-import { getCurrentUser } from "./api/auth";
-import ChartRoute from "./routes/chart";
-import RegularProfile from "./routes/axial_length_growth/regular_user";
-import Profile from "./routes/profile";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+
+import { getCurrentUser } from "./api/auth";
 import { GOOGLE_CLIENT_ID } from "./lib/google_client_id";
-import Admin from "./routes/admin";
+
+const Home = lazy(() => import("./routes/home"));
+const HeaderRoute = lazy(() => import("./routes/header"));
+const Login = lazy(() => import("./routes/login"));
+const Signup = lazy(() => import("./routes/signup"));
+const ProfileChoice = lazy(() => import("./routes/choose_profile"));
+const ProfessionalProfile = lazy(
+  () => import("./routes/axial_length_growth/healthcare_professional")
+);
+const ChartRoute = lazy(() => import("./routes/chart"));
+const RegularProfile = lazy(
+  () => import("./routes/axial_length_growth/regular_user")
+);
+const Profile = lazy(() => import("./routes/profile"));
+const Admin = lazy(() => import("./routes/admin"));
 
 export const UserContext = createContext<{
   user: any | null;
