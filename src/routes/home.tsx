@@ -1,3 +1,9 @@
+import VisitorCounter from "../components/VisitorCounter";
+
 export default function Home() {
-  return <div></div>;
+  return (
+    <div>
+      <VisitorCounter />
+    </div>
+  );
 }
