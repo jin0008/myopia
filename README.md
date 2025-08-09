@@ -1,3 +1,7 @@
+#Myopia Management
+This is a web-based platform to help clinician for tracking axial lengths in children.
+
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
