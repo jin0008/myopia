@@ -1,6 +1,7 @@
 # Myopia Management
 
 This is a web-based platform to help clinician for tracking axial lengths in children.
+
 This tool aims to enhance interaction with parents or help to understand the trend of axial length changes over time.
 
 ![myopia_manage_screenshot](https://github.com/user-attachments/assets/a05515e5-b8de-43e9-8fa2-5ef65c2e27e3)
