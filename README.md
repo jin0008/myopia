@@ -1,6 +1,8 @@
 # Myopia Management
 
 This is a web-based platform to help clinician for tracking axial lengths in children.
+This tool aims to enhance interaction with parents or help to understand the trend of axial length changes over time.
+
 
 
 # React + TypeScript + Vite
