@@ -3,7 +3,7 @@
 This is a web-based platform to help clinician for tracking axial lengths in children.
 This tool aims to enhance interaction with parents or help to understand the trend of axial length changes over time.
 
-
+![alt text](https://github.com/jin0008/myopia/public/myopia_manage_screenshot.jpg?raw=true) 
 
 # React + TypeScript + Vite
 
