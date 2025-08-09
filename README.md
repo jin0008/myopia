@@ -5,6 +5,7 @@ This tool aims to enhance interaction with parents or help to understand the tre
 
 ![alt text](https://github.com/jin0008/myopia/public/myopia_manage_screenshot.jpg?raw=true) 
 
+![myopia_manage_screenshot](https://github.com/user-attachments/assets/a05515e5-b8de-43e9-8fa2-5ef65c2e27e3)
 
 # React + TypeScript + Vite
 
