@@ -5,7 +5,7 @@ type Stats = { dailyVisits: number; totalVisits: number };
 
 export default function VisitorStats() {
   const [stats, setStats] = useState<Stats | null>(null);
-  const sentRef = useRef(false); // StrictMode(개발)에서 중복 호출 가드
+  const sentRef = useRef(false);
 
   useEffect(() => {
     if (sentRef.current) return;
