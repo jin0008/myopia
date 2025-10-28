@@ -1,9 +1,11 @@
+// myopia/src/App.tsx
 import { createContext, lazy, useState, Suspense } from "react";
-import { BrowserRouter, Routes, Route } from "react-router";
+// ⬇️ 권장: react-router-dom에서 가져오기
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import VisitorStats from "./components/VisitorStats";
 
+import VisitorStats from "./components/VisitorStats"; // 실제로 사용!
 import { getCurrentUser } from "./api/auth";
 import { GOOGLE_CLIENT_ID } from "./lib/google_client_id";
 
@@ -31,6 +33,7 @@ export const UserContext = createContext<{
 
 type UserRole = "regular_user" | "healthcare_professional";
 
+// ✅ 래퍼 컴포넌트: 홈 진입 시 방문자 표시 + 홈 본문
 const HomeWithVisitorStats = () => (
   <>
     <VisitorStats />
@@ -60,25 +63,29 @@ const App = () => {
         }}
       >
         <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-          <Routes>
-            <Route element={<HeaderRoute></HeaderRoute>}>
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/choose_profile" element={<ProfileChoice />} />
-              <Route path="/axial_length_growth">
-                <Route
-                  path="healthcare_professional"
-                  element={<ProfessionalProfile />}
-                />
-                <Route path="regular_user" element={<RegularProfile />} />
+          {/* ✅ lazy 로딩 보호 - Suspense를 실제로 사용 */}
+          <Suspense fallback={null}>
+            <Routes>
+              <Route element={<HeaderRoute />}>
+                {/* ✅ 홈에서 래퍼 사용 → “미사용 경고” 사라짐 */}
+                <Route path="/" element={<HomeWithVisitorStats />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/choose_profile" element={<ProfileChoice />} />
+                <Route path="/axial_length_growth">
+                  <Route
+                    path="healthcare_professional"
+                    element={<ProfessionalProfile />}
+                  />
+                  <Route path="regular_user" element={<RegularProfile />} />
+                </Route>
+                <Route path="/chart/:patientId" element={<ChartRoute />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/admin" element={<Admin />} />
+                <Route path="/who_we_are" element={<WhoWeAre />} />
               </Route>
-              <Route path="/chart/:patientId" element={<ChartRoute />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/who_we_are" element={<WhoWeAre />} />
-            </Route>
-          </Routes>
+            </Routes>
+          </Suspense>
         </GoogleOAuthProvider>
       </UserContext.Provider>
     </BrowserRouter>
