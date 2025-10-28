@@ -1,7 +1,7 @@
 // myopia/src/App.tsx
 import { createContext, lazy, useState, Suspense } from "react";
 // ⬇️ 권장: react-router-dom에서 가져오기
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
