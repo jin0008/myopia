@@ -31,6 +31,13 @@ export const UserContext = createContext<{
 
 type UserRole = "regular_user" | "healthcare_professional";
 
+const HomeWithVisitorStats = () => (
+  <>
+    <VisitorStats />
+    <Home />
+  </>
+);
+
 const App = () => {
   const userQuery = useQuery({
     queryKey: ["currentUser"],
