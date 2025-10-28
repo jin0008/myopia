@@ -1,7 +1,8 @@
-import { createContext, lazy, useState } from "react";
+import { createContext, lazy, useState, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import VisitorStats from "./components/VisitorStats";
 
 import { getCurrentUser } from "./api/auth";
 import { GOOGLE_CLIENT_ID } from "./lib/google_client_id";
