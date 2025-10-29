@@ -6,6 +6,15 @@ This tool aims to enhance interaction with parents or help to understand the tre
 
 ![myopia_manage_screenshot](https://github.com/user-attachments/assets/a05515e5-b8de-43e9-8fa2-5ef65c2e27e3)
 
+# How to register my data
+
+To track axial length in your patients, you have to register as healthcare-professional.
+
+The first person who register new hospital is a administrator of your hospital or clinic.
+
+You can designate other person as administrator in My profile page, and you can also grant permission to other person to access the dataset.
+
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
