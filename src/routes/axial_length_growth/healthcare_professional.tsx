@@ -220,13 +220,13 @@ function ProfessionalRegisterDialog({
     }
     const hospitalData = createNewHospital
       ? {
-          name: hospitalName.current,
-          country_id: hospitalCountryId,
-          code: hospitalCode,
-        }
+        name: hospitalName.current,
+        country_id: hospitalCountryId,
+        code: hospitalCode,
+      }
       : {
-          id: hospitalQuery.data.find((e: any) => e.code === hospitalCode)?.id,
-        };
+        id: hospitalQuery.data.find((e: any) => e.code === hospitalCode)?.id,
+      };
     const data = {
       name: name.current,
       country_id: countryId,
@@ -323,7 +323,7 @@ function ProfessionalRegisterDialog({
               style={{
                 borderColor:
                   (createNewHospital && hospitalId != null) ||
-                  (!createNewHospital && hospitalId == null)
+                    (!createNewHospital && hospitalId == null)
                     ? "red"
                     : undefined,
               }}
@@ -417,7 +417,13 @@ function PatientRegisterDialog({
       alert("patient added");
       setOpen(false);
     },
-    onError: () => alert("An error occured"),
+    onError: (error: any) => {
+      if (error.status === 409) {
+        alert("Patient with this registration number already exists.");
+      } else {
+        alert("An error occured");
+      }
+    },
   });
 
   const registration = useRef("");

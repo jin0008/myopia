@@ -166,7 +166,7 @@ export default function ChartRoute() {
 
   const sortedMeasurement = useMemo(
     () =>
-      patientQuery.data?.measurement?.sort(
+      (patientQuery.data?.measurement ?? []).concat().sort(
         (a: any, b: any) =>
           new Date(b.date).getTime() - new Date(a.date).getTime()
       ),
@@ -404,12 +404,12 @@ function KInputDialog({
 }
 
 function Chart({
-  measurement,
+  measurement = [],
   patientBirthday,
   patientSex,
   referenceEthnicity,
 }: {
-  measurement: any[];
+  measurement?: any[];
   patientBirthday: Date;
   patientSex: "male" | "female";
   referenceEthnicity: string;
@@ -506,8 +506,8 @@ function Chart({
             size: 16,
           },
         },
-        min: 4,
-        max: 18,
+        min: undefined,
+        max: undefined,
       },
       y: {
         grid: {
@@ -557,11 +557,11 @@ const GridItemDiv2 = styled(GridItemDiv)`
 `;
 
 function MeasurementList({
-  measurement,
+  measurement = [],
   edit,
   mode, //0: default;1: list
 }: {
-  measurement: any[];
+  measurement?: any[];
   edit: boolean;
   mode: number;
 }) {
@@ -709,7 +709,7 @@ function MeasurementRegisterDialog({
     if (instrumentQuery.isSuccess)
       setInstrumentId(
         user?.healthcare_professional?.default_instrument_id ??
-          instrumentQuery.data[0].id
+        instrumentQuery.data[0].id
       );
   }, [instrumentQuery.isSuccess]);
 
@@ -853,32 +853,32 @@ function TreatmentList({ edit }: { edit: boolean }) {
       {patientQuery.data?.patient_treatment?.length === 0
         ? "No Data"
         : patientQuery.data?.patient_treatment
-            .sort((a: any, b: any) => a.start_date.localeCompare(b.start_date))
-            .map((t: any) => (
-              <TreatmentCard
-                key={t.id}
-                name={
-                  treatmentQuery.data?.find((i: any) => i.id === t.treatment_id)
-                    ?.name
-                }
-                startDate={t.start_date?.split("T")[0]}
-                endDate={t.end_date?.split("T")[0]}
-                edit={edit}
-                onEdit={() => {
-                  setEditData({
-                    patient_treatment_id: t.id,
-                    treatment_id: t.treatment_id,
-                    start_date: t.start_date.split("T")[0],
-                    end_date: t.end_date?.split("T")[0],
-                  });
-                  setIsEditDialogOpen(true);
-                }}
-                onDelete={() => {
-                  confirm("Are you sure you want to delete this treatment?") &&
-                    deleteTreatmentMutation.mutate(t.id);
-                }}
-              />
-            ))}
+          .sort((a: any, b: any) => a.start_date.localeCompare(b.start_date))
+          .map((t: any) => (
+            <TreatmentCard
+              key={t.id}
+              name={
+                treatmentQuery.data?.find((i: any) => i.id === t.treatment_id)
+                  ?.name
+              }
+              startDate={t.start_date?.split("T")[0]}
+              endDate={t.end_date?.split("T")[0]}
+              edit={edit}
+              onEdit={() => {
+                setEditData({
+                  patient_treatment_id: t.id,
+                  treatment_id: t.treatment_id,
+                  start_date: t.start_date.split("T")[0],
+                  end_date: t.end_date?.split("T")[0],
+                });
+                setIsEditDialogOpen(true);
+              }}
+              onDelete={() => {
+                confirm("Are you sure you want to delete this treatment?") &&
+                  deleteTreatmentMutation.mutate(t.id);
+              }}
+            />
+          ))}
       <TreatmentRegisterDialog
         open={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
