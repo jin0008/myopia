@@ -466,6 +466,19 @@ function Chart({
     }));
   }, [measurement]);
 
+  const { minX, maxX } = useMemo(() => {
+    const ages = (measurement || []).map((m: any) => {
+      const measurementTimestamp = new Date(m.date).getTime();
+      const birthdayTimestamp = patientBirthday.getTime();
+      return (measurementTimestamp - birthdayTimestamp) / (1000 * 60 * 60 * 24 * 365.25);
+    });
+
+    // Default to [4, 18], expand if patient data falls outside
+    const minX = Math.min(4, ...ages);
+    const maxX = Math.max(18, ...ages);
+    return { minX, maxX };
+  }, [measurement, patientBirthday]);
+
   const options = {
     responsive: true,
     plugins: {
@@ -506,8 +519,8 @@ function Chart({
             size: 16,
           },
         },
-        min: undefined,
-        max: undefined,
+        min: minX,
+        max: maxX,
       },
       y: {
         grid: {
