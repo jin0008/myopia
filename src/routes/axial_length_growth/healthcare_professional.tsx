@@ -418,7 +418,8 @@ function PatientRegisterDialog({
       setOpen(false);
     },
     onError: (error: any) => {
-      if (error.status === 409) {
+      // Fix: HttpError uses 'code', not 'status'
+      if (error.code === 409 || error.status === 409) {
         alert("Patient with this registration number already exists.");
       } else {
         alert("An error occured");
