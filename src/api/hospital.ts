@@ -1,8 +1,20 @@
 import { jsonFetch, jsonFetchWithSession } from "../lib/fetch";
 import { API_ROOT } from "./root";
 
+export type Hospital = {
+  id: string;
+  name: string;
+  code: string;
+  country: {
+    id: string;
+    name: string;
+    code: string;
+  };
+  patientCount: number;
+};
+
 export function getHospitalList() {
-  return jsonFetch(API_ROOT + "/hospital");
+  return jsonFetch(API_ROOT + "/hospital") as Promise<Hospital[]>;
 }
 
 export function getMembers() {
