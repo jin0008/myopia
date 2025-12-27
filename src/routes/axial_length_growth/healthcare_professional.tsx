@@ -225,7 +225,7 @@ function ProfessionalRegisterDialog({
         code: hospitalCode,
       }
       : {
-        id: hospitalQuery.data.find((e: any) => e.code === hospitalCode)?.id,
+        id: hospitalId!,
       };
     const data = {
       name: name.current,
