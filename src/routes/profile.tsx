@@ -630,13 +630,13 @@ function ChangeHospitalDialog({
     }
     const hospitalData = createNewHospital
       ? {
-          name: hospitalName.current,
-          country_id: hospitalCountryId,
-          code: hospitalCode,
-        }
+        name: hospitalName.current,
+        country_id: hospitalCountryId,
+        code: hospitalCode,
+      }
       : {
-          id: hospitalQuery.data.find((e: any) => e.code === hospitalCode)?.id,
-        };
+        id: hospitalId!,
+      };
 
     mutation.mutate(hospitalData);
   };
@@ -698,7 +698,7 @@ function ChangeHospitalDialog({
             style={{
               borderColor:
                 (createNewHospital && hospitalId != null) ||
-                (!createNewHospital && hospitalId == null)
+                  (!createNewHospital && hospitalId == null)
                   ? "red"
                   : undefined,
             }}
