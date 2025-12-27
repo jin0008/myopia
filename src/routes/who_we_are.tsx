@@ -124,7 +124,7 @@ export default function WhoWeAre() {
                           fontWeight="bold"
                           sx={{ mt: 1 }}
                         >
-                          {hospital.patientCount.toLocaleString()}
+                          {hospital.patientCount != null ? hospital.patientCount.toLocaleString() : 0}
                         </Typography>
                       </CountBox>
                     </CardContent>
@@ -177,6 +177,6 @@ export default function WhoWeAre() {
           </Box>
         </Paper>
       </Container>
-    </TopDiv>
+    </TopDiv >
   );
 }
