@@ -19,7 +19,7 @@ const StyledCard = styled(Card)(({ theme }) => ({
   display: "flex",
   flexDirection: "column",
   justifyContent: "space-between",
-  borderRadius: (theme.shape.borderRadius as number) * 2,
+  borderRadius: theme.shape.borderRadius * 2,
   transition: "transform 0.2s, box-shadow 0.2s",
   "&:hover": {
     transform: "translateY(-4px)",
@@ -124,7 +124,7 @@ export default function WhoWeAre() {
                           fontWeight="bold"
                           sx={{ mt: 1 }}
                         >
-                          {hospital.patientCount != null ? hospital.patientCount.toLocaleString() : 0}
+                          {hospital.patientCount.toLocaleString()}
                         </Typography>
                       </CountBox>
                     </CardContent>
@@ -177,6 +177,6 @@ export default function WhoWeAre() {
           </Box>
         </Paper>
       </Container>
-    </TopDiv >
+    </TopDiv>
   );
 }
