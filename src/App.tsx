@@ -23,8 +23,15 @@ const RegularProfile = lazy(
 const Profile = lazy(() => import("./routes/profile"));
 const Admin = lazy(() => import("./routes/admin"));
 const WhoWeAre = lazy(() => import("./routes/who_we_are"));
+const Treatments = lazy(() => import("./routes/Treatments"));
+const TreatmentDetail = lazy(() => import("./routes/TreatmentDetail"));
+const News = lazy(() => import("./routes/News"));
 
 export const UserContext = createContext<{
+  // ... lines 29-73 skipped in thought, but I need to be precise for replacement.
+  // Actually I can use two replacements or just one big block if I'm careful.
+  // Let's use multi_replace.
+
   user: any | null;
   role: UserRole;
   setRole: (value: UserRole) => void;
@@ -71,6 +78,9 @@ const App = () => {
               <Route path="/profile" element={<Profile />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/who_we_are" element={<WhoWeAre />} />
+              <Route path="/treatments" element={<Treatments />} />
+              <Route path="/treatments/:id" element={<TreatmentDetail />} />
+              <Route path="/news" element={<News />} />
             </Route>
           </Routes>
         </GoogleOAuthProvider>

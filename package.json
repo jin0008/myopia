@@ -15,20 +15,40 @@
     "@mui/icons-material": "^7.3.6",
     "@mui/material": "^7.3.6",
     "@prisma/client": "^7.1.0",
+<<<<<<< HEAD
+=======
+    "@radix-ui/react-avatar": "^1.1.11",
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-label": "^2.1.8",
+    "@radix-ui/react-slot": "^1.2.4",
+>>>>>>> feature/news-redesign
     "@react-oauth/google": "^0.12.2",
     "@tanstack/react-query": "^5.90.12",
     "chart.js": "^4.5.1",
     "chartjs-plugin-autocolors": "^0.3.1",
+<<<<<<< HEAD
     "express": "^5.2.1",
     "fast-xml-parser": "^5.3.3",
+=======
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "express": "^5.2.1",
+    "lucide-react": "^0.561.0",
+>>>>>>> feature/news-redesign
     "ordinal": "^1.0.3",
     "react": "^19.2.3",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.3",
+<<<<<<< HEAD
     "react-image-gallery": "^1.4.0",
     "react-router": "^7.10.1",
     "styled-components": "^6.1.19",
     "swiper": "^12.0.3"
+=======
+    "react-router": "^7.10.1",
+    "styled-components": "^6.1.19",
+    "tailwind-merge": "^3.4.0"
+>>>>>>> feature/news-redesign
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
@@ -37,11 +57,21 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.2",
+<<<<<<< HEAD
+=======
+    "autoprefixer": "^10.4.22",
+>>>>>>> feature/news-redesign
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+<<<<<<< HEAD
     "prisma": "^7.1.0",
+=======
+    "postcss": "^8.5.6",
+    "prisma": "^7.1.0",
+    "tailwindcss": "^4.1.18",
+>>>>>>> feature/news-redesign
     "ts-node-dev": "^2.0.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.49.0",
