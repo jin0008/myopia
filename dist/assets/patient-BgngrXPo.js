@@ -1,0 +1,1 @@
+import{h as e,A as n}from"./index-Ci6lT7C_.js";function i(){return e(n+"/patient")}function r(t){return e(n+`/patient/${t}`)}function s(t){return e(n+"/patient",{method:"POST"},t,!1)}function o(t){return e(n+"/patient/"+t,{method:"DELETE"},void 0,!1)}export{r as a,o as d,i as g,s as r};

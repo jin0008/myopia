@@ -1,0 +1,1 @@
+import{e as t,A as n}from"./index-Ci6lT7C_.js";function i(){return t(n+"/static/country")}function r(){return t(n+"/static/ethnicity")}function s(){return t(n+"/static/instrument")}function a(){return t(n+"/static/treatment")}export{r as a,s as b,a as c,i as g};
