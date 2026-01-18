@@ -13,9 +13,7 @@ type HospitalSummary = {
     name: string;
     code: string;
   };
-  _count?: {
-    patient: number;
-  };
+  patientCount: number;
 };
 
 const ContentWrapper = styled.div`
@@ -93,7 +91,7 @@ export default function WhoWeAre() {
 
   const hospitals = hospitalQuery.data ?? [];
   const totalPatients = hospitals.reduce(
-    (sum, hospital) => sum + (hospital._count?.patient ?? 0),
+    (sum, hospital) => sum + (hospital.patientCount ?? 0),
     0
   );
 
@@ -120,9 +118,9 @@ export default function WhoWeAre() {
                       {hospital.country?.code
                         ? ` · ${hospital.country.code}`
                         : ""}
-                      {typeof hospital._count?.patient === "number"
-                        ? ` · Patients: ${hospital._count.patient}`
-                        : ""}
+                    </HospitalMeta>
+                    <HospitalMeta>
+                      Patients: {hospital.patientCount.toLocaleString()}
                     </HospitalMeta>
                   </HospitalItem>
                 ))}
