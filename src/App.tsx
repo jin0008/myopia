@@ -2,6 +2,7 @@
 
 import { createContext, lazy, useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router";
+import { LanguageProvider } from "./lib/language_context";
 import { useQuery } from "@tanstack/react-query";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
@@ -26,6 +27,7 @@ const WhoWeAre = lazy(() => import("./routes/who_we_are"));
 const Treatments = lazy(() => import("./routes/Treatments"));
 const TreatmentDetail = lazy(() => import("./routes/TreatmentDetail"));
 const News = lazy(() => import("./routes/News"));
+const UserGuide = lazy(() => import("./routes/user_guide"));
 
 export const UserContext = createContext<{
   // ... lines 29-73 skipped in thought, but I need to be precise for replacement.
@@ -50,41 +52,44 @@ const App = () => {
 
   return (
     <BrowserRouter>
-      <UserContext.Provider
-        value={{
-          user: userQuery.data,
-          role: userRole,
-          setRole: (value: UserRole) => {
-            localStorage.setItem("role", value);
-            setUserRole(value);
-          },
-        }}
-      >
-        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-          <Routes>
-            <Route element={<HeaderRoute></HeaderRoute>}>
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/choose_profile" element={<ProfileChoice />} />
-              <Route path="/axial_length_growth">
-                <Route
-                  path="healthcare_professional"
-                  element={<ProfessionalProfile />}
-                />
-                <Route path="regular_user" element={<RegularProfile />} />
+      <LanguageProvider>
+        <UserContext.Provider
+          value={{
+            user: userQuery.data,
+            role: userRole,
+            setRole: (value: UserRole) => {
+              localStorage.setItem("role", value);
+              setUserRole(value);
+            },
+          }}
+        >
+          <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+            <Routes>
+              <Route element={<HeaderRoute></HeaderRoute>}>
+                <Route path="/" element={<Home />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/choose_profile" element={<ProfileChoice />} />
+                <Route path="/axial_length_growth">
+                  <Route
+                    path="healthcare_professional"
+                    element={<ProfessionalProfile />}
+                  />
+                  <Route path="regular_user" element={<RegularProfile />} />
+                </Route>
+                <Route path="/chart/:patientId" element={<ChartRoute />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/admin" element={<Admin />} />
+                <Route path="/who_we_are" element={<WhoWeAre />} />
+                <Route path="/treatments" element={<Treatments />} />
+                <Route path="/treatments/:id" element={<TreatmentDetail />} />
+                <Route path="/news" element={<News />} />
+                <Route path="/user-guide" element={<UserGuide />} />
               </Route>
-              <Route path="/chart/:patientId" element={<ChartRoute />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/who_we_are" element={<WhoWeAre />} />
-              <Route path="/treatments" element={<Treatments />} />
-              <Route path="/treatments/:id" element={<TreatmentDetail />} />
-              <Route path="/news" element={<News />} />
-            </Route>
-          </Routes>
-        </GoogleOAuthProvider>
-      </UserContext.Provider>
+            </Routes>
+          </GoogleOAuthProvider>
+        </UserContext.Provider>
+      </LanguageProvider>
     </BrowserRouter>
   );
 };

@@ -146,6 +146,7 @@ export default function Header() {
     { label: "News", path: "/news", show: true },
     { label: "Who We Are", path: "/who_we_are", show: true },
     { label: "Treatments", path: "/treatments", show: true },
+    { label: "User Guide", path: "/user-guide", show: true },
     { label: "Profile", path: "/profile", show: true },
   ];
 
