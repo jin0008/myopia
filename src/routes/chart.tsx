@@ -37,6 +37,7 @@ import {
 } from "../api/treatment";
 import { UserContext } from "../App";
 import { upsertPatientK } from "../api/mean_k";
+import { useIsMobile } from "../hooks/is_mobile";
 
 ChartJS.register(
   CategoryScale,
@@ -46,16 +47,23 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  autocolors
+  autocolors,
 );
+
+const MOBILE_MEDIA = "(max-aspect-ratio: 1/1)";
 
 const HeaderTextDiv = styled.div`
   background-color: ${theme.primary};
   width: 320px;
+  min-width: 0;
   color: white;
   padding: 8px 0;
   text-align: center;
   border-radius: 8px;
+  @media ${MOBILE_MEDIA} {
+    width: 100%;
+    max-width: 100%;
+  }
 `;
 
 const HeaderDiv = styled.div`
@@ -63,10 +71,19 @@ const HeaderDiv = styled.div`
   flex-direction: row;
   justify-content: space-between;
   margin: 32px 64px 0;
+  gap: 8px;
+  @media ${MOBILE_MEDIA} {
+    flex-direction: column;
+    margin: 16px 16px 0;
+    gap: 8px;
+  }
 `;
 
 const ContentDiv = styled.div`
   margin: 0 96px;
+  @media ${MOBILE_MEDIA} {
+    margin: 0 16px;
+  }
 `;
 
 const ChartTitleDiv = styled.div`
@@ -78,6 +95,76 @@ const ChartTitleDiv = styled.div`
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  @media ${MOBILE_MEDIA} {
+    margin-top: 16px;
+    padding-bottom: 12px;
+  }
+`;
+
+const ChartTitleMain = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+`;
+
+const ReferenceRow = styled.div`
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 0;
+  @media ${MOBILE_MEDIA} {
+    gap: 8px;
+    align-items: center;
+  }
+`;
+
+const ChartAndListWrapper = styled.div`
+  display: flex;
+  flex-direction: row;
+  margin-top: 16px;
+  gap: 16px;
+  min-height: 0;
+  @media ${MOBILE_MEDIA} {
+    flex-direction: column;
+    margin-top: 12px;
+  }
+`;
+
+const ChartContainer = styled.div`
+  flex-grow: 1;
+  min-width: 0;
+  min-height: 480px;
+  position: relative;
+  @media ${MOBILE_MEDIA} {
+    width: 100%;
+  }
+`;
+
+const MeasurementListWrapper = styled.div`
+  min-width: 0;
+  @media ${MOBILE_MEDIA} {
+    margin: 0;
+  }
+`;
+
+const ChartPageRoot = styled.div`
+  min-width: 0;
+  overflow-x: hidden;
+`;
+
+const KInputGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  text-align: center;
+  @media ${MOBILE_MEDIA} {
+    gap: 12px;
+  }
 `;
 
 const TextButton = styled.button`
@@ -87,6 +174,10 @@ const TextButton = styled.button`
   border-radius: 20px;
   padding: 12px 24px;
   font-weight: normal;
+  @media ${MOBILE_MEDIA} {
+    padding: 10px 18px;
+    font-size: 14px;
+  }
 `;
 
 export default function ChartRoute() {
@@ -166,11 +257,13 @@ export default function ChartRoute() {
 
   const sortedMeasurement = useMemo(
     () =>
-      (patientQuery.data?.measurement ?? []).concat().sort(
-        (a: any, b: any) =>
-          new Date(b.date).getTime() - new Date(a.date).getTime()
-      ),
-    [patientQuery.data?.measurement]
+      (patientQuery.data?.measurement ?? [])
+        .concat()
+        .sort(
+          (a: any, b: any) =>
+            new Date(b.date).getTime() - new Date(a.date).getTime(),
+        ),
+    [patientQuery.data?.measurement],
   );
 
   //0:default
@@ -182,32 +275,17 @@ export default function ChartRoute() {
   if (!patientQuery.data) return <div>Loading...</div>;
 
   return (
-    <div>
+    <ChartPageRoot>
       <HeaderDiv>
-        <HeaderTextDiv>
-          ID:{patientQuery.data.registration_number}
-        </HeaderTextDiv>
-
-        <HeaderTextDiv>{patientQuery.data.hospital.name}</HeaderTextDiv>
+        <HeaderTextDiv>{patientQuery.data.registration_number}</HeaderTextDiv>
       </HeaderDiv>
       <ContentDiv>
         <ChartTitleDiv>
-          <h1
-            style={{
-              fontWeight: "normal",
-            }}
-          >
-            Eye growth chart
-          </h1>
-          <span>{new Date().toLocaleDateString()}</span>
-          <div />
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              gap: "16px",
-            }}
-          >
+          <ChartTitleMain>
+            <h1 style={{ fontWeight: "normal" }}>Eye growth chart</h1>
+            <span>{new Date().toLocaleDateString()}</span>
+          </ChartTitleMain>
+          <div style={{ display: "flex", flexDirection: "row", gap: "16px" }}>
             <TextButton
               style={{
                 backgroundColor: viewMode === 0 ? theme.primary : "white",
@@ -230,14 +308,8 @@ export default function ChartRoute() {
             </TextButton>
           </div>
         </ChartTitleDiv>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "end",
-            gap: "16px",
-          }}
-        >
-          reference data :
+        <ReferenceRow>
+          <span>reference data :</span>
           <select
             value={referenceEthnicity}
             onChange={(e) => setReferenceEthnicity(e.target.value)}
@@ -266,44 +338,29 @@ export default function ChartRoute() {
               kValueMutation.mutate(data);
             }}
           />
-        </div>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            marginTop: "16px",
-          }}
-        >
-          <div
-            style={{
-              flexGrow: 1,
-              width: 0,
-            }}
-          >
+        </ReferenceRow>
+        <ChartAndListWrapper>
+          <ChartContainer>
             <Chart
               measurement={sortedMeasurement}
               patientBirthday={new Date(patientQuery.data.date_of_birth)}
               patientSex={patientQuery.data.sex}
               referenceEthnicity={referenceEthnicity}
             />
-          </div>
-          <div
-            style={{
-              margin: "0 16px",
-            }}
-          >
+          </ChartContainer>
+          <MeasurementListWrapper>
             <MeasurementList
               mode={viewMode}
               edit={edit}
               measurement={sortedMeasurement}
             />
-          </div>
-        </div>
+          </MeasurementListWrapper>
+        </ChartAndListWrapper>
         <div>
           <TreatmentList edit={edit} />
         </div>
       </ContentDiv>
-    </div>
+    </ChartPageRoot>
   );
 }
 
@@ -326,51 +383,44 @@ function KInputDialog({
   const k2_os = useRef("");
 
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog open={open} onClose={onClose} fullWidth>
       <DialogTitle>Input K value</DialogTitle>
       <DialogContent>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: "16px",
-            textAlign: "center",
-          }}
-        >
+        <KInputGrid>
           <div></div>
           <div>OD</div>
           <div>OS</div>
-          <div>K1</div>
+          <div>K1(Diopter)</div>
           <div>
             <TextInput
               pattern="[0-9]+(\.[0-9]+){0,1}"
-              placeholder="K1 in Diopter"
+              placeholder="K1"
               onChange={(e) => (k1_od.current = e.target.value)}
             />
           </div>
           <div>
             <TextInput
               pattern="[0-9]+(\.[0-9]+){0,1}"
-              placeholder="K1 in Diopter"
+              placeholder="K1"
               onChange={(e) => (k1_os.current = e.target.value)}
             />
           </div>
-          <div>K2</div>
+          <div>K2(Diopter)</div>
           <div>
             <TextInput
               pattern="[0-9]+(\.[0-9]+){0,1}"
-              placeholder="K2 in Diopter"
+              placeholder="K2"
               onChange={(e) => (k2_od.current = e.target.value)}
             />
           </div>
           <div>
             <TextInput
               pattern="[0-9]+(\.[0-9]+){0,1}"
-              placeholder="K2 in Diopter"
+              placeholder="K2"
               onChange={(e) => (k2_os.current = e.target.value)}
             />
           </div>
-        </div>
+        </KInputGrid>
       </DialogContent>
       <DialogActions>
         <PrimaryNagativeButton onClick={onClose}>Cancel</PrimaryNagativeButton>
@@ -414,6 +464,8 @@ function Chart({
   patientSex: "male" | "female";
   referenceEthnicity: string;
 }) {
+  const isMobile = useIsMobile();
+
   const growthData = useQuery<any[]>({
     queryKey: [
       "growthData",
@@ -470,7 +522,10 @@ function Chart({
     const ages = (measurement || []).map((m: any) => {
       const measurementTimestamp = new Date(m.date).getTime();
       const birthdayTimestamp = patientBirthday.getTime();
-      return (measurementTimestamp - birthdayTimestamp) / (1000 * 60 * 60 * 24 * 365.25);
+      return (
+        (measurementTimestamp - birthdayTimestamp) /
+        (1000 * 60 * 60 * 24 * 365.25)
+      );
     });
 
     // Default to [4, 18], expand if patient data falls outside
@@ -481,13 +536,14 @@ function Chart({
 
   const options = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       autocolors: {
         mode: "dataset" as const,
         offset: 0,
       },
       legend: {
-        position: "left" as const,
+        position: isMobile ? ("top" as const) : ("left" as const),
       },
       title: {
         display: true,
@@ -553,6 +609,10 @@ const GridDiv = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 108px) 1fr;
   gap: 16px;
+  @media ${MOBILE_MEDIA} {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    gap: 8px;
+  }
 `;
 
 const GridItemDiv = styled.div`
@@ -561,6 +621,11 @@ const GridItemDiv = styled.div`
   border: 1px solid lightgray;
   border-radius: 20px;
   padding: 8px 0;
+  @media ${MOBILE_MEDIA} {
+    padding: 6px 4px;
+    border-radius: 12px;
+    font-size: 14px;
+  }
 `;
 
 const GridItemDiv2 = styled(GridItemDiv)`
@@ -580,7 +645,7 @@ function MeasurementList({
 }) {
   const filteredMeasurement = useMemo(
     () => measurement.slice(0, mode === 0 ? 5 : undefined).reverse(),
-    [measurement, mode]
+    [measurement, mode],
   );
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -722,7 +787,7 @@ function MeasurementRegisterDialog({
     if (instrumentQuery.isSuccess)
       setInstrumentId(
         user?.healthcare_professional?.default_instrument_id ??
-        instrumentQuery.data[0].id
+          instrumentQuery.data[0].id,
       );
   }, [instrumentQuery.isSuccess]);
 
@@ -842,56 +907,43 @@ function TreatmentList({ edit }: { edit: boolean }) {
 
   return (
     <div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "end",
-          marginBottom: "16px",
-        }}
-      >
-        <h1
-          style={{
-            fontWeight: "normal",
-          }}
-        >
-          Treatments
-        </h1>
+      <TreatmentListHeader>
+        <h1 style={{ fontWeight: "normal" }}>Treatments</h1>
         {edit && (
           <PrimaryButton onClick={() => setIsDialogOpen(true)}>
             Register
           </PrimaryButton>
         )}
-      </div>
+      </TreatmentListHeader>
       {patientQuery.data?.patient_treatment?.length === 0
         ? "No Data"
         : patientQuery.data?.patient_treatment
-          .sort((a: any, b: any) => a.start_date.localeCompare(b.start_date))
-          .map((t: any) => (
-            <TreatmentCard
-              key={t.id}
-              name={
-                treatmentQuery.data?.find((i: any) => i.id === t.treatment_id)
-                  ?.name
-              }
-              startDate={t.start_date?.split("T")[0]}
-              endDate={t.end_date?.split("T")[0]}
-              edit={edit}
-              onEdit={() => {
-                setEditData({
-                  patient_treatment_id: t.id,
-                  treatment_id: t.treatment_id,
-                  start_date: t.start_date.split("T")[0],
-                  end_date: t.end_date?.split("T")[0],
-                });
-                setIsEditDialogOpen(true);
-              }}
-              onDelete={() => {
-                confirm("Are you sure you want to delete this treatment?") &&
-                  deleteTreatmentMutation.mutate(t.id);
-              }}
-            />
-          ))}
+            .sort((a: any, b: any) => a.start_date.localeCompare(b.start_date))
+            .map((t: any) => (
+              <TreatmentCard
+                key={t.id}
+                name={
+                  treatmentQuery.data?.find((i: any) => i.id === t.treatment_id)
+                    ?.name
+                }
+                startDate={t.start_date?.split("T")[0]}
+                endDate={t.end_date?.split("T")[0]}
+                edit={edit}
+                onEdit={() => {
+                  setEditData({
+                    patient_treatment_id: t.id,
+                    treatment_id: t.treatment_id,
+                    start_date: t.start_date.split("T")[0],
+                    end_date: t.end_date?.split("T")[0],
+                  });
+                  setIsEditDialogOpen(true);
+                }}
+                onDelete={() => {
+                  confirm("Are you sure you want to delete this treatment?") &&
+                    deleteTreatmentMutation.mutate(t.id);
+                }}
+              />
+            ))}
       <TreatmentRegisterDialog
         open={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
@@ -907,6 +959,15 @@ function TreatmentList({ edit }: { edit: boolean }) {
   );
 }
 
+const TreatmentListHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 8px;
+`;
+
 const TreatmentCardDiv = styled.div`
   display: flex;
   flex-direction: row;
@@ -917,6 +978,12 @@ const TreatmentCardDiv = styled.div`
   border-radius: 20px;
   padding: 8px 16px;
   margin: 8px 0;
+  flex-wrap: wrap;
+  gap: 8px;
+  @media ${MOBILE_MEDIA} {
+    padding: 10px 12px;
+    border-radius: 12px;
+  }
 `;
 
 function TreatmentCard({
@@ -991,7 +1058,7 @@ function TreatmentRegisterDialog({
   }, [treatmentQuery.isSuccess]);
 
   const [startDate, setStartDate] = useState(
-    new Date().toISOString().split("T")[0]
+    new Date().toISOString().split("T")[0],
   );
   const [endDate, setEndDate] = useState("");
 
@@ -1020,7 +1087,11 @@ function TreatmentRegisterDialog({
       <DialogContent>
         <label>
           Treatment:
-          <TextInput as="select">
+          <TextInput
+            as="select"
+            value={treatmentId}
+            onChange={(e) => setTreatmentId(e.target.value)}
+          >
             {treatmentQuery.data?.map((i: any) => (
               <option key={i.id} value={i.id}>
                 {i.name}

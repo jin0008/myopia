@@ -23,8 +23,3 @@ dist-ssr
 *.sln
 *.sw?
 .env
-package.json
-<<<<<<< HEAD
-=======
-package-lock.json
->>>>>>> feature/news-redesign

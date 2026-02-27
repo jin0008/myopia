@@ -22,6 +22,7 @@ import {
 } from "@mui/material";
 import { TextInput } from "../../components/input";
 import NotLoggedIn from "../../components/not_logged_in";
+import { HttpError } from "../../lib/fetch";
 
 export default function RegularProfile() {
   const { user } = useContext(UserContext);
@@ -141,7 +142,11 @@ function PatientRegisterDialog({
       queryClient.invalidateQueries({ queryKey: ["user", "patient"] });
       onClose();
     },
-    onError: () => alert("An error occured"),
+    onError: (e: any) => {
+      if (e instanceof HttpError && e.code === 404)
+        alert("Patient with specified information does not exist");
+      else alert("An error occured");
+    },
   });
   const [hospitalId, setHospitalId] = useState("");
 

@@ -14,7 +14,7 @@ export function passwordLogin(username: string, password: string) {
     {
       username,
       password,
-    }
+    },
   ).then((res) => {
     localStorage.setItem("session_key", res.session_key);
     return res;
@@ -29,7 +29,7 @@ export function googleLogin(idToken: string) {
     },
     {
       token: idToken,
-    }
+    },
   ).then((res) => {
     localStorage.setItem("session_key", res.session_key);
     return res;
@@ -46,7 +46,7 @@ export function signupWithPasswordAuth(username: string, password: string) {
       username,
       password,
     },
-    false
+    false,
   );
 }
 
@@ -59,7 +59,7 @@ export function signupWithGoogleAuth(idToken: string) {
     {
       token: idToken,
     },
-    false
+    false,
   );
 }
 
@@ -73,7 +73,7 @@ export function addPasswordAuth(username: string, password: string) {
       username,
       password,
     },
-    false
+    false,
   );
 }
 
@@ -86,7 +86,7 @@ export function addGoogleAuth(idToken: string) {
     {
       token: idToken,
     },
-    false
+    false,
   );
 }
 
@@ -97,7 +97,7 @@ export function removePasswordAuth() {
       method: "DELETE",
     },
     undefined,
-    false
+    false,
   );
 }
 
@@ -108,7 +108,7 @@ export function removeGoogleAuth() {
       method: "DELETE",
     },
     undefined,
-    false
+    false,
   );
 }
 
@@ -119,7 +119,7 @@ export function logout() {
       method: "GET",
     },
     undefined,
-    false
+    false,
   ).then(() => {
     localStorage.removeItem("session_key");
     localStorage.removeItem("role");
@@ -135,7 +135,7 @@ export function changePassword(newPassword: string) {
     {
       newPassword,
     },
-    false
+    false,
   );
 }
 
@@ -152,7 +152,7 @@ export function deleteAccount() {
       method: "DELETE",
     },
     undefined,
-    false
+    false,
   ).then(() => {
     localStorage.removeItem("session_key");
     localStorage.removeItem("role");

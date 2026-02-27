@@ -15,11 +15,11 @@ const Login = lazy(() => import("./routes/login"));
 const Signup = lazy(() => import("./routes/signup"));
 const ProfileChoice = lazy(() => import("./routes/choose_profile"));
 const ProfessionalProfile = lazy(
-  () => import("./routes/axial_length_growth/healthcare_professional")
+  () => import("./routes/axial_length_growth/healthcare_professional"),
 );
 const ChartRoute = lazy(() => import("./routes/chart"));
 const RegularProfile = lazy(
-  () => import("./routes/axial_length_growth/regular_user")
+  () => import("./routes/axial_length_growth/regular_user"),
 );
 const Profile = lazy(() => import("./routes/profile"));
 const Admin = lazy(() => import("./routes/admin"));
@@ -28,6 +28,9 @@ const Treatments = lazy(() => import("./routes/Treatments"));
 const TreatmentDetail = lazy(() => import("./routes/TreatmentDetail"));
 const News = lazy(() => import("./routes/News"));
 const UserGuide = lazy(() => import("./routes/user_guide"));
+const PatientDeleteRequest = lazy(
+  () => import("./routes/patient_delete_request"),
+);
 
 export const UserContext = createContext<{
   // ... lines 29-73 skipped in thought, but I need to be precise for replacement.
@@ -47,7 +50,7 @@ const App = () => {
     queryFn: getCurrentUser,
   });
   const [userRole, setUserRole] = useState<UserRole>(
-    (localStorage.getItem("role") ?? "regular_user") as UserRole
+    (localStorage.getItem("role") ?? "regular_user") as UserRole,
   );
 
   return (
@@ -77,6 +80,10 @@ const App = () => {
                   />
                   <Route path="regular_user" element={<RegularProfile />} />
                 </Route>
+                <Route
+                  path="/patient_delete_request"
+                  element={<PatientDeleteRequest />}
+                />
                 <Route path="/chart/:patientId" element={<ChartRoute />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/admin" element={<Admin />} />

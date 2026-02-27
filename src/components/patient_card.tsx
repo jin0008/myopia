@@ -1,6 +1,7 @@
 import styled from "styled-components";
 import theme from "../theme";
 import deleteIcon from "../assets/delete.svg";
+import editIcon from "../assets/edit.svg";
 
 const CardDiv = styled.div`
   background-color: white;
@@ -19,8 +20,8 @@ const CardDiv = styled.div`
   }
 `;
 
-const DeleteIconImg = styled.img`
-  width: 24px;
+const IconButton = styled.img`
+  width: 16px;
   opacity: 0.5;
 
   &:hover {
@@ -33,12 +34,14 @@ export function PatientCard({
   dateOfBirth,
   sex,
   onClick,
+  onEdit,
   onDelete,
 }: {
   registration: string;
   dateOfBirth: string;
   sex: string;
   onClick: () => void;
+  onEdit?: () => void;
   onDelete: () => void;
 }) {
   return (
@@ -50,17 +53,27 @@ export function PatientCard({
           justifyContent: "space-between",
         }}
       >
-        <h2>{registration}</h2>
-        <DeleteIconImg
-          src={deleteIcon}
-          style={{
-            width: "16px",
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
-        />
+        <h2 style={{ maxWidth: "75%", wordWrap: "break-word" }}>
+          {registration}
+        </h2>
+        <div style={{ display: "flex", gap: "8px" }}>
+          {onEdit && (
+            <IconButton
+              src={editIcon}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
+            />
+          )}
+          <IconButton
+            src={deleteIcon}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+          />
+        </div>
       </div>
       <p>
         {dateOfBirth}/{sex}

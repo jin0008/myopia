@@ -2,7 +2,7 @@ import styled from "styled-components";
 import theme from "../theme";
 
 export const LoginInput = styled.input`
-  width: calc(100% - 16px);
+  width: 100%;
   padding: 8px;
   margin: 8px 0;
   border-radius: 8px;
@@ -33,6 +33,5 @@ export const SearchInput = styled.input`
   padding: 8px;
   border-radius: 16px;
   border: 1px solid #ccc;
-  margin-bottom: 16px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 `;

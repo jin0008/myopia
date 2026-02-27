@@ -7,10 +7,11 @@ export class HttpError extends Error {
   }
 }
 
-export class AuthorizationError extends Error {
+export class AuthorizationError extends HttpError {
   constructor(message: string) {
-    super(message);
+    super(401, message);
     this.name = "AuthorizationError";
+    ``;
   }
 }
 
@@ -18,7 +19,7 @@ export async function jsonFetch<T = any>(
   url: RequestInfo | URL,
   options: RequestInit = {},
   body: any = undefined,
-  getResponse: boolean = true
+  getResponse: boolean = true,
 ) {
   return new Promise<T | null>(async (resolve, reject) => {
     const result = await fetch(
@@ -31,8 +32,8 @@ export async function jsonFetch<T = any>(
           },
           body: JSON.stringify(body),
         },
-        options
-      )
+        options,
+      ),
     );
     if (!result.ok) {
       if (result.body) {
@@ -55,7 +56,7 @@ export async function jsonFetchWithSession<T = any>(
   url: RequestInfo | URL,
   options: RequestInit = {},
   body: any = undefined,
-  getResponse: boolean = true
+  getResponse: boolean = true,
 ) {
   return new Promise<T | null>(async (resolve, reject) => {
     const session_key = localStorage.getItem("session_key");
@@ -73,8 +74,8 @@ export async function jsonFetchWithSession<T = any>(
           },
           body: JSON.stringify(body),
         },
-        options
-      )
+        options,
+      ),
     );
     if (result.status === 401) {
       reject(new AuthorizationError("Authorization error"));

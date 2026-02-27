@@ -4,6 +4,16 @@ import { useNavigate } from "react-router";
 import { useContext } from "react";
 import { UserContext } from "../App";
 
+export const ContainerDiv = styled.div`
+  display: flex;
+  gap: 64px;
+
+  @media (max-aspect-ratio: 1/1) {
+    flex-direction: column;
+    height: fit-content;
+  }
+`;
+
 export default function ProfileChoice() {
   const navigate = useNavigate();
   const { setRole } = useContext(UserContext);
@@ -19,13 +29,7 @@ export default function ProfileChoice() {
       }}
     >
       <h1>Choose user type</h1>
-      <div
-        style={{
-          display: "flex",
-          gap: "64px",
-          flexDirection: "row",
-        }}
-      >
+      <ContainerDiv>
         <ProfileCard
           title="Regular user"
           description="Register your children and track their axial length growth and treatment."
@@ -42,7 +46,7 @@ export default function ProfileChoice() {
             navigate("/");
           }}
         />
-      </div>
+      </ContainerDiv>
     </div>
   );
 }

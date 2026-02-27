@@ -3,11 +3,12 @@ import { PrimaryButton } from "../components/button";
 import { useRef } from "react";
 import { LoginInput } from "../components/input";
 import { useNavigate } from "react-router";
-import { VerticalDivider } from "../components/divider";
+import { HorizontalDivider, VerticalDivider } from "../components/divider";
 import { googleLogin, passwordLogin } from "../api/auth";
 import { HttpError } from "../lib/fetch";
 import { useQueryClient } from "@tanstack/react-query";
 import { GoogleLogin } from "@react-oauth/google";
+import { Reactive } from "../components/reactive";
 
 export const LoginDiv = styled.div`
   display: flex;
@@ -22,6 +23,17 @@ export const ButtonsDiv = styled.div`
   flex-direction: column;
   gap: 16px;
   width: 320px;
+`;
+
+export const ContainerDiv = styled.div`
+  display: flex;
+  gap: 32px;
+  height: 40%;
+
+  @media (max-aspect-ratio: 1/1) {
+    flex-direction: column;
+    height: fit-content;
+  }
 `;
 
 export default function Login() {
@@ -67,13 +79,7 @@ export default function Login() {
         height: "100%",
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          gap: "32px",
-          height: "40%",
-        }}
-      >
+      <ContainerDiv>
         <LoginDiv>
           <div>
             <LoginInput
@@ -98,7 +104,10 @@ export default function Login() {
             }}
           />
         </LoginDiv>
-        <VerticalDivider />
+        <Reactive
+          desktop={<VerticalDivider />}
+          mobile={<HorizontalDivider />}
+        />
         <ButtonsDiv>
           <p>Don't have an account?</p>
           <PrimaryButton onClick={() => navigate("/signup")}>
@@ -107,7 +116,7 @@ export default function Login() {
           {/* <p>Forgot your password?</p>
           <PrimaryButton>Forgot password</PrimaryButton> */}
         </ButtonsDiv>
-      </div>
+      </ContainerDiv>
     </div>
   );
 }

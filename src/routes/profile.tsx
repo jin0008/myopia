@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { TopDiv } from "../components/div";
 import { UserContext } from "../App";
 import NotLoggedIn from "../components/not_logged_in";
@@ -38,13 +38,14 @@ import {
 import { GoogleLogin } from "@react-oauth/google";
 import { professionalRoleList } from "../lib/constants";
 import HospitalSelector from "../components/hospital_selector";
+import { Reactive } from "../components/reactive";
 
 export default function Profile() {
   const { user } = useContext(UserContext);
   if (user == null) return <NotLoggedIn />;
 
   return (
-    <TopDiv>
+    <TopDiv style={{ margin: "0 16px" }}>
       <h1 style={{ margin: "16px 0" }}>Your User Profile</h1>
       <p>
         Your user id is <strong>{user.id}</strong>
@@ -61,6 +62,10 @@ const ProfileSettingsDiv = styled.div`
   padding: 16px;
   border-radius: 16px;
   margin: 16px 0;
+
+  @media (max-aspect-ratio: 1/1) {
+    width: 100%;
+  }
 `;
 
 function UserProfile() {
@@ -290,7 +295,7 @@ function AddPasswordAuthDialog({
   open: boolean;
   onClose: () => void;
 }) {
-  const username = useRef("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -319,8 +324,13 @@ function AddPasswordAuthDialog({
       alert("Password and confirm password does not match");
       return;
     }
-    mutation.mutate({ username: username.current, password });
+    mutation.mutate({ username, password });
   };
+
+  const isUsernameValid = useMemo(
+    () => /^[a-zA-Z0-9]+$/.test(username),
+    [username],
+  );
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth={true}>
@@ -329,7 +339,10 @@ function AddPasswordAuthDialog({
         <label>
           Username:
           <TextInput
-            onChange={(e) => (username.current = e.target.value)}
+            onChange={(e) => setUsername(e.target.value)}
+            style={{
+              borderColor: !isUsernameValid ? "red" : undefined,
+            }}
           ></TextInput>
         </label>
         <label>
@@ -353,8 +366,10 @@ function AddPasswordAuthDialog({
         </label>
       </DialogContent>
       <DialogActions>
-        <PrimaryButton onClick={onClose}>Cancel</PrimaryButton>
-        <PrimaryButton onClick={handleSubmit}>Confirm</PrimaryButton>
+        <PrimaryNagativeButton onClick={onClose}>Cancel</PrimaryNagativeButton>
+        <PrimaryButton onClick={handleSubmit} disabled={!isUsernameValid}>
+          Confirm
+        </PrimaryButton>
       </DialogActions>
     </Dialog>
   );
@@ -475,8 +490,9 @@ function ProfessionalProfile() {
           alignItems: "center",
         }}
       >
-        <p>
-          Your hospital is{" "}
+        <p style={{ flexGrow: 1 }}>
+          Your hospital is
+          <Reactive desktop={<span> </span>} mobile={<br />} />
           <strong>
             {user.healthcare_professional.hospital.name}(Code :{" "}
             {user.healthcare_professional.hospital.code})
@@ -603,7 +619,7 @@ function ChangeHospitalDialog({
   });
 
   const hospitalId = hospitalQuery.data?.find(
-    (e: any) => e.code === hospitalCode
+    (e: any) => e.code === hospitalCode,
   )?.id;
 
   const handleSubmit = () => {
@@ -733,12 +749,189 @@ const Table = styled.table`
   }
 `;
 
+const MemberCardsWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const MemberCard = styled.div`
+  border: 1px solid lightgray;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  & > div {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+`;
+
+const MemberCardLabel = styled.span`
+  font-weight: 600;
+  min-width: 80px;
+`;
+
+type MemberListItem = {
+  user_id: string;
+  name: string;
+  approved: boolean;
+  is_admin: boolean;
+};
+
+function MemberListTable({
+  members,
+  onEdit,
+  onDelete,
+}: {
+  members: MemberListItem[];
+  onEdit: (userId: string, data: { approved?: true; is_admin?: true }) => void;
+  onDelete: (userId: string) => void;
+}) {
+  const { user } = useContext(UserContext);
+  return (
+    <Table>
+      <thead>
+        <tr>
+          <th>User ID</th>
+          <th>name</th>
+          <th>approve</th>
+          <th>reject/kick</th>
+          <th>admin</th>
+        </tr>
+      </thead>
+      <tbody>
+        {members.map((e) => (
+          <tr key={e.user_id}>
+            <td>{e.user_id}</td>
+            <td>{e.name}</td>
+            <td>
+              {e.approved ? (
+                "Approved"
+              ) : (
+                <PrimaryButton
+                  onClick={() => onEdit(e.user_id, { approved: true })}
+                >
+                  Approve
+                </PrimaryButton>
+              )}
+            </td>
+            <td>
+              {user?.id === e.user_id ? (
+                "You"
+              ) : e.is_admin ? (
+                <></>
+              ) : (
+                <PrimaryButton onClick={() => onDelete(e.user_id)}>
+                  {e.approved ? "Kick" : "Reject"}
+                </PrimaryButton>
+              )}
+            </td>
+            <td>
+              {e.is_admin ? (
+                "Is admin"
+              ) : !e.approved ? (
+                <></>
+              ) : (
+                <PrimaryButton
+                  onClick={() => {
+                    if (
+                      confirm(
+                        "Admins can approve new member as well as kick/reject non-admin members and can't be kicked.\nAre you sure you want to set this user as admin?",
+                      )
+                    )
+                      onEdit(e.user_id, { is_admin: true });
+                  }}
+                >
+                  Set as admin
+                </PrimaryButton>
+              )}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </Table>
+  );
+}
+
+function MemberListCards({
+  members,
+  onEdit,
+  onDelete,
+}: {
+  members: MemberListItem[];
+  onEdit: (userId: string, data: { approved?: true; is_admin?: true }) => void;
+  onDelete: (userId: string) => void;
+}) {
+  const { user } = useContext(UserContext);
+  return (
+    <MemberCardsWrapper>
+      {members.map((e) => (
+        <MemberCard key={e.user_id}>
+          <div>
+            <MemberCardLabel>User ID</MemberCardLabel>
+            <span style={{ fontSize: "14px" }}>{e.user_id}</span>
+          </div>
+          <div>
+            <MemberCardLabel>Name</MemberCardLabel>
+            <span>{e.name}</span>
+          </div>
+          <div>
+            <MemberCardLabel>Approve</MemberCardLabel>
+            {e.approved ? (
+              "Approved"
+            ) : (
+              <PrimaryButton
+                onClick={() => onEdit(e.user_id, { approved: true })}
+              >
+                Approve
+              </PrimaryButton>
+            )}
+          </div>
+          {user?.id !== e.user_id && !e.is_admin && (
+            <div>
+              <MemberCardLabel>Reject/Kick</MemberCardLabel>
+              <PrimaryButton onClick={() => onDelete(e.user_id)}>
+                {e.approved ? "Kick" : "Reject"}
+              </PrimaryButton>
+            </div>
+          )}
+          <div>
+            <MemberCardLabel>Admin</MemberCardLabel>
+            {e.is_admin ? (
+              "Is admin"
+            ) : !e.approved ? (
+              <></>
+            ) : (
+              <PrimaryButton
+                onClick={() => {
+                  if (
+                    confirm(
+                      "Admins can approve new member as well as kick/reject non-admin members and can't be kicked.\nAre you sure you want to set this user as admin?",
+                    )
+                  )
+                    onEdit(e.user_id, { is_admin: true });
+                }}
+              >
+                Set as admin
+              </PrimaryButton>
+            )}
+          </div>
+        </MemberCard>
+      ))}
+    </MemberCardsWrapper>
+  );
+}
+
 function HospitalAdminProfile() {
   const memberListQuery = useQuery({
     queryKey: ["hospital", "member"],
     queryFn: getMembers,
   });
-  const { user } = useContext(UserContext);
   const queryClient = useQueryClient();
   const deleteMutation = useMutation({
     mutationFn: deleteMember,
@@ -773,77 +966,22 @@ function HospitalAdminProfile() {
     <ProfileSettingsDiv>
       <h2>Hospital admin settings</h2>
       <h3>Member list</h3>
-      <Table>
-        <thead>
-          <tr>
-            <th>User ID</th>
-            <th>name</th>
-            <th>approve</th>
-            <th>reject/kick</th>
-            <th>admin</th>
-          </tr>
-        </thead>
-        <tbody>
-          {memberListQuery.data?.map((e: any) => (
-            <tr key={e.user_id}>
-              <td>{e.user_id}</td>
-              <td>{e.name}</td>
-              <td>
-                {e.approved ? (
-                  "Approved"
-                ) : (
-                  <PrimaryButton
-                    onClick={() =>
-                      editMutation.mutate({
-                        userId: e.user_id,
-                        data: { approved: true },
-                      })
-                    }
-                  >
-                    Approve
-                  </PrimaryButton>
-                )}
-              </td>
-              <td>
-                {user.id === e.user_id ? (
-                  "You"
-                ) : e.is_admin ? (
-                  <></>
-                ) : (
-                  <PrimaryButton
-                    onClick={() => deleteMutation.mutate(e.user_id)}
-                  >
-                    {e.approved ? "Kick" : "Reject"}
-                  </PrimaryButton>
-                )}
-              </td>
-              <td>
-                {e.is_admin ? (
-                  "Is admin"
-                ) : !e.approved ? (
-                  <></>
-                ) : (
-                  <PrimaryButton
-                    onClick={() => {
-                      if (
-                        confirm(
-                          "Admins can approve new member as well as kick/reject non-admin members and can't be kicked.\nAre you sure you want to set this user as admin?"
-                        )
-                      )
-                        editMutation.mutate({
-                          userId: e.user_id,
-                          data: { is_admin: true },
-                        });
-                    }}
-                  >
-                    Set as admin
-                  </PrimaryButton>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
+      <Reactive
+        desktop={
+          <MemberListTable
+            members={memberListQuery.data ?? []}
+            onEdit={(userId, data) => editMutation.mutate({ userId, data })}
+            onDelete={(userId) => deleteMutation.mutate(userId)}
+          />
+        }
+        mobile={
+          <MemberListCards
+            members={memberListQuery.data ?? []}
+            onEdit={(userId, data) => editMutation.mutate({ userId, data })}
+            onDelete={(userId) => deleteMutation.mutate(userId)}
+          />
+        }
+      />
     </ProfileSettingsDiv>
   );
 }

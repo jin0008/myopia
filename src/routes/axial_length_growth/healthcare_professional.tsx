@@ -18,7 +18,14 @@ import {
 } from "../../api/static";
 import { getHospitalList } from "../../api/hospital";
 import { registerProfessional } from "../../api/healthcare_professional";
-import { deletePatient, getPatients, registerPatient } from "../../api/patient";
+import {
+  UpdatePatientInput,
+  createPatientDeletionRequest,
+  deletePatient,
+  getPatients,
+  registerPatient,
+  updatePatient,
+} from "../../api/patient";
 import { useNavigate } from "react-router";
 import ConfirmDialog from "../../components/dialog";
 import { PatientCard } from "../../components/patient_card";
@@ -28,14 +35,7 @@ import HospitalSelector from "../../components/hospital_selector";
 
 const CenteredDivWithGap = styled(CenteredDiv)`
   gap: 32px;
-`;
-
-const PatientSearchDiv = styled.div`
-  width: 100%;
-  margin-top: 64px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  padding: 16px;
 `;
 
 export default function ProfessionalProfile() {
@@ -59,12 +59,15 @@ export default function ProfessionalProfile() {
     );
   } else if (!user.healthcare_professional.approved) {
     return (
-      <CenteredDiv>
-        Your healthcare professional registration is pending. Please wait until
-        it is approved.
-        <br />
-        Your user id is <strong>{user.id}</strong>
-      </CenteredDiv>
+      <CenteredDivWithGap>
+        <p style={{ textAlign: "center" }}>
+          Your healthcare professional registration is pending. Please wait
+          until it is approved.
+          <br />
+          Your user id is
+        </p>
+        <strong>{user.id}</strong>
+      </CenteredDivWithGap>
     );
   } else {
     //approved healthcare professional
@@ -88,29 +91,127 @@ function PatientSearch({
   );
 }
 
+const PatientOrderBySelect = styled.select`
+  padding: 8px;
+  border-radius: 16px;
+  border: 1px solid #ccc;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+`;
+
+function PatientOrderBy({
+  onSelect,
+}: {
+  onSelect: (
+    orderBy: "created_at" | "registration_number" | "date_of_birth" | "sex",
+    orderByDirection: "asc" | "desc",
+  ) => void;
+}) {
+  return (
+    <PatientOrderBySelect>
+      <option onClick={() => onSelect("created_at", "desc")}>
+        created(desc)
+      </option>
+      <option onClick={() => onSelect("created_at", "asc")}>
+        created(asc)
+      </option>
+      <option onClick={() => onSelect("registration_number", "desc")}>
+        registration number(desc)
+      </option>
+      <option onClick={() => onSelect("registration_number", "asc")}>
+        registration number(asc)
+      </option>
+      <option onClick={() => onSelect("date_of_birth", "desc")}>
+        date of birth(desc)
+      </option>
+      <option onClick={() => onSelect("date_of_birth", "asc")}>
+        date of birth(asc)
+      </option>
+      <option onClick={() => onSelect("sex", "desc")}>sex(desc)</option>
+      <option onClick={() => onSelect("sex", "asc")}>sex(asc)</option>
+    </PatientOrderBySelect>
+  );
+}
+
+const ContainerDiv = styled(TopDiv)`
+  margin: 0 128px;
+
+  @media (max-aspect-ratio: 1/1) {
+    margin: 0 16px;
+  }
+`;
+
+const PatientManageHeaderDiv = styled.div`
+  width: 100%;
+  margin-top: 64px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  @media (max-aspect-ratio: 1/1) {
+    margin-top: 32px;
+    flex-direction: column;
+  }
+`;
+
+const PatientSearchDiv = styled.div`
+  display: flex;
+  gap: 16px;
+
+  @media (max-aspect-ratio: 1/1) {
+    flex-direction: column;
+    gap: 8px;
+  }
+`;
+
 function PatientManage() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const { user } = useContext(UserContext);
 
+  const [orderBy, setOrderBy] = useState<
+    "created_at" | "registration_number" | "date_of_birth" | "sex"
+  >("created_at");
+  const [orderByDirection, setOrderByDirection] = useState<"asc" | "desc">(
+    "desc",
+  );
+
   const hospital = user.healthcare_professional.hospital;
   return (
     <>
-      <TopDiv
-        style={{
-          margin: "0 128px",
-        }}
-      >
-        <PatientSearchDiv>
-          <PatientSearch value={search} onChange={setSearch} />
+      <ContainerDiv>
+        <PatientManageHeaderDiv>
+          <PatientSearchDiv>
+            <PatientSearch value={search} onChange={setSearch} />
+            <PatientOrderBy
+              onSelect={(orderBy, orderByDirection) => {
+                setOrderBy(orderBy);
+                setOrderByDirection(orderByDirection);
+              }}
+            />
+          </PatientSearchDiv>
           <h2>{hospital.name}</h2>
-          <div></div>
-          <PrimaryButton onClick={() => setOpen(true)}>
-            new patient
-          </PrimaryButton>
-        </PatientSearchDiv>
-        <PatientList search={search} />
-      </TopDiv>
+          <div style={{ display: "flex", gap: "16px" }}>
+            {user.healthcare_professional?.is_admin && (
+              <PrimaryButton
+                onClick={() => navigate("/patient_delete_request")}
+              >
+                pending deletion requests
+              </PrimaryButton>
+            )}
+            <PrimaryButton onClick={() => setOpen(true)}>
+              new patient
+            </PrimaryButton>
+          </div>
+        </PatientManageHeaderDiv>
+        <PatientList
+          search={search}
+          orderBy={orderBy}
+          orderByDirection={orderByDirection}
+        />
+      </ContainerDiv>
       <PatientRegisterDialog open={open} setOpen={setOpen} />
     </>
   );
@@ -158,7 +259,7 @@ function ProfessionalRegisterDialog({
       onClose();
       if (createNewHospital)
         alert(
-          "You are now admin of the hospital.\nYou can visit 'My profile' to approve others to join"
+          "You are now admin of the hospital.\nYou can visit 'My profile' to approve others to join",
         );
       else alert("Please wait for approval by hospital admin to join");
     },
@@ -188,7 +289,7 @@ function ProfessionalRegisterDialog({
   const [createNewHospital, setCreateNewHospital] = useState(false);
 
   const hospitalId = hospitalQuery.data?.find(
-    (e: any) => e.code === hospitalCode
+    (e: any) => e.code === hospitalCode,
   )?.id;
 
   const handleSubmit = () => {
@@ -220,13 +321,13 @@ function ProfessionalRegisterDialog({
     }
     const hospitalData = createNewHospital
       ? {
-        name: hospitalName.current,
-        country_id: hospitalCountryId,
-        code: hospitalCode,
-      }
+          name: hospitalName.current,
+          country_id: hospitalCountryId,
+          code: hospitalCode,
+        }
       : {
-        id: hospitalQuery.data.find((e: any) => e.code === hospitalCode)?.id,
-      };
+          id: hospitalQuery.data.find((e: any) => e.code === hospitalCode)?.id,
+        };
     const data = {
       name: name.current,
       country_id: countryId,
@@ -323,7 +424,7 @@ function ProfessionalRegisterDialog({
               style={{
                 borderColor:
                   (createNewHospital && hospitalId != null) ||
-                    (!createNewHospital && hospitalId == null)
+                  (!createNewHospital && hospitalId == null)
                     ? "red"
                     : undefined,
               }}
@@ -331,7 +432,7 @@ function ProfessionalRegisterDialog({
           </label>
           {!createNewHospital && (
             <PrimaryButton onClick={() => setIsHospitalSelectorOpen(true)}>
-              Select hospital
+              select hospital
             </PrimaryButton>
           )}
           <HospitalSelector
@@ -418,8 +519,7 @@ function PatientRegisterDialog({
       setOpen(false);
     },
     onError: (error: any) => {
-      // Fix: HttpError uses 'code', not 'status'
-      if (error.code === 409 || error.status === 409) {
+      if (error.code === 409) {
         alert("Patient with this registration number already exists.");
       } else {
         alert("An error occured");
@@ -438,7 +538,7 @@ function PatientRegisterDialog({
     if (ethnicityQuery.isSuccess) {
       const first = ethnicityQuery.data?.[0];
       setEthnicityId(
-        user?.healthcare_professional?.default_ethnicity_id ?? first?.id
+        user?.healthcare_professional?.default_ethnicity_id ?? first?.id,
       );
     }
   }, [ethnicityQuery.isSuccess]);
@@ -540,36 +640,70 @@ const GridDiv = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 16px;
-  padding: 16px;
   width: 100%;
+
+  @media (max-aspect-ratio: 1/1) {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
 `;
 
-function PatientList({ search }: { search: string }) {
+function PatientList({
+  search,
+  orderBy,
+  orderByDirection,
+}: {
+  search: string;
+  orderBy: "created_at" | "registration_number" | "date_of_birth" | "sex";
+  orderByDirection: "asc" | "desc";
+}) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
   const patientQuery = useQuery({
-    queryKey: ["patient"],
-    queryFn: getPatients,
+    queryKey: ["patient", orderBy, orderByDirection],
+    queryFn: () => getPatients(orderBy, orderByDirection),
   });
-  const deletePatientMutation = useMutation({
-    mutationFn: deletePatient,
+
+  const updatePatientMutation = useMutation({
+    mutationFn: updatePatient,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["patient"] });
-      setIsDeleteConfirmDialogOpen(false);
+      setEditPatientData(null);
     },
     onError: () => alert("An error occured"),
   });
 
-  const [isDeleteConfirmDialogOpen, setIsDeleteConfirmDialogOpen] =
-    useState(false);
+  const deletePatientMutation = useMutation({
+    mutationFn: deletePatient,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["patient"] });
+      setDeleteTargetPatient(null);
+    },
+    onError: () => alert("An error occured"),
+  });
+
+  const createPatientDeletionRequestMutation = useMutation({
+    mutationFn: createPatientDeletionRequest,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["patient", "deleteRequest"] });
+      setDeleteTargetPatient(null);
+    },
+    onError: () => alert("An error occured"),
+  });
+
   const [deleteTargetPatient, setDeleteTargetPatient] = useState<any>();
+
+  const [editPatientData, setEditPatientData] =
+    useState<UpdatePatientInput | null>(null);
+
+  const { user } = useContext(UserContext);
 
   return (
     <>
       <GridDiv>
         {patientQuery.data
           ?.filter((patient: any) =>
-            patient.registration_number.includes(search)
+            patient.registration_number.includes(search),
           )
           ?.map((patient: any) => (
             <PatientCard
@@ -578,32 +712,99 @@ function PatientList({ search }: { search: string }) {
               dateOfBirth={patient.date_of_birth.split("T")[0]}
               sex={patient.sex === "male" ? "M" : "F"}
               onClick={() => navigate(`/chart/${patient.id}?edit=true`)}
+              onEdit={() => {
+                setEditPatientData({
+                  id: patient.id,
+                  date_of_birth: patient.date_of_birth.split("T")[0],
+                  sex: patient.sex,
+                });
+              }}
               onDelete={() => {
                 setDeleteTargetPatient(patient);
-                setIsDeleteConfirmDialogOpen(true);
               }}
             />
           ))}
       </GridDiv>
-      {deleteTargetPatient && (
-        <ConfirmDialog
-          title="Confirm deletion"
-          content={
+      <ConfirmDialog
+        title="Confirm deletion"
+        content={
+          user.healthcare_professional?.is_admin ? (
             <>
-              Are you sure you want to delete patient with registration number:
+              Are you sure you want to delete patient with registration number :
               <br />
-              {deleteTargetPatient.registration_number}
+              {deleteTargetPatient?.registration_number}
               <br />
               <br />
               All records associated with the patient will be gone forever!
             </>
-          }
-          open={isDeleteConfirmDialogOpen}
-          onClose={() => setIsDeleteConfirmDialogOpen(false)}
-          onConfirm={() => {
-            deletePatientMutation.mutate(deleteTargetPatient.id);
-          }}
-        />
+          ) : (
+            <>
+              Are you sure you want to request deletion of patient with
+              registration number :
+              <br />
+              {deleteTargetPatient?.registration_number}
+              <br />
+              <br />
+              Hospital admin will review your request and approve it or reject
+              it.
+            </>
+          )
+        }
+        open={deleteTargetPatient != null}
+        onClose={() => setDeleteTargetPatient(null)}
+        onConfirm={() => {
+          user.healthcare_professional?.is_admin
+            ? deletePatientMutation.mutate(deleteTargetPatient.id)
+            : createPatientDeletionRequestMutation.mutate(
+                deleteTargetPatient.id,
+              );
+        }}
+      />
+      {editPatientData != null && (
+        <Dialog open={true} onClose={() => setEditPatientData(null)}>
+          <DialogTitle>Edit patient</DialogTitle>
+          <DialogContent>
+            <label>
+              Date of birth:
+              <TextInput
+                type="date"
+                value={editPatientData.date_of_birth}
+                onChange={(e) =>
+                  setEditPatientData({
+                    ...editPatientData,
+                    date_of_birth: e.target.value,
+                  })
+                }
+              />
+            </label>
+            <label>
+              Sex:
+              <TextInput
+                as="select"
+                value={editPatientData.sex}
+                onChange={(e) =>
+                  setEditPatientData({
+                    ...editPatientData,
+                    sex: e.target.value as "male" | "female",
+                  })
+                }
+              >
+                <option value="male">male</option>
+                <option value="female">female</option>
+              </TextInput>
+            </label>
+          </DialogContent>
+          <DialogActions>
+            <PrimaryNagativeButton onClick={() => setEditPatientData(null)}>
+              Cancel
+            </PrimaryNagativeButton>
+            <PrimaryButton
+              onClick={() => updatePatientMutation.mutate(editPatientData)}
+            >
+              Confirm
+            </PrimaryButton>
+          </DialogActions>
+        </Dialog>
       )}
     </>
   );

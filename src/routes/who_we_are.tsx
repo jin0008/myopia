@@ -22,7 +22,7 @@ const ContentWrapper = styled.div`
   align-items: center;
   gap: 48px;
   width: 100%;
-  padding: 10% 0;
+  padding: 10%;
 `;
 
 const TextSection = styled.div`
@@ -84,7 +84,7 @@ const TotalPatientsBadge = styled.div`
 export default function WhoWeAre() {
   const hospitalQuery = useQuery<HospitalSummary[]>({
     queryKey: ["hospital", "public"],
-    queryFn: () => getHospitalList() as Promise<HospitalSummary[]>,
+    queryFn: () => getHospitalList(),
     staleTime: 5 * 60 * 1000,
     refetchInterval: 60 * 1000,
   });
@@ -92,7 +92,7 @@ export default function WhoWeAre() {
   const hospitals = hospitalQuery.data ?? [];
   const totalPatients = hospitals.reduce(
     (sum, hospital) => sum + (hospital.patientCount ?? 0),
-    0
+    0,
   );
 
   return (
@@ -156,8 +156,8 @@ export default function WhoWeAre() {
           <p>
             <strong>Reference</strong>
             <br />
-            1. Tideman JWL, Polling JR, Vingerling JR, et al. Axial length growth
-            and the risk of developing myopia in European children. Acta
+            1. Tideman JWL, Polling JR, Vingerling JR, et al. Axial length
+            growth and the risk of developing myopia in European children. Acta
             Ophthalmol. 2018;96(3):301-309.
             <br />
             2. He X, Sankaridurg P, Naduvilath T, et al. Normative data and

@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import { PrimaryButton } from "./button";
 import { SearchInput } from "./input";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export default function HospitalSelector({
   open,
@@ -25,30 +25,41 @@ export default function HospitalSelector({
   });
   const [search, setSearch] = useState("");
 
+  useEffect(() => {
+    if (open) setSearch("");
+  }, [open]);
+
+  const filteredData = useMemo(() => {
+    return hospitalQuery.data?.filter(
+      (hospital: any) =>
+        hospital.name.toLowerCase().includes(search) ||
+        hospital.code.includes(search),
+    );
+  }, [hospitalQuery.data, search]);
+  
   return (
     <Dialog open={open} onClose={onClose}>
       <DialogTitle>Select Hospital</DialogTitle>
       <DialogContent>
         <SearchInput
           style={{
+            width: "100%",
+            minWidth: "320px",
             marginTop: "8px",
           }}
           placeholder="Search Hospital(by name or code)"
+          value={search}
           onChange={(e) => setSearch(e.target.value.toLowerCase())}
         />
         {hospitalQuery.isLoading && "Loading..."}
         {hospitalQuery.isError && "Error"}
         {hospitalQuery.isSuccess && (
-          <ul>
-            {hospitalQuery.data
-              .filter((hospital: any) =>
-                hospital.name.toLowerCase().includes(search)
-              )
-              .map((hospital: any) => (
-                <li key={hospital.id} onClick={() => onSelect(hospital)}>
-                  {hospital.name}({hospital.code})
-                </li>
-              ))}
+          <ul style={{ listStylePosition: "inside" }}>
+            {filteredData.map((hospital: any) => (
+              <li key={hospital.id} onClick={() => onSelect(hospital)}>
+                {hospital.name}({hospital.code})
+              </li>
+            ))}
           </ul>
         )}
       </DialogContent>

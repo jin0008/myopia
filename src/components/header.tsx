@@ -8,6 +8,7 @@ import { UserContext } from "../App";
 import { logout } from "../api/auth";
 import { useQueryClient } from "@tanstack/react-query";
 import { Menu, Close } from "@mui/icons-material";
+import { DesktopOnly, MobileOnly } from "./reactive";
 
 const HeaderContainer = styled.header`
   position: sticky;
@@ -15,16 +16,26 @@ const HeaderContainer = styled.header`
   z-index: 1000;
   transition: background-color 0.3s ease;
   width: 100%;
+  height: 54px;
+
+  align-content: center;
+
+  flex-shrink: 0;
 `;
 
 const NavContent = styled.div`
-  max-width: 980px;
+  width: 100%;
+  max-width: 1080px;
   margin: 0 auto;
-  height: 54px;
+
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 20px;
+
+  @media (max-aspect-ratio: 1/1) {
+    padding-right: 48px;
+  }
 `;
 
 const Logo = styled.img`
@@ -32,9 +43,13 @@ const Logo = styled.img`
   cursor: pointer;
   transition: opacity 0.2s;
   z-index: 1002; /* Above mobile menu */
-  
+
   &:hover {
     opacity: 0.8;
+  }
+
+  @media (max-aspect-ratio: 1/1) {
+    height: 20px;
   }
 `;
 
@@ -42,21 +57,17 @@ const DesktopLinks = styled.div`
   display: flex;
   align-items: center;
   gap: 24px;
-  
-  @media (max-width: 768px) {
-    display: none;
-  }
 `;
 
 const MobileMenuButton = styled.div`
-  display: none;
+  position: absolute;
+  height: 24px;
+  width: 24px;
+  top: 15px;
+  right: 10px;
   cursor: pointer;
   z-index: 1002;
   color: var(--primary-text);
-  
-  @media (max-width: 768px) {
-    display: block;
-  }
 `;
 
 const MobileOverlay = styled.div<{ $isOpen: boolean }>`
@@ -74,17 +85,18 @@ const MobileOverlay = styled.div<{ $isOpen: boolean }>`
   justify-content: center;
   align-items: center;
   gap: 40px;
-  opacity: ${props => props.$isOpen ? 1 : 0};
-  pointer-events: ${props => props.$isOpen ? 'all' : 'none'};
+  opacity: ${(props) => (props.$isOpen ? 1 : 0)};
+  pointer-events: ${(props) => (props.$isOpen ? "all" : "none")};
   transition: opacity 0.3s ease;
 `;
 
 const MobileNavLink = styled.span<{ $isActive?: boolean }>`
   font-size: 24px;
   font-weight: 600;
-  color: ${props => props.$isActive ? 'var(--link-color)' : 'var(--primary-text)'};
+  color: ${(props) =>
+    props.$isActive ? "var(--link-color)" : "var(--primary-text)"};
   cursor: pointer;
-  
+
   &:active {
     opacity: 0.6;
   }
@@ -92,11 +104,13 @@ const MobileNavLink = styled.span<{ $isActive?: boolean }>`
 
 const NavLink = styled.span<{ $isActive?: boolean }>`
   font-size: 13px;
-  color: ${props => props.$isActive ? 'var(--primary-text)' : 'var(--secondary-text)'};
+  gap: 16px;
+  color: ${(props) =>
+    props.$isActive ? "var(--primary-text)" : "var(--secondary-text)"};
   cursor: pointer;
   transition: color 0.2s;
   font-weight: 500;
-  
+
   &:hover {
     color: var(--link-color);
   }
@@ -105,11 +119,6 @@ const NavLink = styled.span<{ $isActive?: boolean }>`
 const UserInfo = styled.div`
   font-size: 11px;
   color: var(--secondary-text);
-  margin-right: 15px;
-  
-  @media (max-width: 768px) {
-    display: none;
-  }
 `;
 
 export default function Header() {
@@ -125,8 +134,8 @@ export default function Header() {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 0);
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Close mobile menu when route changes
@@ -156,52 +165,71 @@ export default function Header() {
         <NavContent>
           <Logo src={logo} alt="logo" onClick={() => navigate("/")} />
 
-          <DesktopLinks>
-            {navItems.map(item => (
-              <NavLink
-                key={item.label}
-                $isActive={location.pathname.includes(item.path)}
-                onClick={() => navigate(item.path)}
+          <DesktopOnly>
+            <DesktopLinks>
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.label}
+                  $isActive={location.pathname.includes(item.path)}
+                  onClick={() => navigate(item.path)}
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+            </DesktopLinks>
+          </DesktopOnly>
+
+          {user && (
+            <UserInfo>
+              <Link
+                to="/choose_profile"
+                style={{ color: "inherit", textDecoration: "underline" }}
               >
-                {item.label}
-              </NavLink>
-            ))}
-          </DesktopLinks>
-
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            {user && (
-              <UserInfo>
-                {role} (<Link to="/choose_profile" style={{ color: 'inherit', textDecoration: 'underline' }}>change</Link>)
-              </UserInfo>
+                change user type
+              </Link>
+            </UserInfo>
+          )}
+          <DesktopOnly>
+            {user ? (
+              <PrimaryButton
+                style={{
+                  padding: "4px 12px",
+                  fontSize: "12px",
+                  height: "auto",
+                  borderRadius: "12px",
+                }}
+                onClick={handleLogout}
+              >
+                Logout
+              </PrimaryButton>
+            ) : (
+              <PrimaryButton
+                style={{
+                  padding: "4px 12px",
+                  fontSize: "12px",
+                  height: "auto",
+                  borderRadius: "12px",
+                }}
+                onClick={() => navigate("/login")}
+              >
+                Login
+              </PrimaryButton>
             )}
+          </DesktopOnly>
 
-            <div className="desktop-only" style={{ display: window.innerWidth > 768 ? 'block' : 'none' }}>
-              {user ? (
-                <PrimaryButton
-                  style={{ padding: '4px 12px', fontSize: '12px', height: 'auto', borderRadius: '12px' }}
-                  onClick={handleLogout}
-                >
-                  Logout
-                </PrimaryButton>
-              ) : (
-                <PrimaryButton
-                  style={{ padding: '4px 12px', fontSize: '12px', height: 'auto', borderRadius: '12px' }}
-                  onClick={() => navigate("/login")}
-                >
-                  Login
-                </PrimaryButton>
-              )}
-            </div>
-
-            <MobileMenuButton onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-              {isMobileMenuOpen ? <Close /> : <Menu />}
+          <MobileOnly>
+            <MobileMenuButton onClick={() => setIsMobileMenuOpen(true)}>
+              <Menu />
             </MobileMenuButton>
-          </div>
+          </MobileOnly>
         </NavContent>
       </HeaderContainer>
 
       <MobileOverlay $isOpen={isMobileMenuOpen}>
-        {navItems.map(item => (
+        <MobileMenuButton onClick={() => setIsMobileMenuOpen(false)}>
+          <Close />
+        </MobileMenuButton>
+        {navItems.map((item) => (
           <MobileNavLink
             key={item.label}
             $isActive={location.pathname.includes(item.path)}
@@ -211,9 +239,16 @@ export default function Header() {
           </MobileNavLink>
         ))}
         {user ? (
-          <PrimaryButton onClick={handleLogout} style={{ marginTop: '20px' }}>Logout</PrimaryButton>
+          <PrimaryButton onClick={handleLogout} style={{ marginTop: "20px" }}>
+            Logout
+          </PrimaryButton>
         ) : (
-          <PrimaryButton onClick={() => navigate("/login")} style={{ marginTop: '20px' }}>Login</PrimaryButton>
+          <PrimaryButton
+            onClick={() => navigate("/login")}
+            style={{ marginTop: "20px" }}
+          >
+            Login
+          </PrimaryButton>
         )}
       </MobileOverlay>
     </>
