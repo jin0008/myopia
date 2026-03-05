@@ -1,5 +1,6 @@
 import { jsonFetch, jsonFetchWithSession } from "../lib/fetch";
 import { API_ROOT } from "./root";
+import type { EditMemberData } from "../types/hospital";
 
 export function getHospitalList() {
   return jsonFetch(API_ROOT + "/hospital");
@@ -25,11 +26,6 @@ export function deleteMember(userId: string) {
     false
   );
 }
-
-export type EditMemberData = {
-  approved?: true;
-  is_admin?: true;
-};
 
 export function editMember(userId: string, data: EditMemberData) {
   return jsonFetchWithSession(

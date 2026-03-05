@@ -19,18 +19,18 @@ import {
 import { getHospitalList } from "../../api/hospital";
 import { registerProfessional } from "../../api/healthcare_professional";
 import {
-  UpdatePatientInput,
   createPatientDeletionRequest,
   deletePatient,
   getPatients,
   registerPatient,
   updatePatient,
 } from "../../api/patient";
+import type { UpdatePatientInput } from "../../types/patient";
 import { useNavigate } from "react-router";
 import ConfirmDialog from "../../components/dialog";
 import { PatientCard } from "../../components/patient_card";
 import NotLoggedIn from "../../components/not_logged_in";
-import { professionalRoleList } from "../../lib/constants";
+import { professionalRoleList, MOBILE_MEDIA } from "../../lib/constants";
 import HospitalSelector from "../../components/hospital_selector";
 
 const CenteredDivWithGap = styled(CenteredDiv)`
@@ -136,7 +136,7 @@ function PatientOrderBy({
 const ContainerDiv = styled(TopDiv)`
   margin: 0 128px;
 
-  @media (max-aspect-ratio: 1/1) {
+  @media ${MOBILE_MEDIA} {
     margin: 0 16px;
   }
 `;
@@ -149,7 +149,7 @@ const PatientManageHeaderDiv = styled.div`
   justify-content: space-between;
   align-items: center;
 
-  @media (max-aspect-ratio: 1/1) {
+  @media ${MOBILE_MEDIA} {
     margin-top: 32px;
     flex-direction: column;
   }
@@ -159,7 +159,7 @@ const PatientSearchDiv = styled.div`
   display: flex;
   gap: 16px;
 
-  @media (max-aspect-ratio: 1/1) {
+  @media ${MOBILE_MEDIA} {
     flex-direction: column;
     gap: 8px;
   }
@@ -642,7 +642,7 @@ const GridDiv = styled.div`
   gap: 16px;
   width: 100%;
 
-  @media (max-aspect-ratio: 1/1) {
+  @media ${MOBILE_MEDIA} {
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   }
 `;

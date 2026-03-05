@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
+import { MOBILE_MEDIA } from "../lib/constants";
 
 export function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-aspect-ratio: 1/1)");
+    const mediaQuery = window.matchMedia(MOBILE_MEDIA);
     setIsMobile(mediaQuery.matches);
     const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
     mediaQuery.addEventListener("change", handler);

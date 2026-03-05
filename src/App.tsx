@@ -8,6 +8,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 
 import { getCurrentUser } from "./api/auth";
 import { GOOGLE_CLIENT_ID } from "./lib/google_client_id";
+import type { UserRole } from "./types/user";
 
 const Home = lazy(() => import("./routes/home"));
 const HeaderRoute = lazy(() => import("./routes/header"));
@@ -17,7 +18,7 @@ const ProfileChoice = lazy(() => import("./routes/choose_profile"));
 const ProfessionalProfile = lazy(
   () => import("./routes/axial_length_growth/healthcare_professional"),
 );
-const ChartRoute = lazy(() => import("./routes/chart"));
+const ChartRoute = lazy(() => import("./routes/chart/index"));
 const RegularProfile = lazy(
   () => import("./routes/axial_length_growth/regular_user"),
 );
@@ -41,8 +42,6 @@ export const UserContext = createContext<{
   role: UserRole;
   setRole: (value: UserRole) => void;
 }>(null as any);
-
-type UserRole = "regular_user" | "healthcare_professional";
 
 const App = () => {
   const userQuery = useQuery({

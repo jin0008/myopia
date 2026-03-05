@@ -1,12 +1,6 @@
 import { jsonFetchWithSession } from "../lib/fetch";
 import { API_ROOT } from "./root";
-
-type Treatment = {
-  patient_id: string;
-  treatment_id: string;
-  start_date: string;
-  end_date: string | null;
-};
+import type { Treatment, TreatmentEdit } from "../types/treatment";
 
 export function registerPatientTreatment(data: Treatment) {
   return jsonFetchWithSession(
@@ -18,12 +12,6 @@ export function registerPatientTreatment(data: Treatment) {
     false
   );
 }
-
-type TreatmentEdit = {
-  treatment_id: string;
-  start_date: string;
-  end_date: string | null;
-};
 
 export function editPatientTreatment(id: string, data: Partial<TreatmentEdit>) {
   return jsonFetchWithSession(

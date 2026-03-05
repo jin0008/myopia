@@ -5,3 +5,5 @@ export const professionalRoleList = [
   "Nurse or Nurse Practitioner",
   "Others",
 ] as const;
+
+export const MOBILE_MEDIA = "(max-aspect-ratio: 1/1)";

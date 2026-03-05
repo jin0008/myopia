@@ -1,6 +1,7 @@
 import { useParams, Link } from "react-router";
 import styled from "styled-components";
 import { treatments } from "../data/treatments";
+import { MOBILE_MEDIA } from "../lib/constants";
 import { ArrowBack } from "@mui/icons-material";
 
 const Container = styled.div`
@@ -9,7 +10,7 @@ const Container = styled.div`
   padding: 40px 20px 100px;
   animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 
-  @media (max-aspect-ratio: 1/1) {
+  @media ${MOBILE_MEDIA} {
     padding: 20px 20px 60px;
   }
 
@@ -57,7 +58,7 @@ const HeroSection = styled.div`
   margin-bottom: 100px;
   align-items: center;
 
-  @media (max-aspect-ratio: 1/1) {
+  @media ${MOBILE_MEDIA} {
     flex-direction: column;
     gap: 40px;
     margin-bottom: 60px;
@@ -111,7 +112,7 @@ const Title = styled.h1`
   line-height: 1.05;
   letter-spacing: -0.02em;
 
-  @media (max-aspect-ratio: 1/1) {
+  @media ${MOBILE_MEDIA} {
     font-size: 2.5rem;
   }
 `;
@@ -122,7 +123,7 @@ const Subtitle = styled.p`
   line-height: 1.5;
   font-weight: 400;
 
-  @media (max-aspect-ratio: 1/1) {
+  @media ${MOBILE_MEDIA} {
     font-size: 1.2rem;
   }
 `;
@@ -132,7 +133,7 @@ const ContentGrid = styled.div`
   grid-template-columns: 1fr 1fr;
   gap: 40px;
 
-  @media (max-aspect-ratio: 1/1) {
+  @media ${MOBILE_MEDIA} {
     grid-template-columns: 1fr;
     gap: 20px;
   }
@@ -145,7 +146,7 @@ const SectionCard = styled.div`
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
   transition: transform 0.3s;
 
-  @media (max-aspect-ratio: 1/1) {
+  @media ${MOBILE_MEDIA} {
     padding: 30px;
   }
 `;
@@ -157,7 +158,7 @@ const SectionTitle = styled.h2`
   font-weight: 600;
   letter-spacing: -0.01em;
 
-  @media (max-aspect-ratio: 1/1) {
+  @media ${MOBILE_MEDIA} {
     font-size: 1.5rem;
   }
 `;
@@ -167,7 +168,7 @@ const SectionText = styled.p`
   color: var(--secondary-text);
   line-height: 1.7;
 
-  @media (max-aspect-ratio: 1/1) {
+  @media ${MOBILE_MEDIA} {
     font-size: 1.1rem;
   }
 `;

@@ -1,5 +1,8 @@
 import { jsonFetchWithSession } from "../lib/fetch";
 import { API_ROOT } from "./root";
+import type { NewPatientInput, UpdatePatientInput } from "../types/patient";
+import type { PatientData } from "../types/patient";
+import type { Nullable } from "../types/util";
 
 export function getPatients(
   orderBy:
@@ -19,13 +22,25 @@ export function getPatientDetail(id: string) {
   return jsonFetchWithSession(API_ROOT + `/patient/${id}`);
 }
 
-type NewPatientInput = {
-  registration_number: string;
-  date_of_birth: string;
-  sex: "male" | "female";
-  ethnicity_id: string;
-  email?: string;
-};
+export function getLatestPatientData(id: string) {
+  return jsonFetchWithSession<Nullable<PatientData>>(
+    API_ROOT + `/patient/${id}/data/latest`,
+  );
+}
+
+export function postPatientData(
+  id: string,
+  data: Partial<Nullable<PatientData>>,
+) {
+  return jsonFetchWithSession(
+    API_ROOT + `/patient/${id}/data`,
+    {
+      method: "POST",
+    },
+    data,
+    false,
+  );
+}
 
 export function registerPatient(data: NewPatientInput) {
   return jsonFetchWithSession(
@@ -37,12 +52,6 @@ export function registerPatient(data: NewPatientInput) {
     false,
   );
 }
-
-export type UpdatePatientInput = {
-  id: string;
-  date_of_birth?: string;
-  sex?: "male" | "female";
-};
 
 export function updatePatient(data: UpdatePatientInput) {
   return jsonFetchWithSession(

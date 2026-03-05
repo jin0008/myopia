@@ -1,13 +1,8 @@
 import { jsonFetchWithSession } from "../lib/fetch";
 import { API_ROOT } from "./root";
+import type { PatientKInput } from "../types/patient_k";
 
-type kInput = {
-  patient_id: string;
-  k_type: "K1" | "K2";
-  od: number;
-  os: number;
-};
-export function upsertPatientK(data: kInput) {
+export function upsertPatientK(data: PatientKInput) {
   return jsonFetchWithSession(
     API_ROOT + "/patient_k",
     {

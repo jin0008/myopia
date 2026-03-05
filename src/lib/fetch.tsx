@@ -54,11 +54,23 @@ export async function jsonFetch<T = any>(
 
 export async function jsonFetchWithSession<T = any>(
   url: RequestInfo | URL,
+  options?: RequestInit,
+  body?: any,
+  getResponse?: true,
+): Promise<T>;
+export async function jsonFetchWithSession<T = any>(
+  url: RequestInfo | URL,
+  options: RequestInit,
+  body: any,
+  getResponse: false,
+): Promise<void>;
+export async function jsonFetchWithSession<T = any>(
+  url: RequestInfo | URL,
   options: RequestInit = {},
   body: any = undefined,
   getResponse: boolean = true,
-) {
-  return new Promise<T | null>(async (resolve, reject) => {
+): Promise<T | void> {
+  return new Promise(async (resolve, reject) => {
     const session_key = localStorage.getItem("session_key");
     if (!session_key) {
       reject(new AuthorizationError("Authorization error"));
@@ -95,7 +107,7 @@ export async function jsonFetchWithSession<T = any>(
       return;
     }
     if (!getResponse) {
-      resolve(null);
+      resolve();
       return;
     }
     result.json().then(resolve).catch(reject);

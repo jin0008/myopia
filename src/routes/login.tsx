@@ -9,6 +9,7 @@ import { HttpError } from "../lib/fetch";
 import { useQueryClient } from "@tanstack/react-query";
 import { GoogleLogin } from "@react-oauth/google";
 import { Reactive } from "../components/reactive";
+import { MOBILE_MEDIA } from "../lib/constants";
 
 export const LoginDiv = styled.div`
   display: flex;
@@ -30,7 +31,7 @@ export const ContainerDiv = styled.div`
   gap: 32px;
   height: 40%;
 
-  @media (max-aspect-ratio: 1/1) {
+  @media ${MOBILE_MEDIA} {
     flex-direction: column;
     height: fit-content;
   }

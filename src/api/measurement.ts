@@ -1,13 +1,6 @@
 import { jsonFetchWithSession } from "../lib/fetch";
 import { API_ROOT } from "./root";
-
-type RegisterMeasurementData = {
-  patient_id: string;
-  date: string;
-  instrument_id: string;
-  od: number | null;
-  os: number | null;
-};
+import type { RegisterMeasurementData } from "../types/measurement";
 
 export function registerMeasurement(data: RegisterMeasurementData) {
   return jsonFetchWithSession(

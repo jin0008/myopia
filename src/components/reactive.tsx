@@ -1,4 +1,6 @@
 import { useIsMobile } from "../hooks/is_mobile";
+import styled from "styled-components";
+import { MOBILE_MEDIA } from "../lib/constants";
 
 export function DesktopOnly({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
@@ -20,3 +22,12 @@ export function Reactive({
   const isMobile = useIsMobile();
   return isMobile ? mobile : desktop;
 }
+
+export const ReactiveFlex = styled.div`
+  display: flex;
+  flex-direction: row;
+
+  @media ${MOBILE_MEDIA} {
+    flex-direction: column;
+  }
+`;

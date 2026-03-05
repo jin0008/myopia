@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { MOBILE_MEDIA } from "../lib/constants";
 import { treatments } from "../data/treatments";
 import { Link } from "react-router";
 
@@ -7,7 +8,7 @@ const PageContainer = styled.div`
   margin: 0 auto;
   padding: 80px 20px 100px;
   
-  @media (max-aspect-ratio: 1/1) {
+  @media ${MOBILE_MEDIA} {
     padding: 40px 20px 80px;
   }
 `;
@@ -17,7 +18,7 @@ const Header = styled.div`
   margin-bottom: 80px;
   animation: fadeIn 1s ease-out;
   
-  @media (max-aspect-ratio: 1/1) {
+  @media ${MOBILE_MEDIA} {
     margin-bottom: 40px;
   }
 `;
@@ -29,7 +30,7 @@ const Title = styled.h1`
   font-weight: 700;
   letter-spacing: -0.02em;
   
-  @media (max-aspect-ratio: 1/1) {
+  @media ${MOBILE_MEDIA} {
     font-size: 2.5rem;
   }
 `;
@@ -42,7 +43,7 @@ const Subtitle = styled.p`
   line-height: 1.4;
   font-weight: 400;
   
-  @media (max-aspect-ratio: 1/1) {
+  @media ${MOBILE_MEDIA} {
     font-size: 1.1rem;
   }
 `;
@@ -75,7 +76,7 @@ const Card = styled(Link)`
     box-shadow: 0 20px 48px rgba(0,0,0,0.12);
   }
   
-  @media (max-aspect-ratio: 1/1) {
+  @media ${MOBILE_MEDIA} {
     height: auto; /* Allow auto height on mobile */
     min-height: 400px;
   }
@@ -107,7 +108,7 @@ const ContentArea = styled.div`
   background: white;
   z-index: 2;
   
-  @media (max-aspect-ratio: 1/1) {
+  @media ${MOBILE_MEDIA} {
     padding: 24px;
   }
 `;
@@ -129,7 +130,7 @@ const CardTitle = styled.h2`
   font-weight: 600;
   line-height: 1.1;
   
-  @media (max-aspect-ratio: 1/1) {
+  @media ${MOBILE_MEDIA} {
     font-size: 1.5rem;
   }
 `;

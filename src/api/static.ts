@@ -16,3 +16,7 @@ export function getInstrumentList() {
 export function getTreatmentList() {
   return jsonFetch(API_ROOT + "/static/treatment");
 }
+
+export function getRefractiveErrorMethodList() {
+  return jsonFetch(API_ROOT + "/static/refractive_error_method");
+}

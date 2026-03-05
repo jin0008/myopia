@@ -9,6 +9,7 @@ import { logout } from "../api/auth";
 import { useQueryClient } from "@tanstack/react-query";
 import { Menu, Close } from "@mui/icons-material";
 import { DesktopOnly, MobileOnly } from "./reactive";
+import { MOBILE_MEDIA } from "../lib/constants";
 
 const HeaderContainer = styled.header`
   position: sticky;
@@ -33,7 +34,7 @@ const NavContent = styled.div`
   align-items: center;
   padding: 0 20px;
 
-  @media (max-aspect-ratio: 1/1) {
+  @media ${MOBILE_MEDIA} {
     padding-right: 48px;
   }
 `;
@@ -48,7 +49,7 @@ const Logo = styled.img`
     opacity: 0.8;
   }
 
-  @media (max-aspect-ratio: 1/1) {
+  @media ${MOBILE_MEDIA} {
     height: 20px;
   }
 `;

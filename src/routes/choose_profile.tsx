@@ -2,13 +2,14 @@ import styled from "styled-components";
 import theme from "../theme";
 import { useNavigate } from "react-router";
 import { useContext } from "react";
+import { MOBILE_MEDIA } from "../lib/constants";
 import { UserContext } from "../App";
 
 export const ContainerDiv = styled.div`
   display: flex;
   gap: 64px;
 
-  @media (max-aspect-ratio: 1/1) {
+  @media ${MOBILE_MEDIA} {
     flex-direction: column;
     height: fit-content;
   }

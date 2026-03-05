@@ -36,7 +36,7 @@ import {
   removePasswordAuth,
 } from "../api/auth";
 import { GoogleLogin } from "@react-oauth/google";
-import { professionalRoleList } from "../lib/constants";
+import { professionalRoleList, MOBILE_MEDIA } from "../lib/constants";
 import HospitalSelector from "../components/hospital_selector";
 import { Reactive } from "../components/reactive";
 
@@ -63,7 +63,7 @@ const ProfileSettingsDiv = styled.div`
   border-radius: 16px;
   margin: 16px 0;
 
-  @media (max-aspect-ratio: 1/1) {
+  @media ${MOBILE_MEDIA} {
     width: 100%;
   }
 `;

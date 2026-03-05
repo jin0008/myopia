@@ -3,18 +3,7 @@ import styled from "styled-components";
 import { getHospitalList } from "../api/hospital";
 import { TopDiv } from "../components/div";
 import theme from "../theme";
-
-type HospitalSummary = {
-  id: string;
-  name: string;
-  code: string;
-  country?: {
-    id?: string;
-    name: string;
-    code: string;
-  };
-  patientCount: number;
-};
+import type { HospitalSummary } from "../types/hospital";
 
 const ContentWrapper = styled.div`
   display: flex;
