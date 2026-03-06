@@ -88,13 +88,20 @@ export const ChartAndListWrapper = styled.div`
   }
 `;
 
-export const ChartContainer = styled.div`
-  flex-grow: 1;
-  min-width: 0;
-  min-height: 480px;
-  position: relative;
+export const ChartWrapper = styled.div`
+  flex: 1;
+  width: 0;
   @media ${MOBILE_MEDIA} {
     width: 100%;
+  }
+`;
+
+export const ChartContainer = styled.div`
+  position: relative;
+  min-height: 560px;
+  width: 100%;
+  @media ${MOBILE_MEDIA} {
+    min-height: 480px;
   }
 `;
 

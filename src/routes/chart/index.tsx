@@ -36,6 +36,7 @@ import {
   ChartPageRoot,
   TextButton,
   SmallTextButton,
+  ChartWrapper,
 } from "./styles";
 import { deleteMeasurement, registerMeasurement } from "../../api/measurement";
 import { Measurement, RefractiveError } from "../../types/measurement";
@@ -402,7 +403,7 @@ export default function ChartRoute() {
           </SmallTextButton>
         </ReferenceRow>
         <ChartAndListWrapper>
-          <ChartContainer>
+          <ChartWrapper>
             <Chart
               displayAxialLength={displayAxialLength}
               refractiveErrorType={refractiveErrorType}
@@ -420,7 +421,7 @@ export default function ChartRoute() {
               height={160}
               width={160}
             />
-          </ChartContainer>
+          </ChartWrapper>
           {!(displayAxialLength && refractiveErrorType) && (
             <MeasurementListWrapper>
               <MeasurementList

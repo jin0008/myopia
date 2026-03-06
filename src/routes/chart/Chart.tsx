@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import autocolors from "chartjs-plugin-autocolors";
 import {
   Chart as ChartJS,
@@ -10,7 +10,6 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import AnnotationPlugin from "chartjs-plugin-annotation";
 import { Scatter } from "react-chartjs-2";
 import ordinal from "ordinal";
 import { getGrowthData } from "../../api/growth_data";
@@ -20,6 +19,7 @@ import { Measurement } from "../../types/measurement";
 import { Treatment } from "../../types/treatment";
 import { getTreatmentList } from "../../api/static";
 import theme from "../../theme";
+import { ChartContainer } from "./styles";
 
 ChartJS.register(
   CategoryScale,
@@ -30,7 +30,6 @@ ChartJS.register(
   Tooltip,
   Legend,
   autocolors,
-  AnnotationPlugin,
 );
 
 interface ChartProps {
@@ -222,19 +221,20 @@ export function Chart({
     ];
 
     if (displayAxialLength)
-      data.push(
-        ...(growthData.data ?? [])
-          .map((g) => g.value)
-          .filter((y): y is number => y != null),
-      );
+      data.push(...(growthData.data ?? []).map((g) => g.value));
 
     let minY = Math.min(...data);
     let maxY = Math.max(...data);
 
     const range = maxY - minY;
-    const padding = range * 0.1;
-    minY = Math.floor(minY - padding);
-    maxY = Math.ceil(maxY + padding);
+    if (range < 1) {
+      minY = Math.floor(minY - 0.5);
+      maxY = Math.ceil(maxY + 0.5);
+    } else {
+      const padding = range * 0.1;
+      minY = Math.floor(minY - padding);
+      maxY = Math.ceil(maxY + padding);
+    }
 
     return { minY, maxY };
   }, [
@@ -252,154 +252,164 @@ export function Chart({
     let maxY2 = Math.max(...data);
 
     const range = maxY2 - minY2;
-    const padding = range * 0.1;
-    minY2 = Math.floor(minY2 - padding);
-    maxY2 = Math.ceil(maxY2 + padding);
+    if (range < 1) {
+      minY2 = Math.floor(minY2 - 0.5);
+      maxY2 = Math.ceil(maxY2 + 0.5);
+    } else {
+      const padding = range * 0.1;
+      minY2 = Math.floor(minY2 - padding);
+      maxY2 = Math.ceil(maxY2 + padding);
+    }
 
     return { minY2, maxY2 };
   }, [sortedRefractiveErrorMeasurement]);
 
-  const treatmentAnnotations = useMemo(() => {
-    return sortedTreatment.reverse().flatMap((treatment, index) => {
+  const treatmentDisplayData = useMemo(() => {
+    const birthdayMs = patientBirthday.getTime();
+    const msPerYear = 1000 * 60 * 60 * 24 * 365.25;
+    return [...sortedTreatment].reverse().map((treatment) => {
+      const startAge =
+        (new Date(treatment.start_date).getTime() - birthdayMs) / msPerYear;
+      const endAge = treatment.end_date
+        ? (new Date(treatment.end_date).getTime() - birthdayMs) / msPerYear
+        : (Date.now() - birthdayMs) / msPerYear;
       const treatmentName =
         treatmentQuery.data?.find((t: any) => t.id === treatment.treatment_id)
           ?.name ?? "???";
-      return [
-        {
-          type: "line" as const,
-          yMin: minY - 1.25 - index * 0.25,
-          yMax: minY - 1.25 - index * 0.25,
-          yAxisID: "y",
-          xMin:
-            (new Date(treatment.start_date).getTime() -
-              patientBirthday.getTime()) /
-            (1000 * 60 * 60 * 24 * 365.25),
-          xMax: treatment.end_date
-            ? (new Date(treatment.end_date).getTime() -
-                patientBirthday.getTime()) /
-              (1000 * 60 * 60 * 24 * 365.25)
-            : (new Date().getTime() - patientBirthday.getTime()) /
-              (1000 * 60 * 60 * 24 * 365.25),
-          borderColor: theme.primary,
-        },
-        {
-          type: "label" as const,
-          content: treatmentName,
-          yValue: minY - 1.5 - index * 0.25,
-          xValue:
-            (new Date(treatment.start_date).getTime() -
-              patientBirthday.getTime()) /
-            (1000 * 60 * 60 * 24 * 365.25),
-          yAxisID: "y",
-          xAxisID: "x",
-        },
-      ];
+      return { name: treatmentName, startAge, endAge };
     });
-  }, [sortedTreatment, treatmentQuery.data, minY]);
+  }, [sortedTreatment, treatmentQuery.data, patientBirthday]);
 
-  const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    devicePixelRatio: window.devicePixelRatio * 2,
-    layout: {
-      padding: {
-        bottom: 10 + sortedTreatment.length * 8,
-      },
-    },
-    plugins: {
-      autocolors: {
-        mode: "dataset" as const,
-        offset: 0,
-      },
-      legend: {
-        position: isMobile ? ("top" as const) : ("left" as const),
-      },
-      title: {
-        display: true,
-        text:
-          displayAxialLength && refractiveErrorType
-            ? `Axial Length and Refractive Error(${refractiveErrorType === "sph" ? "Sph" : "SE"})`
-            : displayAxialLength
-              ? "Axial Length Percentiles"
-              : `Refractive Error(${refractiveErrorType === "sph" ? "Sph" : "SE"})`,
-        color: "#333333",
-        font: {
-          size: 24,
+  const [xScale, setXScale] = useState<{ left: number; width: number }>({
+    left: 0,
+    width: 0,
+  });
+  const xScalePrevRef = useRef<{ left: number; width: number }>({
+    left: 0,
+    width: 0,
+  });
+
+  const options = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      devicePixelRatio: window.devicePixelRatio * 2,
+      plugins: {
+        autocolors: {
+          mode: "dataset" as const,
+          offset: 0,
         },
-      },
-      annotation: {
-        clip: false,
-        annotations: treatmentAnnotations,
-      },
-    },
-    elements: {
-      point: {
-        radius: 0,
-      },
-    },
-    showLine: true,
-    scales: {
-      x: {
-        grid: {
-          tickColor: "black",
-        },
-        border: {
-          color: "black",
-        },
-        title: {
-          display: true,
-          text: "Age (years)",
-          font: {
-            size: 16,
-          },
-        },
-        min: minX,
-        max: maxX,
-      },
-      y: {
-        grid: {
-          tickColor: "black",
-        },
-        border: {
-          color: "black",
+        legend: {
+          position: isMobile ? ("top" as const) : ("left" as const),
         },
         title: {
           display: true,
           text:
-            !displayAxialLength && refractiveErrorType
-              ? "Refractive Error"
-              : "Axial Length (mm)",
+            displayAxialLength && refractiveErrorType
+              ? `Axial Length and Refractive Error(${refractiveErrorType === "sph" ? "Sph" : "SE"})`
+              : displayAxialLength
+                ? "Axial Length Percentiles"
+                : `Refractive Error(${refractiveErrorType === "sph" ? "Sph" : "SE"})`,
+          color: "#333333",
           font: {
-            size: 16,
+            size: 24,
           },
         },
-        min: minY,
-        max: maxY,
       },
-      ...(displayAxialLength && refractiveErrorType
-        ? {
-            y2: {
-              grid: {
-                display: false,
-              },
-              border: {
-                color: "black",
-              },
-              position: "right" as const,
-              title: {
-                display: true,
-                text: `Refractive Error(${refractiveErrorType === "sph" ? "Sph" : "SE"})`,
-                font: {
-                  size: 16,
-                },
-              },
-              min: minY2,
-              max: maxY2,
+      elements: {
+        point: {
+          radius: 0,
+        },
+      },
+      showLine: true,
+      scales: {
+        x: {
+          grid: {
+            tickColor: "black",
+          },
+          border: {
+            color: "black",
+          },
+          title: {
+            display: true,
+            text: "Age (years)",
+            font: {
+              size: 12,
             },
-          }
-        : {}),
-    },
-  };
+          },
+          min: minX,
+          max: maxX,
+          afterSetDimensions: (scale: any) => {
+            const next = {
+              width:
+                scale.getPixelForValue(maxX) - scale.getPixelForValue(minX),
+              left: scale.getPixelForValue(minX),
+            };
+            if (
+              xScalePrevRef.current.left !== next.left ||
+              xScalePrevRef.current.width !== next.width
+            ) {
+              xScalePrevRef.current = next;
+              setXScale(next);
+            }
+          },
+        },
+        y: {
+          grid: {
+            tickColor: "black",
+          },
+          border: {
+            color: "black",
+          },
+          title: {
+            display: true,
+            text:
+              !displayAxialLength && refractiveErrorType
+                ? "Refractive Error"
+                : "Axial Length (mm)",
+            font: {
+              size: 16,
+            },
+          },
+          min: minY,
+          max: maxY,
+        },
+        ...(displayAxialLength && refractiveErrorType
+          ? {
+              y2: {
+                grid: {
+                  display: false,
+                },
+                border: {
+                  color: "black",
+                },
+                position: "right" as const,
+                title: {
+                  display: true,
+                  text: `Refractive Error(${refractiveErrorType === "sph" ? "Sph" : "SE"})`,
+                  font: {
+                    size: 16,
+                  },
+                },
+                min: minY2,
+                max: maxY2,
+              },
+            }
+          : {}),
+      },
+    }),
+    [
+      isMobile,
+      displayAxialLength,
+      refractiveErrorType,
+      minX,
+      maxX,
+      minY,
+      maxY,
+      minY2,
+      maxY2,
+    ],
+  );
 
   if (!referenceDataset.length) return null;
 
@@ -408,13 +418,66 @@ export function Chart({
       ? userDataset
       : referenceDataset.concat(userDataset);
 
+  const xRange = maxX - minX;
+
   return (
-    <Scatter
-      ref={chartRef}
-      options={options}
-      data={{
-        datasets: dataset,
-      }}
-    />
+    <div style={{ position: "relative", height: "100%", width: "100%" }}>
+      <ChartContainer>
+        <Scatter
+          ref={chartRef}
+          options={options}
+          data={{
+            datasets: dataset,
+          }}
+        />
+      </ChartContainer>
+      {treatmentDisplayData.length > 0 && (
+        <div
+          style={{
+            marginLeft: xScale.left,
+            position: "relative",
+          }}
+        >
+          {treatmentDisplayData.map((t, index) => {
+            const left = ((t.startAge - minX) / xRange) * xScale.width;
+            const width = Math.max(
+              1,
+              ((t.endAge - t.startAge) / xRange) * xScale.width,
+            );
+            return (
+              <div
+                key={index}
+                style={{
+                  position: "relative",
+                  width: "100%",
+                  height: 6,
+                }}
+              >
+                <div
+                  style={{
+                    position: "absolute",
+                    left: left,
+                    width: width,
+                    top: 0,
+                    height: 2,
+                    backgroundColor: theme.primary,
+                  }}
+                />
+                <span
+                  style={{
+                    position: "absolute",
+                    left: left,
+                    top: 2,
+                    fontSize: 12,
+                  }}
+                >
+                  {t.name}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }

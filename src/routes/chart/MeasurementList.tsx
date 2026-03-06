@@ -15,7 +15,13 @@ import {
   getRefractiveErrorMethodList,
 } from "../../api/static";
 import { UserContext } from "../../App";
-import { GridDiv, GridItemDiv, GridItemDiv2, MeasurementGroup } from "./styles";
+import {
+  GridDiv,
+  GridItemDiv,
+  GridItemDiv2,
+  MeasurementGroup,
+  TextButton,
+} from "./styles";
 import { Measurement } from "../../types/measurement";
 
 interface MeasurementListProps {
@@ -225,7 +231,13 @@ export function RefractiveErrorRegisterDialog({
     gcTime: Infinity,
   });
 
-  const [methodId, setMethodId] = useState<string>();
+  const methodNameMap = {
+    Autorefraction: "Auto",
+    "Cycloplegic refraction": "CR",
+    "Manifest refraction": "MR",
+  } as Record<string, string>;
+
+  const [methodId, setMethodId] = useState<number | null>(null);
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const od_sph = useRef("");
   const od_cyl = useRef("");
@@ -239,7 +251,6 @@ export function RefractiveErrorRegisterDialog({
   }, [methodQuery.isSuccess, methodQuery.data]);
 
   const handleConfirm = () => {
-    const methodIdValue = methodId ? parseInt(methodId) : null;
     const od_sphValue =
       od_sph.current === "" ? null : parseFloat(od_sph.current);
     const od_cylValue =
@@ -249,7 +260,7 @@ export function RefractiveErrorRegisterDialog({
     const os_cylValue =
       os_cyl.current === "" ? null : parseFloat(os_cyl.current);
     if (
-      !methodIdValue ||
+      !methodId ||
       Number.isNaN(od_sphValue as number) ||
       Number.isNaN(od_cylValue as number) ||
       Number.isNaN(os_sphValue as number) ||
@@ -263,7 +274,7 @@ export function RefractiveErrorRegisterDialog({
       return;
     }
     onConfirm({
-      methodId: methodIdValue,
+      methodId,
       date,
       od_sph: od_sphValue,
       od_cyl: od_cylValue,
@@ -283,33 +294,37 @@ export function RefractiveErrorRegisterDialog({
             onChange={(e) => setDate(e.target.value)}
           />
         </label>
-        <label>
-          Method:
-          <TextInput
-            as="select"
-            value={methodId}
-            onChange={(e) => setMethodId(e.target.value)}
-          >
-            {methodQuery.data?.map((m: { id: number; name: string }) => (
-              <option key={m.id} value={m.id}>
-                {m.name}
-              </option>
-            ))}
-          </TextInput>
-        </label>
+        <label>Method:</label>
+        <div style={{ display: "flex", flexDirection: "row", gap: "8px" }}>
+          {methodQuery.data?.map((m: { id: number; name: string }) => (
+            <TextButton
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: "50%",
+                padding: 0,
+              }}
+              $active={methodId === m.id}
+              key={m.id}
+              onClick={() => setMethodId(m.id)}
+            >
+              {methodNameMap[m.name] ?? m.name}
+            </TextButton>
+          ))}
+        </div>
         <p>OD</p>
         <MeasurementGroup>
           <label>
             sph:
             <TextInput
-              pattern="[0-9]+(\.[0-9]+){0,1}"
+              pattern="(\+|-)?[0-9]+(\.[0-9]+)?"
               onChange={(e) => (od_sph.current = e.target.value)}
             />
           </label>
           <label>
             cyl:
             <TextInput
-              pattern="[0-9]+(\.[0-9]+){0,1}"
+              pattern="(\+|-)?[0-9]+(\.[0-9]+)?"
               onChange={(e) => (od_cyl.current = e.target.value)}
             />
           </label>
@@ -319,14 +334,14 @@ export function RefractiveErrorRegisterDialog({
           <label>
             sph:
             <TextInput
-              pattern="[0-9]+(\.[0-9]+){0,1}"
+              pattern="(\+|-)?[0-9]+(\.[0-9]+)?"
               onChange={(e) => (os_sph.current = e.target.value)}
             />
           </label>
           <label>
             cyl:
             <TextInput
-              pattern="[0-9]+(\.[0-9]+){0,1}"
+              pattern="(\+|-)?[0-9]+(\.[0-9]+)?"
               onChange={(e) => (os_cyl.current = e.target.value)}
             />
           </label>
