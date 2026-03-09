@@ -14,15 +14,11 @@ import { Chart } from "./Chart";
 import { KInputDialog } from "./KInputDialog";
 import {
   MeasurementList,
-  MeasurementRegisterDialog,
+  AxialLengthRegisterDialog,
   RefractiveErrorRegisterDialog,
 } from "./MeasurementList";
 import { TreatmentList } from "./TreatmentList";
-import {
-  ACTIVITY_LABELS,
-  MYOPIA_STATUS_LABELS,
-  PatientDataInput,
-} from "./PatientDataInput";
+import { MYOPIA_STATUS_LABELS, PatientDataInput } from "./PatientDataInput";
 import {
   HeaderDiv,
   HeaderTextDiv,
@@ -31,18 +27,27 @@ import {
   ChartTitleMain,
   ReferenceRow,
   ChartAndListWrapper,
-  ChartContainer,
   MeasurementListWrapper,
   ChartPageRoot,
   TextButton,
   SmallTextButton,
   ChartWrapper,
 } from "./styles";
-import { deleteMeasurement, registerMeasurement } from "../../api/measurement";
-import { Measurement, RefractiveError } from "../../types/measurement";
+import {
+  deleteMeasurement,
+  registerMeasurement,
+  updateMeasurement,
+} from "../../api/measurement";
+import {
+  Measurement,
+  RefractiveError,
+  RegisterAxialLengthData,
+  RegisterRefractiveErrorData,
+} from "../../types/measurement";
 import {
   deleteRefractiveError,
   registerRefractiveError,
+  updateRefractiveError,
 } from "../../api/refractive_error";
 import {
   getInstrumentList,
@@ -100,6 +105,8 @@ export default function ChartRoute() {
     isRefractiveErrorRegisterDialogOpen,
     setIsRefractiveErrorRegisterDialogOpen,
   ] = useState(false);
+
+  const [editTargetId, setEditTargetId] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
   const kValueMutation = useMutation({
@@ -211,6 +218,22 @@ export default function ChartRoute() {
     },
   });
 
+  const updateMeasurementMutation = useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Omit<RegisterAxialLengthData, "patient_id">;
+    }) => updateMeasurement(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["patient", patientId],
+      });
+      setIsMeasurementRegisterDialogOpen(false);
+    },
+  });
+
   const deleteMeasurementMutation = useMutation({
     mutationFn: deleteMeasurement,
     onSuccess: () => {
@@ -226,6 +249,26 @@ export default function ChartRoute() {
 
   const registerRefractiveErrorMutation = useMutation({
     mutationFn: registerRefractiveError,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["patient", patientId],
+      });
+      setIsRefractiveErrorRegisterDialogOpen(false);
+    },
+    onError: (e) => {
+      console.log(e);
+      alert("An error has occured");
+    },
+  });
+
+  const updateRefractiveErrorMutation = useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Omit<RegisterRefractiveErrorData, "patient_id">;
+    }) => updateRefractiveError(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["patient", patientId],
@@ -430,7 +473,14 @@ export default function ChartRoute() {
                 measurement={
                   displayAxialLength ? sortedAxialLength : sortedRefractiveError
                 }
+                onEdit={(measurement) => {
+                  setEditTargetId(measurement.id);
+                  displayAxialLength
+                    ? setIsMeasurementRegisterDialogOpen(true)
+                    : setIsRefractiveErrorRegisterDialogOpen(true);
+                }}
                 onAdd={() => {
+                  setEditTargetId(null);
                   displayAxialLength
                     ? setIsMeasurementRegisterDialogOpen(true)
                     : setIsRefractiveErrorRegisterDialogOpen(true);
@@ -475,7 +525,8 @@ export default function ChartRoute() {
           },
         }}
       />
-      <MeasurementRegisterDialog
+
+      <AxialLengthRegisterDialog
         open={isMeasurementRegisterDialogOpen}
         onClose={() => setIsMeasurementRegisterDialogOpen(false)}
         onConfirm={({ instrumentId, date, od, os }) => {
@@ -483,29 +534,65 @@ export default function ChartRoute() {
             alert("Can't register future measurement");
             return;
           }
-          registerMeasurementMutation.mutate({
-            patient_id: patientId!,
-            instrument_id: instrumentId,
-            date,
-            od,
-            os,
-          });
+          editTargetId
+            ? updateMeasurementMutation.mutate({
+                id: editTargetId!,
+                data: {
+                  instrument_id: instrumentId,
+                  date,
+                  od,
+                  os,
+                },
+              })
+            : registerMeasurementMutation.mutate({
+                patient_id: patientId!,
+                instrument_id: instrumentId,
+                date,
+                od,
+                os,
+              });
         }}
+        initialData={
+          editTargetId
+            ? patientQuery.data?.measurement.find(
+                (e: Measurement) => e.id === editTargetId,
+              )
+            : undefined
+        }
       />
       <RefractiveErrorRegisterDialog
         open={isRefractiveErrorRegisterDialogOpen}
         onClose={() => setIsRefractiveErrorRegisterDialogOpen(false)}
-        onConfirm={({ methodId, date, od_sph, od_cyl, os_sph, os_cyl }) => {
-          registerRefractiveErrorMutation.mutate({
-            patient_id: patientId!,
-            method_id: methodId,
-            date,
-            od_sph,
-            od_cyl,
-            os_sph,
-            os_cyl,
-          });
+        onConfirm={({ method_id, date, od_sph, od_cyl, os_sph, os_cyl }) => {
+          editTargetId
+            ? updateRefractiveErrorMutation.mutate({
+                id: editTargetId!,
+                data: {
+                  method_id,
+                  date,
+                  od_sph,
+                  od_cyl,
+                  os_sph,
+                  os_cyl,
+                },
+              })
+            : registerRefractiveErrorMutation.mutate({
+                patient_id: patientId!,
+                method_id,
+                date,
+                od_sph,
+                od_cyl,
+                os_sph,
+                os_cyl,
+              });
         }}
+        initialData={
+          editTargetId
+            ? patientQuery.data?.refractive_error.find(
+                (e: RefractiveError) => e.id === editTargetId,
+              )
+            : undefined
+        }
       />
     </ChartPageRoot>
   );
@@ -645,13 +732,13 @@ async function generateXlsx(
   patientDataWorksheet.addRow({
     key: "nearwork_activity",
     value: latestPatientData.nearwork_activity
-      ? ACTIVITY_LABELS[latestPatientData.nearwork_activity.category]
+      ? latestPatientData.nearwork_activity.hours
       : "(unknown)",
   });
   patientDataWorksheet.addRow({
     key: "outdoor_activity",
     value: latestPatientData.outdoor_activity
-      ? ACTIVITY_LABELS[latestPatientData.outdoor_activity.category]
+      ? latestPatientData.outdoor_activity.hours
       : "(unknown)",
   });
   patientDataWorksheet.addRow({

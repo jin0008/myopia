@@ -1,12 +1,3 @@
-export enum ActivityDurationCategory {
-  ZeroToOne = "zero_to_one",
-  OneToTwo = "one_to_two",
-  TwoToFour = "two_to_four",
-  FourToSix = "four_to_six",
-  SixToEight = "six_to_eight",
-  EightToInfinity = "eight_to_infinity",
-}
-
 export type NewPatientInput = {
   registration_number: string;
   date_of_birth: string;
@@ -29,10 +20,10 @@ export type MyopiaStatus =
 
 export type PatientData = {
   nearwork_activity: {
-    category: ActivityDurationCategory;
+    hours: number;
   };
   outdoor_activity: {
-    category: ActivityDurationCategory;
+    hours: number;
   };
   mother_myopia_status: {
     status: MyopiaStatus;

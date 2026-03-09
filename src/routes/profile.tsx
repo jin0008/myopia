@@ -32,6 +32,7 @@ import {
   addPasswordAuth,
   changePassword,
   deleteAccount,
+  editSelf,
   removeGoogleAuth,
   removePasswordAuth,
 } from "../api/auth";
@@ -111,6 +112,25 @@ function UserProfile() {
       alert("Password auth removal failed:\n" + e.message);
     },
   });
+
+  const editSelfMutation = useMutation({
+    mutationFn: ({
+      email,
+      receive_email_updates,
+    }: {
+      email?: string;
+      receive_email_updates?: boolean;
+    }) => editSelf(email, receive_email_updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["currentUser"],
+      });
+    },
+    onError: (e) => {
+      alert("change failed: " + e.message);
+    },
+  });
+
   return (
     <ProfileSettingsDiv>
       <h2>User settings</h2>
@@ -209,6 +229,34 @@ function UserProfile() {
             </div>
           </>
         )}
+      </div>
+      <div>
+        <h3>Email</h3>
+        <p>
+          Your email is: <strong>{user.email ?? "not registered"}</strong>
+        </p>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <p>
+            Receive email updates:{" "}
+            <strong>{user.receive_email_updates ? "Yes" : "No"}</strong>
+          </p>
+          <PrimaryNagativeButton
+            onClick={() =>
+              editSelfMutation.mutate(
+                { receive_email_updates: !user.receive_email_updates },
+                {
+                  onSuccess: () => {
+                    alert(
+                      `You are now ${user.receive_email_updates ? "not " : ""}receiving email updates`,
+                    );
+                  },
+                },
+              )
+            }
+          >
+            Change
+          </PrimaryNagativeButton>
+        </div>
       </div>
       <div>
         <h3>Delete account</h3>

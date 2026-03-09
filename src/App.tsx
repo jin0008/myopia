@@ -11,7 +11,7 @@ import { GOOGLE_CLIENT_ID } from "./lib/google_client_id";
 import type { UserRole } from "./types/user";
 
 const Home = lazy(() => import("./routes/home"));
-const HeaderRoute = lazy(() => import("./routes/header"));
+const HeaderRoute = lazy(() => import("./routes/header_footer"));
 const Login = lazy(() => import("./routes/login"));
 const Signup = lazy(() => import("./routes/signup"));
 const ProfileChoice = lazy(() => import("./routes/choose_profile"));
@@ -32,6 +32,8 @@ const UserGuide = lazy(() => import("./routes/user_guide"));
 const PatientDeleteRequest = lazy(
   () => import("./routes/patient_delete_request"),
 );
+
+const TOS = lazy(() => import("./routes/tos"));
 
 export const UserContext = createContext<{
   // ... lines 29-73 skipped in thought, but I need to be precise for replacement.
@@ -91,6 +93,7 @@ const App = () => {
                 <Route path="/treatments/:id" element={<TreatmentDetail />} />
                 <Route path="/news" element={<News />} />
                 <Route path="/user-guide" element={<UserGuide />} />
+                <Route path="/tos" element={<TOS />} />
               </Route>
             </Routes>
           </GoogleOAuthProvider>

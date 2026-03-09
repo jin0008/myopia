@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -8,6 +8,7 @@ import {
   DialogActions,
 } from "@mui/material";
 import deleteIcon from "../../assets/delete.svg";
+import editIcon from "../../assets/edit.svg";
 import { PrimaryButton, PrimaryNagativeButton } from "../../components/button";
 import { TextInput } from "../../components/input";
 import {
@@ -22,12 +23,17 @@ import {
   MeasurementGroup,
   TextButton,
 } from "./styles";
-import { Measurement } from "../../types/measurement";
+import {
+  AxialLength,
+  Measurement,
+  RefractiveError,
+} from "../../types/measurement";
 
 interface MeasurementListProps {
   measurement?: Measurement[];
   edit: boolean;
   onAdd: () => void;
+  onEdit: (measurement: Measurement) => void;
   onDelete: (measurement: Measurement) => void;
   mode: "default" | "list";
 }
@@ -36,6 +42,7 @@ export function MeasurementList({
   measurement = [],
   edit,
   onAdd,
+  onEdit,
   onDelete,
   mode,
 }: MeasurementListProps) {
@@ -72,14 +79,29 @@ export function MeasurementList({
               <span>{m.od ?? "(No data)"}</span>
               <span>{m.os ?? "(No data)"}</span>
             </GridItemDiv>
-            <div style={{ alignContent: "center" }}>
+            <div
+              style={{
+                alignContent: "center",
+                display: "flex",
+                gap: "8px",
+                justifyContent: "center",
+              }}
+            >
               {edit && (
-                <img
-                  src={deleteIcon}
-                  style={{ width: "24px" }}
-                  alt="delete"
-                  onClick={() => onDelete(m)}
-                />
+                <>
+                  <img
+                    src={editIcon}
+                    style={{ width: "24px", cursor: "pointer", opacity: 0.5 }}
+                    alt="edit"
+                    onClick={() => onEdit(m)}
+                  />
+                  <img
+                    src={deleteIcon}
+                    style={{ width: "24px", cursor: "pointer", opacity: 0.5 }}
+                    alt="delete"
+                    onClick={() => onDelete(m)}
+                  />
+                </>
               )}
             </div>
           </React.Fragment>
@@ -92,7 +114,7 @@ export function MeasurementList({
   );
 }
 
-interface MeasurementRegisterDialogProps {
+interface AxialLengthRegisterDialogProps {
   open: boolean;
   onClose: () => void;
   onConfirm: (data: {
@@ -101,13 +123,15 @@ interface MeasurementRegisterDialogProps {
     od: number | null;
     os: number | null;
   }) => void;
+  initialData?: AxialLength;
 }
 
-export function MeasurementRegisterDialog({
+export function AxialLengthRegisterDialog({
   open,
   onClose,
   onConfirm,
-}: MeasurementRegisterDialogProps) {
+  initialData,
+}: AxialLengthRegisterDialogProps) {
   const { user } = useContext(UserContext);
   const instrumentQuery = useQuery({
     queryKey: ["instrument"],
@@ -118,8 +142,17 @@ export function MeasurementRegisterDialog({
 
   const [instrumentId, setInstrumentId] = useState<string>();
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
-  const od = useRef("");
-  const os = useRef("");
+  const [od, setOd] = useState("");
+  const [os, setOs] = useState("");
+
+  useEffect(() => {
+    if (initialData) {
+      setInstrumentId(initialData.instrument_id);
+      setDate(initialData.date.split("T")[0]);
+      setOd(initialData.od?.toString() ?? "");
+      setOs(initialData.os?.toString() ?? "");
+    }
+  }, [initialData]);
 
   useEffect(() => {
     if (instrumentQuery.isSuccess)
@@ -139,8 +172,8 @@ export function MeasurementRegisterDialog({
   }, [open, user?.healthcare_professional?.default_instrument_id]);
 
   const handleConfirm = () => {
-    const odValue = od.current === "" ? null : parseFloat(od.current);
-    const osValue = os.current === "" ? null : parseFloat(os.current);
+    const odValue = od === "" ? null : parseFloat(od);
+    const osValue = os === "" ? null : parseFloat(os);
     if (
       !instrumentId ||
       Number.isNaN(odValue as number) ||
@@ -187,14 +220,16 @@ export function MeasurementRegisterDialog({
           OD:
           <TextInput
             pattern="[0-9]+(\.[0-9]+){0,1}"
-            onChange={(e) => (od.current = e.target.value)}
+            value={od}
+            onChange={(e) => setOd(e.target.value)}
           />
         </label>
         <label>
           OS:
           <TextInput
             pattern="[0-9]+(\.[0-9]+){0,1}"
-            onChange={(e) => (os.current = e.target.value)}
+            value={os}
+            onChange={(e) => setOs(e.target.value)}
           />
         </label>
       </DialogContent>
@@ -209,20 +244,15 @@ export function MeasurementRegisterDialog({
 interface RefractiveErrorRegisterDialogProps {
   open: boolean;
   onClose: () => void;
-  onConfirm: (data: {
-    methodId: number;
-    date: string;
-    od_sph: number;
-    od_cyl: number;
-    os_sph: number;
-    os_cyl: number;
-  }) => void;
+  onConfirm: (data: Omit<RefractiveError, "id">) => void;
+  initialData?: RefractiveError;
 }
 
 export function RefractiveErrorRegisterDialog({
   open,
   onClose,
   onConfirm,
+  initialData,
 }: RefractiveErrorRegisterDialogProps) {
   const methodQuery = useQuery({
     queryKey: ["refractive_error_method"],
@@ -239,10 +269,21 @@ export function RefractiveErrorRegisterDialog({
 
   const [methodId, setMethodId] = useState<number | null>(null);
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
-  const od_sph = useRef("");
-  const od_cyl = useRef("");
-  const os_sph = useRef("");
-  const os_cyl = useRef("");
+  const [od_sph, setOdSph] = useState("");
+  const [od_cyl, setOdCyl] = useState("");
+  const [os_sph, setOsSph] = useState("");
+  const [os_cyl, setOsCyl] = useState("");
+
+  useEffect(() => {
+    if (initialData) {
+      setMethodId(initialData.method_id);
+      setDate(initialData.date.split("T")[0]);
+      setOdSph(initialData.od_sph?.toString() ?? "");
+      setOdCyl(initialData.od_cyl?.toString() ?? "");
+      setOsSph(initialData.os_sph?.toString() ?? "");
+      setOsCyl(initialData.os_cyl?.toString() ?? "");
+    }
+  }, [initialData]);
 
   useEffect(() => {
     if (methodQuery.isSuccess) {
@@ -251,14 +292,10 @@ export function RefractiveErrorRegisterDialog({
   }, [methodQuery.isSuccess, methodQuery.data]);
 
   const handleConfirm = () => {
-    const od_sphValue =
-      od_sph.current === "" ? null : parseFloat(od_sph.current);
-    const od_cylValue =
-      od_cyl.current === "" ? null : parseFloat(od_cyl.current);
-    const os_sphValue =
-      os_sph.current === "" ? null : parseFloat(os_sph.current);
-    const os_cylValue =
-      os_cyl.current === "" ? null : parseFloat(os_cyl.current);
+    const od_sphValue = od_sph === "" ? null : parseFloat(od_sph);
+    const od_cylValue = od_cyl === "" ? null : parseFloat(od_cyl);
+    const os_sphValue = os_sph === "" ? null : parseFloat(os_sph);
+    const os_cylValue = os_cyl === "" ? null : parseFloat(os_cyl);
     if (
       !methodId ||
       Number.isNaN(od_sphValue as number) ||
@@ -274,7 +311,7 @@ export function RefractiveErrorRegisterDialog({
       return;
     }
     onConfirm({
-      methodId,
+      method_id: methodId,
       date,
       od_sph: od_sphValue,
       od_cyl: od_cylValue,
@@ -318,14 +355,16 @@ export function RefractiveErrorRegisterDialog({
             sph:
             <TextInput
               pattern="(\+|-)?[0-9]+(\.[0-9]+)?"
-              onChange={(e) => (od_sph.current = e.target.value)}
+              value={od_sph}
+              onChange={(e) => setOdSph(e.target.value)}
             />
           </label>
           <label>
             cyl:
             <TextInput
               pattern="(\+|-)?[0-9]+(\.[0-9]+)?"
-              onChange={(e) => (od_cyl.current = e.target.value)}
+              value={od_cyl}
+              onChange={(e) => setOdCyl(e.target.value)}
             />
           </label>
         </MeasurementGroup>
@@ -335,14 +374,16 @@ export function RefractiveErrorRegisterDialog({
             sph:
             <TextInput
               pattern="(\+|-)?[0-9]+(\.[0-9]+)?"
-              onChange={(e) => (os_sph.current = e.target.value)}
+              value={os_sph}
+              onChange={(e) => setOsSph(e.target.value)}
             />
           </label>
           <label>
             cyl:
             <TextInput
               pattern="(\+|-)?[0-9]+(\.[0-9]+)?"
-              onChange={(e) => (os_cyl.current = e.target.value)}
+              value={os_cyl}
+              onChange={(e) => setOsCyl(e.target.value)}
             />
           </label>
         </MeasurementGroup>

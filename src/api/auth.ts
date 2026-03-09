@@ -36,7 +36,12 @@ export function googleLogin(idToken: string) {
   });
 }
 
-export function signupWithPasswordAuth(username: string, password: string) {
+export function signupWithPasswordAuth(
+  username: string,
+  password: string,
+  email: string,
+  receive_email_updates: boolean,
+) {
   return jsonFetch(
     API_ROOT + "/auth/user/passwordAuth",
     {
@@ -45,12 +50,17 @@ export function signupWithPasswordAuth(username: string, password: string) {
     {
       username,
       password,
+      email,
+      receive_email_updates,
     },
     false,
   );
 }
 
-export function signupWithGoogleAuth(idToken: string) {
+export function signupWithGoogleAuth(
+  idToken: string,
+  receive_email_updates: boolean,
+) {
   return jsonFetch(
     API_ROOT + "/auth/user/googleAuth",
     {
@@ -58,6 +68,7 @@ export function signupWithGoogleAuth(idToken: string) {
     },
     {
       token: idToken,
+      receive_email_updates,
     },
     false,
   );
@@ -108,6 +119,17 @@ export function removeGoogleAuth() {
       method: "DELETE",
     },
     undefined,
+    false,
+  );
+}
+
+export function editSelf(email?: string, receive_email_updates?: boolean) {
+  return jsonFetchWithSession(
+    API_ROOT + "/auth/user",
+    {
+      method: "PATCH",
+    },
+    { email, receive_email_updates },
     false,
   );
 }

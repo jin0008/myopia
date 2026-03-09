@@ -243,6 +243,9 @@ export const RadioField = styled.label`
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.875rem;
+  input[type="radio"] {
+    accent-color: ${theme.primary};
+  }
   &:has(input:checked) {
     background-color: ${theme.primary50};
     font-weight: 500;

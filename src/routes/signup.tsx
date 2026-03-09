@@ -7,11 +7,15 @@ import { ButtonsDiv, LoginDiv } from "./login";
 import { signupWithGoogleAuth, signupWithPasswordAuth } from "../api/auth";
 import { HttpError } from "../lib/fetch";
 import { GoogleLogin } from "@react-oauth/google";
+import { Switch } from "@mui/material";
+import theme from "../theme";
 
 export default function Signup() {
   const username = useRef("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [email, setEmail] = useState("");
+  const [receiveEmailUpdates, setReceiveEmailUpdates] = useState(false);
   const navigate = useNavigate();
 
   function handleSignup() {
@@ -19,8 +23,16 @@ export default function Signup() {
       alert("Passwords do not match");
       return;
     }
-    signupWithPasswordAuth(username.current, password)
-      .then(() => navigate("/login"))
+    signupWithPasswordAuth(
+      username.current,
+      password,
+      email,
+      receiveEmailUpdates,
+    )
+      .then(() => {
+        alert("Signup successful\nPlease login to continue");
+        navigate("/login");
+      })
       .catch((e: HttpError) => {
         console.error(e);
         alert("Signup failed\n" + e.message);
@@ -28,8 +40,11 @@ export default function Signup() {
   }
 
   function handleGoogleSignup(token: string) {
-    signupWithGoogleAuth(token)
-      .then(() => navigate("/login"))
+    signupWithGoogleAuth(token, false)
+      .then(() => {
+        alert("Signup successful\nPlease login to continue");
+        navigate("/login");
+      })
       .catch((e: HttpError) => {
         console.error(e);
         alert("Signup failed\n" + e.message);
@@ -51,7 +66,6 @@ export default function Signup() {
         style={{
           display: "flex",
           gap: "32px",
-          height: "40%",
         }}
       >
         <LoginDiv>
@@ -80,6 +94,43 @@ export default function Signup() {
                   : undefined
               }
             />
+            <LoginInput
+              defaultValue={""}
+              placeholder="Email"
+              type="email"
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                justifyContent: "space-between",
+              }}
+            >
+              Receive Email Updates:
+              <Switch
+                checked={receiveEmailUpdates}
+                onChange={(e) => setReceiveEmailUpdates(e.target.checked)}
+                sx={{
+                  "& .MuiSwitch-track": {
+                    backgroundColor: theme.primary,
+                  },
+                  "& .MuiSwitch-thumb": {
+                    backgroundColor: "white",
+                  },
+
+                  "& .MuiSwitch-switchBase": {
+                    "&.Mui-checked": {
+                      "+ .MuiSwitch-track": {
+                        backgroundColor: theme.primary,
+                        opacity: 1,
+                      },
+                    },
+                  },
+                }}
+              />
+            </label>
           </div>
           <PrimaryButton onClick={handleSignup}>Sign up</PrimaryButton>
           <GoogleLogin

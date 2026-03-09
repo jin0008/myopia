@@ -4,10 +4,8 @@ import { getLatestPatientData, postPatientData } from "../../api/patient";
 import { PrimaryButton } from "../../components/button";
 import type { Nullable } from "../../types/util";
 import type { PatientData } from "../../types/patient";
-import {
-  ActivityDurationCategory,
-  type MyopiaStatus,
-} from "../../types/patient";
+import { type MyopiaStatus } from "../../types/patient";
+import theme from "../../theme";
 import {
   PatientDataHeader,
   PatientDataSection,
@@ -17,15 +15,7 @@ import {
   RadioGroup,
   RadioField,
 } from "./styles";
-
-export const ACTIVITY_LABELS: Record<ActivityDurationCategory, string> = {
-  [ActivityDurationCategory.ZeroToOne]: "0–1 h/day",
-  [ActivityDurationCategory.OneToTwo]: "1–2 h/day",
-  [ActivityDurationCategory.TwoToFour]: "2–4 h/day",
-  [ActivityDurationCategory.FourToSix]: "4–6 h/day",
-  [ActivityDurationCategory.SixToEight]: "6–8 h/day",
-  [ActivityDurationCategory.EightToInfinity]: "8+ h/day",
-};
+import { Slider } from "@mui/material";
 
 export const MYOPIA_STATUS_LABELS: Record<MyopiaStatus, string> = {
   myopia: "Myopia",
@@ -35,8 +25,8 @@ export const MYOPIA_STATUS_LABELS: Record<MyopiaStatus, string> = {
 };
 
 type PatientDataFormState = {
-  nearwork_activity: ActivityDurationCategory | null;
-  outdoor_activity: ActivityDurationCategory | null;
+  nearwork_activity: number | null;
+  outdoor_activity: number | null;
   mother_myopia_status: MyopiaStatus | null;
   father_myopia_status: MyopiaStatus | null;
 };
@@ -51,8 +41,8 @@ function toFormState(data: Nullable<PatientData> | null): PatientDataFormState {
     };
   }
   return {
-    nearwork_activity: data.nearwork_activity?.category ?? null,
-    outdoor_activity: data.outdoor_activity?.category ?? null,
+    nearwork_activity: data.nearwork_activity?.hours ?? null,
+    outdoor_activity: data.outdoor_activity?.hours ?? null,
     mother_myopia_status: data.mother_myopia_status?.status ?? null,
     father_myopia_status: data.father_myopia_status?.status ?? null,
   };
@@ -98,10 +88,10 @@ export function PatientDataInput({ patientId, edit }: PatientDataInputProps) {
     mutationFn: () =>
       postPatientData(patientId, {
         nearwork_activity: formState.nearwork_activity
-          ? { category: formState.nearwork_activity }
+          ? { hours: formState.nearwork_activity }
           : undefined,
         outdoor_activity: formState.outdoor_activity
-          ? { category: formState.outdoor_activity }
+          ? { hours: formState.outdoor_activity }
           : undefined,
         mother_myopia_status: formState.mother_myopia_status
           ? { status: formState.mother_myopia_status }
@@ -118,7 +108,6 @@ export function PatientDataInput({ patientId, edit }: PatientDataInputProps) {
     },
   });
 
-  const activityCategories = Object.values(ActivityDurationCategory);
   const myopiaStatuses: MyopiaStatus[] = [
     "myopia",
     "high_myopia",
@@ -167,33 +156,33 @@ export function PatientDataInput({ patientId, edit }: PatientDataInputProps) {
     <>
       <PatientDataField>
         <PatientDataFieldLabel>Nearwork activity</PatientDataFieldLabel>
-        <RadioFieldset
-          value={formState.nearwork_activity}
-          options={activityCategories}
-          labels={ACTIVITY_LABELS}
-          onChange={(v) =>
-            setFormState((s) => ({
-              ...s,
-              nearwork_activity: v,
-            }))
-          }
-          showUnknown={initialFormState.nearwork_activity === null}
-        />
+        <div style={{ padding: "0 24px" }}>
+          <HoursSlider
+            showUnknown={initialFormState.nearwork_activity === null}
+            value={formState.nearwork_activity}
+            onChange={(v) =>
+              setFormState((s) => ({
+                ...s,
+                nearwork_activity: v,
+              }))
+            }
+          />
+        </div>
       </PatientDataField>
       <PatientDataField>
         <PatientDataFieldLabel>Outdoor activity</PatientDataFieldLabel>
-        <RadioFieldset
-          value={formState.outdoor_activity}
-          options={activityCategories}
-          labels={ACTIVITY_LABELS}
-          onChange={(v) =>
-            setFormState((s) => ({
-              ...s,
-              outdoor_activity: v,
-            }))
-          }
-          showUnknown={initialFormState.outdoor_activity === null}
-        />
+        <div style={{ padding: "0 24px" }}>
+          <HoursSlider
+            showUnknown={initialFormState.outdoor_activity === null}
+            value={formState.outdoor_activity}
+            onChange={(v) =>
+              setFormState((s) => ({
+                ...s,
+                outdoor_activity: v,
+              }))
+            }
+          />
+        </div>
       </PatientDataField>
       <PatientDataField>
         <PatientDataFieldLabel>Mother myopia status</PatientDataFieldLabel>
@@ -245,5 +234,37 @@ export function PatientDataInput({ patientId, edit }: PatientDataInputProps) {
         <PatientDataGrid>{content}</PatientDataGrid>
       </PatientDataSection>
     </div>
+  );
+}
+
+function HoursSlider({
+  value,
+  onChange,
+  showUnknown = false,
+}: {
+  value: number | null;
+  onChange: (value: number | null) => void;
+  showUnknown?: boolean;
+}) {
+  return (
+    <Slider
+      min={showUnknown ? 0 : 1}
+      max={12}
+      step={1}
+      value={value ?? 0}
+      valueLabelDisplay="auto"
+      marks={[
+        ...(showUnknown ? [{ value: 0, label: "unknown" }] : []),
+        { value: 3, label: "3 h/day" },
+        { value: 6, label: "6 h/day" },
+        { value: 9, label: "9 h/day" },
+        { value: 12, label: "12 h/day" },
+      ]}
+      track={false}
+      onChange={(_, value) => onChange(value === 0 ? null : value)}
+      sx={{
+        color: theme.primary,
+      }}
+    />
   );
 }

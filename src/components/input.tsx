@@ -12,6 +12,10 @@ export const LoginInput = styled.input`
     outline: none;
     border: 1px solid ${theme.primary};
   }
+
+  &:user-invalid {
+    border: 1px solid red;
+  }
 `;
 
 export const TextInput = styled.input`
