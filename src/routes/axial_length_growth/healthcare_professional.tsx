@@ -107,28 +107,26 @@ function PatientOrderBy({
     orderByDirection: "asc" | "desc",
   ) => void;
 }) {
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const [orderBy, orderByDirection] = e.target.value.split("-") as [
+      "created_at" | "registration_number" | "date_of_birth" | "sex",
+      "asc" | "desc",
+    ];
+    onSelect(orderBy, orderByDirection);
+  };
+
   return (
-    <PatientOrderBySelect>
-      <option onClick={() => onSelect("created_at", "desc")}>
-        created(desc)
-      </option>
-      <option onClick={() => onSelect("created_at", "asc")}>
-        created(asc)
-      </option>
-      <option onClick={() => onSelect("registration_number", "desc")}>
+    <PatientOrderBySelect onChange={handleChange}>
+      <option value="created_at-desc">created(desc)</option>
+      <option value="created_at-asc">created(asc)</option>
+      <option value="registration_number-desc">
         registration number(desc)
       </option>
-      <option onClick={() => onSelect("registration_number", "asc")}>
-        registration number(asc)
-      </option>
-      <option onClick={() => onSelect("date_of_birth", "desc")}>
-        date of birth(desc)
-      </option>
-      <option onClick={() => onSelect("date_of_birth", "asc")}>
-        date of birth(asc)
-      </option>
-      <option onClick={() => onSelect("sex", "desc")}>sex(desc)</option>
-      <option onClick={() => onSelect("sex", "asc")}>sex(asc)</option>
+      <option value="registration_number-asc">registration number(asc)</option>
+      <option value="date_of_birth-desc">date of birth(desc)</option>
+      <option value="date_of_birth-asc">date of birth(asc)</option>
+      <option value="sex-desc">sex(desc)</option>
+      <option value="sex-asc">sex(asc)</option>
     </PatientOrderBySelect>
   );
 }

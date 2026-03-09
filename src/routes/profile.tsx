@@ -77,6 +77,7 @@ function UserProfile() {
     useState(false);
   const [isDeleteAccountDialogOpen, setIsDeleteAccountDialogOpen] =
     useState(false);
+  const [isEditEmailDialogOpen, setIsEditEmailDialogOpen] = useState(false);
 
   const queryClient = useQueryClient();
   const addGoogleAuthMutation = useMutation({
@@ -232,9 +233,21 @@ function UserProfile() {
       </div>
       <div>
         <h3>Email</h3>
-        <p>
-          Your email is: <strong>{user.email ?? "not registered"}</strong>
-        </p>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <p>
+            Your email is: <strong>{user.email ?? "not registered"}</strong>
+          </p>
+          <PrimaryButton onClick={() => setIsEditEmailDialogOpen(true)}>
+            Edit
+          </PrimaryButton>
+        </div>
+        <div style={{ height: "8px" }}></div>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <p>
             Receive email updates:{" "}
@@ -274,8 +287,67 @@ function UserProfile() {
           open={isDeleteAccountDialogOpen}
           onClose={() => setIsDeleteAccountDialogOpen(false)}
         />
+        <EditEmailDialog
+          open={isEditEmailDialogOpen}
+          onClose={() => setIsEditEmailDialogOpen(false)}
+        />
       </div>
     </ProfileSettingsDiv>
+  );
+}
+
+function EditEmailDialog({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  const { user } = useContext(UserContext);
+  const [email, setEmail] = useState(user?.email ?? "");
+
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: (email: string) => editSelf(email),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["currentUser"],
+      });
+      alert("Email updated");
+      onClose();
+    },
+    onError: (e) => {
+      alert("Email update failed: " + e.message);
+    },
+  });
+
+  useEffect(() => {
+    if (open) {
+      setEmail(user?.email ?? "");
+    }
+  }, [open, user?.email]);
+
+  return (
+    <Dialog open={open} onClose={onClose}>
+      <DialogTitle>Edit email</DialogTitle>
+      <DialogContent>
+        <label>
+          Email:
+          <TextInput
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="your@email.com"
+          />
+        </label>
+      </DialogContent>
+      <DialogActions>
+        <PrimaryNagativeButton onClick={onClose}>Cancel</PrimaryNagativeButton>
+        <PrimaryButton onClick={() => mutation.mutate(email)}>
+          Confirm
+        </PrimaryButton>
+      </DialogActions>
+    </Dialog>
   );
 }
 
