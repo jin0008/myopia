@@ -36,7 +36,7 @@ export default function HospitalSelector({
         hospital.code.includes(search),
     );
   }, [hospitalQuery.data, search]);
-  
+
   return (
     <Dialog open={open} onClose={onClose}>
       <DialogTitle>Select Hospital</DialogTitle>
@@ -54,7 +54,7 @@ export default function HospitalSelector({
         {hospitalQuery.isLoading && "Loading..."}
         {hospitalQuery.isError && "Error"}
         {hospitalQuery.isSuccess && (
-          <ul style={{ listStylePosition: "inside" }}>
+          <ul style={{ listStylePosition: "inside", userSelect: "none" }}>
             {filteredData.map((hospital: any) => (
               <li key={hospital.id} onClick={() => onSelect(hospital)}>
                 {hospital.name}({hospital.code})

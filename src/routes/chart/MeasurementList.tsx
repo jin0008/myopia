@@ -293,9 +293,9 @@ export function RefractiveErrorRegisterDialog({
 
   const handleConfirm = () => {
     const od_sphValue = od_sph === "" ? null : parseFloat(od_sph);
-    const od_cylValue = od_cyl === "" ? null : parseFloat(od_cyl);
+    const od_cylValue = od_cyl === "" ? 0 : parseFloat(od_cyl);
     const os_sphValue = os_sph === "" ? null : parseFloat(os_sph);
-    const os_cylValue = os_cyl === "" ? null : parseFloat(os_cyl);
+    const os_cylValue = os_cyl === "" ? 0 : parseFloat(os_cyl);
     if (
       !methodId ||
       Number.isNaN(od_sphValue as number) ||
@@ -303,9 +303,7 @@ export function RefractiveErrorRegisterDialog({
       Number.isNaN(os_sphValue as number) ||
       Number.isNaN(os_cylValue as number) ||
       od_sphValue === null ||
-      od_cylValue === null ||
-      os_sphValue === null ||
-      os_cylValue === null
+      os_sphValue === null
     ) {
       alert("Invalid value detected");
       return;
@@ -363,6 +361,7 @@ export function RefractiveErrorRegisterDialog({
             cyl:
             <TextInput
               pattern="(\+|-)?[0-9]+(\.[0-9]+)?"
+              placeholder="(defaults to 0)"
               value={od_cyl}
               onChange={(e) => setOdCyl(e.target.value)}
             />
@@ -382,6 +381,7 @@ export function RefractiveErrorRegisterDialog({
             cyl:
             <TextInput
               pattern="(\+|-)?[0-9]+(\.[0-9]+)?"
+              placeholder="(defaults to 0)"
               value={os_cyl}
               onChange={(e) => setOsCyl(e.target.value)}
             />

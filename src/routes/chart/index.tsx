@@ -456,7 +456,9 @@ export default function ChartRoute() {
               patientBirthday={new Date(patientQuery.data.date_of_birth)}
               patientSex={patientQuery.data.sex}
               referenceEthnicity={referenceEthnicity}
-              onCanvasChange={(canvas) => setTargetCanvas(canvas)}
+              onCanvasChange={(canvas) => {
+                setTargetCanvas(canvas);
+              }}
             />
             <MagnifyingGlass
               targetCanvas={targetCanvas}

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import autocolors from "chartjs-plugin-autocolors";
+import annotation from "chartjs-plugin-annotation";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -30,6 +31,7 @@ ChartJS.register(
   Tooltip,
   Legend,
   autocolors,
+  annotation,
 );
 
 interface ChartProps {
@@ -57,12 +59,14 @@ export function Chart({
 }: ChartProps) {
   const isMobile = useIsMobile();
 
-  const chartRef = useRef<ChartJS<"scatter">>(null);
+  const chartRef = useRef<ChartJS<"scatter"> | null>(null);
 
-  useEffect(() => {
-    if (!chartRef.current) return;
-    onCanvasChange(chartRef.current.canvas);
-  }, [chartRef.current]);
+  const chartCallbackRef = (
+    instance: ChartJS<"scatter"> | null | undefined,
+  ) => {
+    chartRef.current = instance ?? null;
+    if (instance?.canvas) onCanvasChange(instance.canvas);
+  };
 
   const growthData = useQuery<
     Array<{ percentile: number; age: number; value: number }>
@@ -264,22 +268,6 @@ export function Chart({
     return { minY2, maxY2 };
   }, [sortedRefractiveErrorMeasurement]);
 
-  const treatmentDisplayData = useMemo(() => {
-    const birthdayMs = patientBirthday.getTime();
-    const msPerYear = 1000 * 60 * 60 * 24 * 365.25;
-    return [...sortedTreatment].reverse().map((treatment) => {
-      const startAge =
-        (new Date(treatment.start_date).getTime() - birthdayMs) / msPerYear;
-      const endAge = treatment.end_date
-        ? (new Date(treatment.end_date).getTime() - birthdayMs) / msPerYear
-        : (Date.now() - birthdayMs) / msPerYear;
-      const treatmentName =
-        treatmentQuery.data?.find((t: any) => t.id === treatment.treatment_id)
-          ?.name ?? "???";
-      return { name: treatmentName, startAge, endAge };
-    });
-  }, [sortedTreatment, treatmentQuery.data, patientBirthday]);
-
   const [xScale, setXScale] = useState<{ left: number; width: number }>({
     left: 0,
     width: 0,
@@ -289,12 +277,52 @@ export function Chart({
     width: 0,
   });
 
+  const [annotations, otherData] = useMemo(() => {
+    const annotations: any[] = [];
+    const otherData: { name: string; startAge: number; endAge: number }[] = [];
+    const birthdayMs = patientBirthday.getTime();
+    const msPerYear = 1000 * 60 * 60 * 24 * 365.25;
+    [...sortedTreatment].reverse().forEach((treatment) => {
+      const treatmentName: string =
+        treatmentQuery.data?.find((t: any) => t.id === treatment.treatment_id)
+          ?.name ?? "???";
+      const startAge =
+        (new Date(treatment.start_date).getTime() - birthdayMs) / msPerYear;
+      const endAge = treatment.end_date
+        ? (new Date(treatment.end_date).getTime() - birthdayMs) / msPerYear
+        : (Date.now() - birthdayMs) / msPerYear;
+      if (treatmentName.endsWith("atropine")) {
+        annotations.push({
+          type: "box" as const,
+          xMin: startAge,
+          xMax: endAge,
+          backgroundColor: theme.primary50,
+          label: {
+            display: true,
+            color: "rgba(0, 0, 0, 0.75)",
+            content: treatmentName
+              .split(" ")
+              .filter((s) => s !== "atropine")
+              .join(" "),
+            position: { x: "start", y: "end" },
+          },
+        });
+      } else {
+        otherData.push({ name: treatmentName, startAge, endAge });
+      }
+    });
+    return [annotations, otherData];
+  }, [sortedTreatment, treatmentQuery.data, patientBirthday]);
+
   const options = useMemo(
     () => ({
       responsive: true,
       maintainAspectRatio: false,
       devicePixelRatio: window.devicePixelRatio * 2,
       plugins: {
+        annotation: {
+          annotations: annotations,
+        },
         autocolors: {
           mode: "dataset" as const,
           offset: 0,
@@ -349,8 +377,10 @@ export function Chart({
               xScalePrevRef.current.left !== next.left ||
               xScalePrevRef.current.width !== next.width
             ) {
-              xScalePrevRef.current = next;
-              setXScale(next);
+              if (!Number.isNaN(next.left) && !Number.isNaN(next.width)) {
+                xScalePrevRef.current = next;
+                setXScale(next);
+              }
             }
           },
         },
@@ -402,6 +432,7 @@ export function Chart({
       isMobile,
       displayAxialLength,
       refractiveErrorType,
+      annotations,
       minX,
       maxX,
       minY,
@@ -410,6 +441,20 @@ export function Chart({
       maxY2,
     ],
   );
+
+  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   if (!referenceDataset.length) return null;
 
@@ -424,55 +469,53 @@ export function Chart({
     <div style={{ position: "relative", height: "100%", width: "100%" }}>
       <ChartContainer>
         <Scatter
-          ref={chartRef}
+          key={`${displayAxialLength}-${refractiveErrorType}-${windowSize.width}-${windowSize.height}`}
+          ref={chartCallbackRef}
           options={options}
           data={{
             datasets: dataset,
           }}
         />
       </ChartContainer>
-      {treatmentDisplayData.length > 0 && (
-        <div
-          style={{
-            marginLeft: xScale.left,
-            position: "relative",
-          }}
-        >
-          {treatmentDisplayData.map((t, index) => {
+      {otherData.length > 0 && (
+        <div>
+          {otherData.map((t, index) => {
             const left = ((t.startAge - minX) / xRange) * xScale.width;
             const width = Math.max(
               1,
               ((t.endAge - t.startAge) / xRange) * xScale.width,
             );
             return (
-              <div
-                key={index}
-                style={{
-                  position: "relative",
-                  width: "100%",
-                  height: 6,
-                }}
-              >
+              <div key={index} style={{ display: "flex", height: 24 }}>
                 <div
                   style={{
-                    position: "absolute",
-                    left: left,
-                    width: width,
-                    top: 0,
-                    height: 2,
-                    backgroundColor: theme.primary,
-                  }}
-                />
-                <span
-                  style={{
-                    position: "absolute",
-                    left: left,
-                    top: 2,
-                    fontSize: 12,
+                    width: xScale.left,
+                    flexShrink: 0,
+                    textAlign: "right",
+                    fontWeight: 600,
                   }}
                 >
                   {t.name}
-                </span>
+                </div>
+                <div
+                  style={{
+                    position: "relative",
+                    width: "100%",
+                    height: "100%",
+                  }}
+                >
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: left,
+                      width: width,
+                      top: 4,
+                      bottom: 4,
+                      backgroundColor: "#08334a",
+                      border: "2px solid #000000",
+                    }}
+                  />
+                </div>
               </div>
             );
           })}
