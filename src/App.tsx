@@ -1,6 +1,6 @@
 // myopia/src/App.tsx
 
-import { createContext, lazy, useState } from "react";
+import { createContext, lazy, Suspense, useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router";
 import { LanguageProvider } from "./lib/language_context";
 import { useQuery } from "@tanstack/react-query";
@@ -68,6 +68,7 @@ const App = () => {
           }}
         >
           <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+            <Suspense fallback={<div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading…</div>}>
             <Routes>
               <Route element={<HeaderRoute></HeaderRoute>}>
                 <Route path="/" element={<Home />} />
@@ -96,6 +97,7 @@ const App = () => {
                 <Route path="/tos" element={<TOS />} />
               </Route>
             </Routes>
+            </Suspense>
           </GoogleOAuthProvider>
         </UserContext.Provider>
       </LanguageProvider>
