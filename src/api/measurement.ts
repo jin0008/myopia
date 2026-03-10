@@ -37,3 +37,14 @@ export function deleteMeasurement(id: string) {
     false,
   );
 }
+
+export function getMeasurementsByHospital(hospitalId: string) {
+  return jsonFetchWithSession(
+    API_ROOT + "/hospital/" + hospitalId + "/measurement",
+    {
+      method: "GET",
+    },
+    undefined,
+    true,
+  );
+}

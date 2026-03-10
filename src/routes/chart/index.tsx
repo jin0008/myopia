@@ -634,10 +634,6 @@ async function generateXlsx(
     gcTime: Infinity,
   });
 
-  console.log(treatmentList);
-  console.log(instrumentList);
-  console.log(refractiveErrorMethodList);
-
   const workbook = new ExcelJS.Workbook();
   const axialLengthWorksheet = workbook.addWorksheet("axial_length");
   axialLengthWorksheet.columns = [

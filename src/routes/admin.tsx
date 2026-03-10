@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getHospitalList, getMembersByHospital } from "../api/hospital";
-import { useContext, useMemo, useState } from "react";
+import { useCallback, useContext, useMemo, useState } from "react";
 import styled from "styled-components";
 import {
   deleteProfessional,
@@ -10,6 +10,11 @@ import { PrimaryButton, PrimaryNagativeButton } from "../components/button";
 import { TopDiv } from "../components/div";
 import { SearchInput } from "../components/input";
 import { UserContext } from "../App";
+
+import downloadIcon from "../assets/download.svg";
+import { getMeasurementsByHospital } from "../api/measurement";
+import ExcelJS from "exceljs";
+import { getEthnicityList, getInstrumentList } from "../api/static";
 
 const Table = styled.table`
   text-align: center;
@@ -155,6 +160,10 @@ export default function Admin() {
 }
 
 const HospitalCardDiv = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
   padding: 8px;
   border: 1px solid black;
   cursor: pointer;
@@ -171,12 +180,108 @@ function HospitalCard({
   hospital: any;
   onSelect: () => void;
 }) {
+  const queryClient = useQueryClient();
+
+  const handleDownload = useCallback(async () => {
+    try {
+      if (!confirm("Download measurements for this hospital?")) {
+        return;
+      }
+      const data = await getMeasurementsByHospital(hospital.id);
+      const instrumentList = await queryClient.fetchQuery({
+        queryKey: ["instrument"],
+        queryFn: () => getInstrumentList(),
+        staleTime: Infinity,
+        gcTime: Infinity,
+      });
+      const ethnicityList = await queryClient.fetchQuery({
+        queryKey: ["ethnicity"],
+        queryFn: () => getEthnicityList(),
+        staleTime: Infinity,
+        gcTime: Infinity,
+      });
+      const instrumentIdToName: Map<string, string> = new Map(
+        instrumentList.map((instrument: any) => [
+          instrument.id,
+          instrument.name,
+        ]),
+      );
+      const ethnicityIdToName: Map<string, string> = new Map(
+        ethnicityList.map((ethnicity: any) => [ethnicity.id, ethnicity.name]),
+      );
+
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Measurements");
+      worksheet.columns = [
+        { header: "hospital", key: "hospital" },
+        { header: "registration_number", key: "registration_number" },
+        { header: "date_of_birth", key: "date_of_birth" },
+        { header: "sex", key: "sex" },
+        { header: "ethnicity", key: "ethnicity" },
+        { header: "date", key: "date" },
+        { header: "instrument", key: "instrument" },
+        { header: "OD", key: "od" },
+        { header: "OS", key: "os" },
+      ];
+      const hospitalName = hospital.name + " (" + hospital.code + ")";
+      data.forEach((patient: any) => {
+        const registrationNumber = patient.registration_number;
+        const dateOfBirth = patient.date_of_birth.split("T")[0];
+        const sex = patient.sex;
+        const ethnicity =
+          ethnicityIdToName.get(patient.ethnicity_id) || "Unknown";
+        patient.measurement.forEach((measurement: any) => {
+          const date = measurement.date.split("T")[0];
+          const instrument =
+            instrumentIdToName.get(measurement.instrument_id) || "Unknown";
+          const od = measurement.od;
+          const os = measurement.os;
+          worksheet.addRow({
+            hospital: hospitalName,
+            registration_number: registrationNumber,
+            date_of_birth: dateOfBirth,
+            sex: sex,
+            ethnicity: ethnicity,
+            date: date,
+            instrument: instrument,
+            od: od,
+            os: os,
+          });
+        });
+      });
+      const buffer = await workbook.xlsx.writeBuffer();
+      const url = URL.createObjectURL(
+        new Blob([buffer], {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        }),
+      );
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${hospital.name}(${hospital.code}).xlsx`;
+      a.click();
+    } catch (error) {
+      alert("Error downloading measurements");
+      console.error(error);
+    }
+  }, [hospital, queryClient]);
+
   return (
     <HospitalCardDiv onClick={onSelect}>
-      <p>
-        {hospital.name}({hospital.country.code})
-      </p>
-      <p>Code: {hospital.code}</p>
+      <div>
+        <p>
+          {hospital.name}({hospital.country.code})
+        </p>
+        <p>Code: {hospital.code}</p>
+      </div>
+      <img
+        src={downloadIcon}
+        style={{ width: "24px", height: "24px" }}
+        alt="download"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleDownload();
+        }}
+      />
     </HospitalCardDiv>
   );
 }
@@ -194,7 +299,7 @@ function HospitalList({ onSelect }: { onSelect: (hospitalId: any) => void }) {
       return query.data.filter(
         (e: any) =>
           e.name.toLowerCase().includes(search.toLowerCase()) ||
-          e.code.includes(search)
+          e.code.includes(search),
       );
     }
     return [];
