@@ -143,7 +143,7 @@ export default function WhoWeAre() {
             is non-commercial.
           </p>
           <p>
-            <strong>Reference</strong>
+            <strong>References</strong>
             <br />
             1. Tideman JWL, Polling JR, Vingerling JR, et al. Axial length
             growth and the risk of developing myopia in European children. Acta
