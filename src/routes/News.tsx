@@ -69,15 +69,18 @@ const Subtitle = styled.p`
 const List = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 16px;
 `;
 
 const Card = styled.div`
-  padding: 28px 0;
-  border-bottom: 1px solid #eee;
+  padding: 28px;
+  border: 1px solid #e8e8e8;
+  border-radius: 16px;
+  background: white;
+  transition: box-shadow 0.2s;
 
-  &:first-child {
-    border-top: 1px solid #eee;
+  &:hover {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
   }
 `;
 
@@ -101,19 +104,19 @@ const JournalName = styled.span`
 `;
 
 const ItemTitle = styled.h3`
-  font-size: 1.15rem;
-  color: ${theme.textPrimary};
+  font-size: 1.3rem;
+  color: #1a3a5c;
   margin-bottom: 8px;
   line-height: 1.4;
-  font-weight: 600;
+  font-weight: 700;
 
   a {
-    color: inherit;
+    color: #1a3a5c;
     text-decoration: none;
 
     &:hover {
       text-decoration: none;
-      color: ${theme.primary};
+      color: #0d2847;
     }
   }
 `;
