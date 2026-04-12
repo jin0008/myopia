@@ -2,175 +2,192 @@ import { useParams, Link } from "react-router";
 import styled from "styled-components";
 import { treatments } from "../data/treatments";
 import { MOBILE_MEDIA } from "../lib/constants";
-import { ArrowBack } from "@mui/icons-material";
+import theme from "../theme";
 
 const Container = styled.div`
-  max-width: 980px;
+  max-width: 800px;
   margin: 0 auto;
-  padding: 40px 20px 100px;
-  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 60px 24px 100px;
 
   @media ${MOBILE_MEDIA} {
-    padding: 20px 20px 60px;
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    padding: 32px 16px 60px;
   }
 `;
 
-const BackLink = styled(Link)`
-  display: inline-flex;
-  align-items: center;
-  text-decoration: none;
-  color: var(--secondary-text);
-  font-size: 13px;
-  font-weight: 500;
+const Label = styled.div`
+  font-size: 14px;
+  font-weight: 600;
+  color: ${theme.primary};
+  text-align: center;
+  margin-bottom: 12px;
+`;
+
+const Title = styled.h1`
+  font-size: 2.5rem;
+  text-align: center;
+  color: ${theme.textPrimary};
+  font-weight: 700;
   margin-bottom: 40px;
-  transition: all 0.2s;
-  padding: 8px 12px;
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-
-  &:hover {
-    color: var(--primary-text);
-    transform: translateX(-5px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  }
-
-  svg {
-    margin-right: 6px;
-    font-size: 16px;
-  }
-`;
-
-const HeroSection = styled.div`
-  display: flex;
-  gap: 60px;
-  margin-bottom: 100px;
-  align-items: center;
+  line-height: 1.2;
 
   @media ${MOBILE_MEDIA} {
-    flex-direction: column;
-    gap: 40px;
-    margin-bottom: 60px;
+    font-size: 2rem;
+    margin-bottom: 24px;
   }
 `;
 
 const ImageContainer = styled.div`
-  flex: 1;
-  border-radius: 30px;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto 48px;
+  border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-  background: #fbfbfd;
+  background: #f8f9fa;
+
+  img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  @media ${MOBILE_MEDIA} {
+    margin-bottom: 32px;
+  }
+`;
+
+const SectionWrapper = styled.div`
+  margin-bottom: 48px;
+
+  @media ${MOBILE_MEDIA} {
+    margin-bottom: 32px;
+  }
+`;
+
+const SectionLabel = styled.h3`
+  font-size: 14px;
+  font-weight: 600;
+  color: ${theme.textPrimary};
+  margin-bottom: 16px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  aspect-ratio: 1;
-  width: 100%; /* Full width on mobile */
+  gap: 4px;
+
+  &::before {
+    content: "";
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    background-color: ${theme.textPrimary};
+    border-radius: 50%;
+  }
+`;
+
+const SectionText = styled.p`
+  font-size: 15px;
+  color: ${theme.textSecondary};
+  line-height: 1.7;
+`;
+
+const SubSectionTitle = styled.h3`
+  font-size: 15px;
+  font-weight: 600;
+  color: ${theme.textPrimary};
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const GreenIcon = styled.span`
+  color: ${theme.primary};
+  font-size: 18px;
+`;
+
+const OtherTreatmentsSection = styled.div`
+  margin-top: 80px;
+  border-top: 1px solid #eee;
+  padding-top: 40px;
+
+  @media ${MOBILE_MEDIA} {
+    margin-top: 48px;
+    padding-top: 24px;
+  }
+`;
+
+const OtherTitle = styled.h2`
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: ${theme.textPrimary};
+  text-align: center;
+  margin-bottom: 32px;
+`;
+
+const OtherGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+
+  @media ${MOBILE_MEDIA} {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+`;
+
+const OtherCard = styled(Link)`
+  text-decoration: none;
+  color: inherit;
+  border-radius: 16px;
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+  }
+`;
+
+const OtherCardImage = styled.div`
+  height: 160px;
+  background: #f8f9fa;
+  overflow: hidden;
 
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    display: block;
-    transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-
-    &:hover {
-      transform: scale(1.05);
-    }
   }
 `;
 
-const HeaderContent = styled.div`
-  flex: 1;
-  width: 100%;
+const OtherCardContent = styled.div`
+  padding: 16px;
 `;
 
-const Label = styled.div`
-  font-size: 12px;
+const OtherCardDot = styled.div`
+  width: 8px;
+  height: 8px;
+  background-color: ${theme.primary};
+  border-radius: 50%;
+  margin-bottom: 8px;
+`;
+
+const OtherCardTitle = styled.h4`
+  font-size: 14px;
   font-weight: 600;
-  text-transform: uppercase;
-  color: var(--link-color);
-  margin-bottom: 15px;
-  letter-spacing: 0.1em;
+  color: ${theme.textPrimary};
+  margin-bottom: 6px;
 `;
 
-const Title = styled.h1`
-  font-size: 4rem;
-  margin-bottom: 25px;
-  color: var(--primary-text);
-  font-weight: 700;
-  line-height: 1.05;
-  letter-spacing: -0.02em;
-
-  @media ${MOBILE_MEDIA} {
-    font-size: 2.5rem;
-  }
-`;
-
-const Subtitle = styled.p`
-  font-size: 1.5rem;
-  color: var(--secondary-text);
-  line-height: 1.5;
-  font-weight: 400;
-
-  @media ${MOBILE_MEDIA} {
-    font-size: 1.2rem;
-  }
-`;
-
-const ContentGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 40px;
-
-  @media ${MOBILE_MEDIA} {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-`;
-
-const SectionCard = styled.div`
-  background: white;
-  padding: 50px;
-  border-radius: 30px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
-  transition: transform 0.3s;
-
-  @media ${MOBILE_MEDIA} {
-    padding: 30px;
-  }
-`;
-
-const SectionTitle = styled.h2`
-  font-size: 2rem;
-  color: var(--primary-text);
-  margin-bottom: 20px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-
-  @media ${MOBILE_MEDIA} {
-    font-size: 1.5rem;
-  }
-`;
-
-const SectionText = styled.p`
-  font-size: 1.2rem;
-  color: var(--secondary-text);
-  line-height: 1.7;
-
-  @media ${MOBILE_MEDIA} {
-    font-size: 1.1rem;
-  }
+const OtherCardDesc = styled.p`
+  font-size: 13px;
+  color: ${theme.textSecondary};
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 `;
 
 export default function TreatmentDetail() {
@@ -180,42 +197,62 @@ export default function TreatmentDetail() {
   if (!treatment) {
     return (
       <Container>
-        <BackLink to="/treatments">
-          <ArrowBack /> Treatments
-        </BackLink>
-        <h1>Treatment not found</h1>
+        <Title>Treatment not found</Title>
       </Container>
     );
   }
 
+  const otherTreatments = treatments.filter((t) => t.id !== id).slice(0, 3);
+
   return (
     <Container>
-      <BackLink to="/treatments">
-        <ArrowBack /> Treatments
-      </BackLink>
+      <Label>Myopia Control Technology</Label>
+      <Title>{treatment.title}</Title>
 
-      <HeroSection>
-        <ImageContainer>
-          <img src={treatment.imageUrl} alt={treatment.title} />
-        </ImageContainer>
-        <HeaderContent>
-          <Label>Myopia Control Technology</Label>
-          <Title>{treatment.title}</Title>
-          <Subtitle>{treatment.longDescription}</Subtitle>
-        </HeaderContent>
-      </HeroSection>
+      <ImageContainer>
+        <img src={treatment.imageUrl} alt={treatment.title} />
+      </ImageContainer>
 
-      <ContentGrid>
-        <SectionCard>
-          <SectionTitle>Mechanism</SectionTitle>
-          <SectionText>{treatment.mechanism}</SectionText>
-        </SectionCard>
+      <SectionWrapper>
+        <SectionLabel>Detail</SectionLabel>
+        <SectionText>{treatment.longDescription}</SectionText>
+      </SectionWrapper>
 
-        <SectionCard>
-          <SectionTitle>Clinical Efficacy</SectionTitle>
-          <SectionText>{treatment.efficacy}</SectionText>
-        </SectionCard>
-      </ContentGrid>
+      <SectionWrapper>
+        <SubSectionTitle>
+          <GreenIcon>⚙</GreenIcon>
+          Mechanism
+        </SubSectionTitle>
+        <SectionText>{treatment.mechanism}</SectionText>
+      </SectionWrapper>
+
+      <SectionWrapper>
+        <SubSectionTitle>
+          <GreenIcon>📊</GreenIcon>
+          Clinical Efficacy
+        </SubSectionTitle>
+        <SectionText>{treatment.efficacy}</SectionText>
+      </SectionWrapper>
+
+      {otherTreatments.length > 0 && (
+        <OtherTreatmentsSection>
+          <OtherTitle>Other Treatments</OtherTitle>
+          <OtherGrid>
+            {otherTreatments.map((t) => (
+              <OtherCard key={t.id} to={`/treatments/${t.id}`}>
+                <OtherCardImage>
+                  <img src={t.imageUrl} alt={t.title} />
+                </OtherCardImage>
+                <OtherCardContent>
+                  <OtherCardDot />
+                  <OtherCardTitle>{t.title}</OtherCardTitle>
+                  <OtherCardDesc>{t.shortDescription}</OtherCardDesc>
+                </OtherCardContent>
+              </OtherCard>
+            ))}
+          </OtherGrid>
+        </OtherTreatmentsSection>
+      )}
     </Container>
   );
 }

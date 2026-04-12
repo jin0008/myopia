@@ -1,5 +1,5 @@
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
-import { TopDiv } from "../components/div";
+// TopDiv removed - using custom PageWrapper
 import { UserContext } from "../App";
 import NotLoggedIn from "../components/not_logged_in";
 import {
@@ -41,31 +41,97 @@ import { professionalRoleList, MOBILE_MEDIA } from "../lib/constants";
 import HospitalSelector from "../components/hospital_selector";
 import { Reactive } from "../components/reactive";
 
+const PageWrapper = styled.div`
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 60px 24px 100px;
+
+  @media ${MOBILE_MEDIA} {
+    padding: 32px 16px 60px;
+  }
+`;
+
+const PageTitle = styled.h1`
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1d1d1f;
+  margin-bottom: 4px;
+
+  &::after {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: #00B167;
+    border-radius: 50%;
+    margin-left: 4px;
+    vertical-align: super;
+    font-size: 0.5em;
+  }
+`;
+
+const UserIdText = styled.p`
+  font-size: 14px;
+  color: #86868b;
+  margin-bottom: 24px;
+`;
+
+const SettingsGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+
+  @media ${MOBILE_MEDIA} {
+    grid-template-columns: 1fr;
+  }
+`;
+
 export default function Profile() {
   const { user } = useContext(UserContext);
   if (user == null) return <NotLoggedIn />;
 
   return (
-    <TopDiv style={{ margin: "0 16px" }}>
-      <h1 style={{ margin: "16px 0" }}>Your User Profile</h1>
-      <p>
-        Your user id is <strong>{user.id}</strong>
-      </p>
-      <UserProfile />
-      {user.healthcare_professional && <ProfessionalProfile />}
+    <PageWrapper>
+      <PageTitle>User Profile</PageTitle>
+      <UserIdText>User ID: {user.id}</UserIdText>
+      <SettingsGrid>
+        <UserProfile />
+        {user.healthcare_professional && <ProfessionalProfile />}
+      </SettingsGrid>
       {user.healthcare_professional?.is_admin && <HospitalAdminProfile />}
-    </TopDiv>
+    </PageWrapper>
   );
 }
 
 const ProfileSettingsDiv = styled.div`
-  border: 1px solid lightgray;
-  padding: 16px;
+  background: white;
+  border: 1px solid #eee;
+  padding: 24px;
   border-radius: 16px;
-  margin: 16px 0;
+
+  h2 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #1d1d1f;
+  }
+
+  h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 16px 0 8px;
+    color: #1d1d1f;
+  }
+
+  p {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 8px;
+  }
 
   @media ${MOBILE_MEDIA} {
     width: 100%;
+    padding: 16px;
   }
 `;
 

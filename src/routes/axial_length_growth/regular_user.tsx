@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import styled from "styled-components";
 import { UserContext } from "../../App";
 import { PrimaryButton, PrimaryNagativeButton } from "../../components/button";
-import { TopDiv } from "../../components/div";
+// TopDiv removed - using custom PageWrapper
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import {
   addUserPatient,
@@ -14,6 +14,8 @@ import { PatientCard } from "../../components/patient_card";
 import ConfirmDialog from "../../components/dialog";
 import theme from "../../theme";
 import { getHospitalList } from "../../api/hospital";
+import { MOBILE_MEDIA } from "../../lib/constants";
+import { Add } from "@mui/icons-material";
 import {
   Dialog,
   DialogTitle,
@@ -24,28 +26,85 @@ import { TextInput } from "../../components/input";
 import NotLoggedIn from "../../components/not_logged_in";
 import { HttpError } from "../../lib/fetch";
 
+const PageWrapper = styled.div`
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 60px 24px 100px;
+
+  @media ${MOBILE_MEDIA} {
+    padding: 32px 16px 60px;
+  }
+`;
+
+const PageHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+
+  @media ${MOBILE_MEDIA} {
+    flex-direction: column;
+    gap: 12px;
+  }
+`;
+
+const PageTitle = styled.h1`
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1d1d1f;
+
+  &::after {
+    content: "";
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    background-color: ${theme.primary};
+    border-radius: 50%;
+    margin-left: 4px;
+    vertical-align: super;
+    font-size: 0.5em;
+  }
+
+  @media ${MOBILE_MEDIA} {
+    font-size: 2rem;
+  }
+`;
+
+const PageSubtitle = styled.p`
+  font-size: 15px;
+  color: #86868b;
+  margin-bottom: 32px;
+`;
+
 export default function RegularProfile() {
   const { user } = useContext(UserContext);
   if (user == null) return <NotLoggedIn />;
   return (
-    <TopDiv
-      style={{
-        margin: "0 128px",
-        marginTop: "32px",
-      }}
-    >
-      <h1>Child list</h1>
+    <PageWrapper>
+      <PageHeader>
+        <div>
+          <PageTitle>Child list</PageTitle>
+          <PageSubtitle>환자 리스트를 확인하고 관리하세요</PageSubtitle>
+        </div>
+      </PageHeader>
       <PatientList />
-    </TopDiv>
+    </PageWrapper>
   );
 }
 
 const GridDiv = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
-  padding: 16px;
   width: 100%;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media ${MOBILE_MEDIA} {
+    grid-template-columns: 1fr;
+  }
 `;
 
 function PatientList() {
@@ -86,9 +145,6 @@ function PatientList() {
             }}
           />
         ))}
-        <AddCardDiv onClick={() => setRegisterDialogOpen(true)}>
-          register child
-        </AddCardDiv>
       </GridDiv>
       {deleteTargetPatient && (
         <ConfirmDialog
@@ -101,6 +157,12 @@ function PatientList() {
           }}
         />
       )}
+      <RegisterButtonWrapper>
+        <RegisterButton onClick={() => setRegisterDialogOpen(true)}>
+          <Add style={{ fontSize: "20px" }} />
+          Register Child
+        </RegisterButton>
+      </RegisterButtonWrapper>
       <PatientRegisterDialog
         open={registerDialogOpen}
         onClose={() => setRegisterDialogOpen(false)}
@@ -109,17 +171,37 @@ function PatientList() {
   );
 }
 
-const AddCardDiv = styled.div`
-  background-color: ${theme.primary};
-  color: white;
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin: 8px 0;
-  text-align: center;
-  align-content: center;
+const RegisterButtonWrapper = styled.div`
+  position: fixed;
+  bottom: 80px;
+  right: 32px;
+  z-index: 100;
 
+  @media ${MOBILE_MEDIA} {
+    bottom: 64px;
+    right: 16px;
+  }
+`;
+
+const RegisterButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #1d1d1f;
+  color: white;
+  border: none;
+  border-radius: 28px;
+  padding: 14px 28px;
+  font-size: 15px;
+  font-weight: 500;
   cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  transition: transform 0.15s, box-shadow 0.15s;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+  }
 `;
 
 function PatientRegisterDialog({

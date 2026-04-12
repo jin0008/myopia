@@ -2,6 +2,8 @@ import styled from "styled-components";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import theme from "../theme";
+import { MOBILE_MEDIA } from "../lib/constants";
+import { ExpandMore, ExpandLess, OpenInNew } from "@mui/icons-material";
 
 interface Article {
   id: string;
@@ -24,130 +26,165 @@ const fetchNews = async (): Promise<Article[]> => {
 const PageContainer = styled.div`
   max-width: 800px;
   margin: 0 auto;
-  padding: 80px 20px 100px;
+  padding: 60px 24px 100px;
+
+  @media ${MOBILE_MEDIA} {
+    padding: 32px 16px 80px;
+  }
 `;
 
 const Header = styled.div`
-  margin-bottom: 60px;
-  animation: fadeIn 0.8s ease-out;
+  margin-bottom: 48px;
 `;
 
 const Title = styled.h1`
-  font-size: 3rem;
-  color: ${theme.primary};
-  margin-bottom: 10px;
+  font-size: 2.5rem;
+  color: ${theme.textPrimary};
+  margin-bottom: 8px;
   font-weight: 700;
-  letter-spacing: -0.02em;
+
+  &::after {
+    content: "";
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    background-color: ${theme.primary};
+    border-radius: 50%;
+    margin-left: 4px;
+    vertical-align: super;
+    font-size: 0.5em;
+  }
+
+  @media ${MOBILE_MEDIA} {
+    font-size: 2rem;
+  }
 `;
 
 const Subtitle = styled.p`
-  font-size: 1.2rem;
-  color: #666;
+  font-size: 1.1rem;
+  color: ${theme.textSecondary};
   font-weight: 400;
 `;
 
 const List = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 0;
 `;
 
 const Card = styled.div`
-  background: white;
-  padding: 30px;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-  border: 1px solid rgba(0,0,0,0.05);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  
-  &:hover {
-    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+  padding: 28px 0;
+  border-bottom: 1px solid #eee;
+
+  &:first-child {
+    border-top: 1px solid #eee;
+  }
+`;
+
+const JournalRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+`;
+
+const JournalIcon = styled.span`
+  color: ${theme.primary};
+  display: flex;
+  align-items: center;
+`;
+
+const JournalName = styled.span`
+  color: ${theme.primary};
+  font-weight: 500;
+`;
+
+const ItemTitle = styled.h3`
+  font-size: 1.15rem;
+  color: ${theme.textPrimary};
+  margin-bottom: 8px;
+  line-height: 1.4;
+  font-weight: 600;
+
+  a {
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: none;
+      color: ${theme.primary};
+    }
   }
 `;
 
 const MetaRow = styled.div`
+  font-size: 13px;
+  color: ${theme.textSecondary};
+  margin-bottom: 12px;
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 600;
-  color: #888;
-`;
-
-const Journal = styled.span`
-  color: ${theme.primary};
-`;
-
-const ItemTitle = styled.h3`
-  font-size: 1.4rem;
-  color: #222;
-  margin-bottom: 12px;
-  line-height: 1.4;
-  font-weight: 700;
-`;
-
-const Author = styled.div`
-  font-size: 0.9rem;
-  color: #666;
-  margin-bottom: 16px;
-  font-style: italic;
+  gap: 12px;
+  flex-wrap: wrap;
 `;
 
 const Abstract = styled.div<{ $expanded: boolean }>`
-  font-size: 1rem;
-  color: #444;
-  line-height: 1.6;
-  margin-bottom: 20px;
+  font-size: 14px;
+  color: #555;
+  line-height: 1.7;
+  margin-bottom: 16px;
   overflow: hidden;
   display: -webkit-box;
-  -webkit-line-clamp: ${props => (props.$expanded ? "unset" : 3)};
+  -webkit-line-clamp: ${(props) => (props.$expanded ? "unset" : 3)};
   -webkit-box-orient: vertical;
   text-overflow: ellipsis;
 `;
 
 const ButtonRow = styled.div`
   display: flex;
-  gap: 12px;
+  gap: 16px;
   align-items: center;
 `;
 
-const ActionButton = styled.button`
+const ActionLink = styled.button`
   background: none;
   border: none;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  padding: 8px 16px;
-  border-radius: 20px;
-  transition: background 0.2s;
-  
-  &.primary {
-    color: ${theme.primary};
-    background: ${theme.primary}10;
-    &:hover { background: ${theme.primary}20; }
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: opacity 0.2s;
+
+  &.summary {
+    color: ${theme.textSecondary};
+    &:hover {
+      color: ${theme.textPrimary};
+    }
   }
 
-  &.secondary {
-    color: #666;
-    &:hover { background: #f0f0f0; }
+  &.article {
+    color: ${theme.primary};
+    &:hover {
+      opacity: 0.8;
+    }
   }
 `;
 
 const Loading = styled.div`
   text-align: center;
-  padding: 100px 0;
-  color: #666;
-  font-size: 1.2rem;
+  padding: 80px 0;
+  color: ${theme.textSecondary};
+  font-size: 1rem;
 `;
 
 const ErrorMessage = styled.div`
   text-align: center;
   padding: 50px;
-  color: #dc3545;
-  background: #dc354510;
-  border-radius: 20px;
+  color: ${theme.danger};
+  background: rgba(229, 57, 53, 0.05);
+  border-radius: 16px;
 `;
 
 function NewsCard({ article }: { article: Article }) {
@@ -155,66 +192,93 @@ function NewsCard({ article }: { article: Article }) {
 
   return (
     <Card>
+      <JournalRow>
+        <JournalIcon>📄</JournalIcon>
+        <JournalName>{article.journal || "Scientific Article"}</JournalName>
+      </JournalRow>
+
+      <ItemTitle>
+        {article.title}
+        {article.url && (
+          <>
+            {" "}
+            <a href={article.url} target="_blank" rel="noopener noreferrer">
+              Full Article <OpenInNew style={{ fontSize: "14px", verticalAlign: "middle" }} />
+            </a>
+          </>
+        )}
+      </ItemTitle>
+
       <MetaRow>
-        <Journal>{article.journal || "Scientific Article"}</Journal>
-        <span>{new Date(article.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+        <span>
+          {new Date(article.date).toLocaleDateString(undefined, {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          })}
+        </span>
+        <span>by {article.author}</span>
       </MetaRow>
-      <ItemTitle>{article.title}</ItemTitle>
-      <Author>by {article.author}</Author>
 
-      <Abstract $expanded={expanded}>
-        {article.abstract || "No abstract available for this article."}
-      </Abstract>
-
-      <ButtonRow>
-        <ActionButton
-          className="secondary"
-          onClick={() => setExpanded(!expanded)}
-        >
-          {expanded ? "Show Less" : "Read Summary"}
-        </ActionButton>
-
-        <a href={article.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-          <ActionButton className="primary">
-            Full Article ↗
-          </ActionButton>
-        </a>
-      </ButtonRow>
+      {article.abstract && (
+        <>
+          <Abstract $expanded={expanded}>
+            {article.abstract}
+          </Abstract>
+          <ButtonRow>
+            <ActionLink
+              className="summary"
+              onClick={() => setExpanded(!expanded)}
+            >
+              {expanded ? "Show Less" : "Read Summary"}{" "}
+              {expanded ? (
+                <ExpandLess style={{ fontSize: "18px" }} />
+              ) : (
+                <ExpandMore style={{ fontSize: "18px" }} />
+              )}
+            </ActionLink>
+          </ButtonRow>
+        </>
+      )}
     </Card>
   );
 }
 
 export default function News() {
-  const { data: articles, isLoading, error } = useQuery({
-    queryKey: ['news'],
-    queryFn: fetchNews
+  const {
+    data: articles,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["news"],
+    queryFn: fetchNews,
   });
 
-  if (isLoading) return (
-    <PageContainer>
-      <Header>
-        <Title>Latest Research</Title>
+  if (isLoading)
+    return (
+      <PageContainer>
+        <Header>
+          <Title>Latest Research</Title>
+        </Header>
         <Loading>Fetching latest updates from PubMed...</Loading>
-      </Header>
-    </PageContainer>
-  );
+      </PageContainer>
+    );
 
-  if (error) return (
-    <PageContainer>
-      <Header>
-        <Title>Latest Research</Title>
-      </Header>
-      <ErrorMessage>Unable to load news. Please try again later.</ErrorMessage>
-    </PageContainer>
-  );
+  if (error)
+    return (
+      <PageContainer>
+        <Header>
+          <Title>Latest Research</Title>
+        </Header>
+        <ErrorMessage>Unable to load news. Please try again later.</ErrorMessage>
+      </PageContainer>
+    );
 
   return (
     <PageContainer>
       <Header>
         <Title>Latest Research</Title>
-        <Subtitle>
-          Curated Myopia Control updates from the last 6 months.
-        </Subtitle>
+        <Subtitle>Curated Myopia Control updates from the last 6 months.</Subtitle>
       </Header>
 
       <List>
@@ -222,10 +286,6 @@ export default function News() {
           <NewsCard key={article.id} article={article} />
         ))}
       </List>
-
-      <div style={{ textAlign: 'center', marginTop: '60px', color: '#999', fontSize: '0.8rem' }}>
-        Data source: NCBI PubMed API (Auto-updated)
-      </div>
     </PageContainer>
   );
 }

@@ -1,15 +1,16 @@
 import styled from "styled-components";
 import logo from "../assets/logo.svg";
 
-import { PrimaryButton } from "./button";
-import { Link, useNavigate, useLocation } from "react-router";
+import { PrimaryButton, GrayButton, OutlinedButton } from "./button";
+import { useNavigate, useLocation } from "react-router";
 import { useContext, useState, useEffect } from "react";
 import { UserContext } from "../App";
 import { logout } from "../api/auth";
 import { useQueryClient } from "@tanstack/react-query";
-import { Menu, Close } from "@mui/icons-material";
+import { Menu, Close, Login, Logout, SwapHoriz } from "@mui/icons-material";
 import { DesktopOnly, MobileOnly } from "./reactive";
 import { MOBILE_MEDIA } from "../lib/constants";
+import theme from "../theme";
 
 const HeaderContainer = styled.header`
   position: sticky;
@@ -17,55 +18,75 @@ const HeaderContainer = styled.header`
   z-index: 1000;
   transition: background-color 0.3s ease;
   width: 100%;
-  height: 54px;
-
+  height: 60px;
+  background-color: white;
   align-content: center;
-
   flex-shrink: 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 `;
 
 const NavContent = styled.div`
   width: 100%;
-  max-width: 1080px;
+  max-width: 1200px;
   margin: 0 auto;
-
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 20px;
+  padding: 0 24px;
 
   @media ${MOBILE_MEDIA} {
+    padding: 0 16px;
     padding-right: 48px;
   }
 `;
 
 const Logo = styled.img`
-  height: 24px;
+  height: 28px;
   cursor: pointer;
   transition: opacity 0.2s;
-  z-index: 1002; /* Above mobile menu */
+  z-index: 1002;
 
   &:hover {
     opacity: 0.8;
   }
 
   @media ${MOBILE_MEDIA} {
-    height: 20px;
+    height: 22px;
   }
 `;
 
-const DesktopLinks = styled.div`
+const DesktopNav = styled.nav`
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 32px;
+`;
+
+const NavLink = styled.span<{ $isActive?: boolean }>`
+  font-size: 14px;
+  color: ${(props) =>
+    props.$isActive ? theme.primary : theme.textPrimary};
+  cursor: pointer;
+  transition: color 0.2s;
+  font-weight: ${(props) => (props.$isActive ? "600" : "400")};
+  white-space: nowrap;
+
+  &:hover {
+    color: ${theme.primary};
+  }
+`;
+
+const RightSection = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
 `;
 
 const MobileMenuButton = styled.div`
   position: absolute;
   height: 24px;
   width: 24px;
-  top: 15px;
-  right: 10px;
+  top: 18px;
+  right: 16px;
   cursor: pointer;
   z-index: 1002;
   color: var(--primary-text);
@@ -74,28 +95,39 @@ const MobileMenuButton = styled.div`
 const MobileOverlay = styled.div<{ $isOpen: boolean }>`
   position: fixed;
   top: 0;
-  left: 0;
-  width: 100vw;
+  right: 0;
+  width: 70%;
+  max-width: 300px;
   height: 100vh;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: white;
   z-index: 1001;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 40px;
+  padding: 80px 32px 32px;
+  gap: 32px;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.1);
+  transform: translateX(${(props) => (props.$isOpen ? "0" : "100%")});
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+`;
+
+const MobileBackdrop = styled.div<{ $isOpen: boolean }>`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1000;
   opacity: ${(props) => (props.$isOpen ? 1 : 0)};
   pointer-events: ${(props) => (props.$isOpen ? "all" : "none")};
   transition: opacity 0.3s ease;
 `;
 
 const MobileNavLink = styled.span<{ $isActive?: boolean }>`
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: ${(props) => (props.$isActive ? "600" : "400")};
   color: ${(props) =>
-    props.$isActive ? "var(--link-color)" : "var(--primary-text)"};
+    props.$isActive ? theme.primary : theme.textPrimary};
   cursor: pointer;
 
   &:active {
@@ -103,23 +135,11 @@ const MobileNavLink = styled.span<{ $isActive?: boolean }>`
   }
 `;
 
-const NavLink = styled.span<{ $isActive?: boolean }>`
-  font-size: 13px;
-  gap: 16px;
-  color: ${(props) =>
-    props.$isActive ? "var(--primary-text)" : "var(--secondary-text)"};
-  cursor: pointer;
-  transition: color 0.2s;
-  font-weight: 500;
-
-  &:hover {
-    color: var(--link-color);
-  }
-`;
-
-const UserInfo = styled.div`
-  font-size: 11px;
-  color: var(--secondary-text);
+const MobileButtonsSection = styled.div`
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 `;
 
 export default function Header() {
@@ -139,7 +159,6 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close mobile menu when route changes
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
@@ -162,12 +181,20 @@ export default function Header() {
 
   return (
     <>
-      <HeaderContainer className={isScrolled ? "glass" : ""}>
+      <HeaderContainer
+        style={
+          isScrolled
+            ? {
+                boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+              }
+            : undefined
+        }
+      >
         <NavContent>
           <Logo src={logo} alt="logo" onClick={() => navigate("/")} />
 
           <DesktopOnly>
-            <DesktopLinks>
+            <DesktopNav>
               {navItems.map((item) => (
                 <NavLink
                   key={item.label}
@@ -177,45 +204,38 @@ export default function Header() {
                   {item.label}
                 </NavLink>
               ))}
-            </DesktopLinks>
+            </DesktopNav>
           </DesktopOnly>
 
-          {user && (
-            <UserInfo>
-              <Link
-                to="/choose_profile"
-                style={{ color: "inherit", textDecoration: "underline" }}
-              >
-                change user type
-              </Link>
-            </UserInfo>
-          )}
           <DesktopOnly>
-            {user ? (
-              <PrimaryButton
-                style={{
-                  padding: "4px 12px",
-                  fontSize: "12px",
-                  height: "auto",
-                  borderRadius: "12px",
-                }}
-                onClick={handleLogout}
-              >
-                Logout
-              </PrimaryButton>
-            ) : (
-              <PrimaryButton
-                style={{
-                  padding: "4px 12px",
-                  fontSize: "12px",
-                  height: "auto",
-                  borderRadius: "12px",
-                }}
-                onClick={() => navigate("/login")}
-              >
-                Login
-              </PrimaryButton>
-            )}
+            <RightSection>
+              {user && (
+                <OutlinedButton
+                  style={{ padding: "6px 16px", fontSize: "13px" }}
+                  onClick={() => navigate("/choose_profile")}
+                >
+                  <SwapHoriz style={{ fontSize: "16px" }} />
+                  User Type
+                </OutlinedButton>
+              )}
+              {user ? (
+                <GrayButton
+                  style={{ padding: "6px 16px", fontSize: "13px" }}
+                  onClick={handleLogout}
+                >
+                  <Logout style={{ fontSize: "16px" }} />
+                  Logout
+                </GrayButton>
+              ) : (
+                <PrimaryButton
+                  style={{ padding: "6px 16px", fontSize: "13px" }}
+                  onClick={() => navigate("/login")}
+                >
+                  <Login style={{ fontSize: "16px" }} />
+                  Login
+                </PrimaryButton>
+              )}
+            </RightSection>
           </DesktopOnly>
 
           <MobileOnly>
@@ -226,10 +246,17 @@ export default function Header() {
         </NavContent>
       </HeaderContainer>
 
+      <MobileBackdrop
+        $isOpen={isMobileMenuOpen}
+        onClick={() => setIsMobileMenuOpen(false)}
+      />
       <MobileOverlay $isOpen={isMobileMenuOpen}>
-        <MobileMenuButton onClick={() => setIsMobileMenuOpen(false)}>
+        <div
+          style={{ position: "absolute", top: "18px", right: "16px", cursor: "pointer" }}
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
           <Close />
-        </MobileMenuButton>
+        </div>
         {navItems.map((item) => (
           <MobileNavLink
             key={item.label}
@@ -239,18 +266,34 @@ export default function Header() {
             {item.label}
           </MobileNavLink>
         ))}
-        {user ? (
-          <PrimaryButton onClick={handleLogout} style={{ marginTop: "20px" }}>
-            Logout
-          </PrimaryButton>
-        ) : (
-          <PrimaryButton
-            onClick={() => navigate("/login")}
-            style={{ marginTop: "20px" }}
-          >
-            Login
-          </PrimaryButton>
-        )}
+        <MobileButtonsSection>
+          {user && (
+            <PrimaryButton
+              style={{ width: "100%", justifyContent: "center" }}
+              onClick={() => navigate("/choose_profile")}
+            >
+              <SwapHoriz style={{ fontSize: "18px" }} />
+              User Type
+            </PrimaryButton>
+          )}
+          {user ? (
+            <GrayButton
+              style={{ width: "100%", justifyContent: "center" }}
+              onClick={handleLogout}
+            >
+              <Logout style={{ fontSize: "18px" }} />
+              Logout
+            </GrayButton>
+          ) : (
+            <PrimaryButton
+              style={{ width: "100%", justifyContent: "center" }}
+              onClick={() => navigate("/login")}
+            >
+              <Login style={{ fontSize: "18px" }} />
+              Login
+            </PrimaryButton>
+          )}
+        </MobileButtonsSection>
       </MobileOverlay>
     </>
   );

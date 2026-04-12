@@ -1,7 +1,7 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { UserContext } from "../../App";
 import { PrimaryButton, PrimaryNagativeButton } from "../../components/button";
-import { CenteredDiv, TopDiv } from "../../components/div";
+import { CenteredDiv } from "../../components/div";
 import { SearchInput, TextInput } from "../../components/input";
 import styled from "styled-components";
 import {
@@ -131,25 +131,30 @@ function PatientOrderBy({
   );
 }
 
-const ContainerDiv = styled(TopDiv)`
-  margin: 0 128px;
+const ContainerDiv = styled.div`
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 24px;
 
   @media ${MOBILE_MEDIA} {
-    margin: 0 16px;
+    padding: 0 16px;
   }
 `;
 
 const PatientManageHeaderDiv = styled.div`
   width: 100%;
-  margin-top: 64px;
-  margin-bottom: 16px;
+  margin-top: 48px;
+  margin-bottom: 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
 
   @media ${MOBILE_MEDIA} {
-    margin-top: 32px;
+    margin-top: 24px;
     flex-direction: column;
+    align-items: stretch;
   }
 `;
 
@@ -180,6 +185,23 @@ function PatientManage() {
   return (
     <>
       <ContainerDiv>
+        <h1 style={{
+          fontSize: "2.5rem",
+          fontWeight: 700,
+          color: "#1d1d1f",
+          marginTop: "48px",
+        }}>
+          {hospital.name}<span style={{
+            display: "inline-block",
+            width: "10px",
+            height: "10px",
+            backgroundColor: "#00B167",
+            borderRadius: "50%",
+            marginLeft: "4px",
+            verticalAlign: "super",
+            fontSize: "0.5em",
+          }} />
+        </h1>
         <PatientManageHeaderDiv>
           <PatientSearchDiv>
             <PatientSearch value={search} onChange={setSearch} />
@@ -190,8 +212,7 @@ function PatientManage() {
               }}
             />
           </PatientSearchDiv>
-          <h2>{hospital.name}</h2>
-          <div style={{ display: "flex", gap: "16px" }}>
+          <div style={{ display: "flex", gap: "12px" }}>
             {user.healthcare_professional?.is_admin && (
               <PrimaryButton
                 onClick={() => navigate("/patient_delete_request")}
@@ -636,12 +657,16 @@ function PatientRegisterDialog({
 
 const GridDiv = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
   width: 100%;
 
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   @media ${MOBILE_MEDIA} {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: 1fr;
   }
 `;
 

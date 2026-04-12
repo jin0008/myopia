@@ -1,15 +1,158 @@
 import styled from "styled-components";
-import { PrimaryButton } from "../components/button";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { LoginInput } from "../components/input";
 import { useNavigate } from "react-router";
-import { HorizontalDivider, VerticalDivider } from "../components/divider";
 import { googleLogin, passwordLogin } from "../api/auth";
 import { HttpError } from "../lib/fetch";
 import { useQueryClient } from "@tanstack/react-query";
 import { GoogleLogin } from "@react-oauth/google";
-import { Reactive } from "../components/reactive";
 import { MOBILE_MEDIA } from "../lib/constants";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+import theme from "../theme";
+
+const PageWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 40px 20px;
+`;
+
+const LogoTitle = styled.h1`
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: ${theme.primary};
+  text-align: center;
+  line-height: 1.2;
+  margin-bottom: 40px;
+
+  @media ${MOBILE_MEDIA} {
+    font-size: 1.8rem;
+    margin-bottom: 32px;
+  }
+`;
+
+const FormContainer = styled.div`
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const PasswordWrapper = styled.div`
+  position: relative;
+  width: 100%;
+`;
+
+const EyeButton = styled.button`
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #aaa;
+  display: flex;
+  align-items: center;
+  padding: 0;
+
+  &:hover {
+    color: #666;
+  }
+`;
+
+const OptionsRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 4px 0 16px;
+  font-size: 14px;
+`;
+
+const CheckboxLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: ${theme.textSecondary};
+  cursor: pointer;
+  font-size: 14px;
+`;
+
+const ForgotLink = styled.span`
+  color: ${theme.textPrimary};
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 14px;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+const SubmitButton = styled.button`
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background-color: #e8e8e8;
+  color: #666;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: #ddd;
+  }
+`;
+
+const SignupRow = styled.div`
+  text-align: center;
+  margin-top: 20px;
+  font-size: 15px;
+  color: ${theme.textSecondary};
+`;
+
+const SignupLink = styled.span`
+  color: ${theme.primary};
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 6px;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+const Divider = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 24px 0;
+  color: #ccc;
+  font-size: 14px;
+
+  &::before,
+  &::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background-color: #e0e0e0;
+  }
+`;
+
+const GoogleButtonWrapper = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: center;
+
+  & > div {
+    width: 100% !important;
+  }
+`;
 
 export const LoginDiv = styled.div`
   display: flex;
@@ -40,6 +183,7 @@ export const ContainerDiv = styled.div`
 export default function Login() {
   const username = useRef("");
   const password = useRef("");
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -70,54 +214,71 @@ export default function Login() {
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "32px",
-        justifyContent: "center",
-        alignItems: "center",
-        height: "100%",
-      }}
-    >
-      <ContainerDiv>
-        <LoginDiv>
-          <div>
-            <LoginInput
-              defaultValue={""}
-              onChange={(e) => (username.current = e.target.value)}
-              placeholder="Username"
-            />
-            <LoginInput
-              defaultValue={""}
-              onChange={(e) => (password.current = e.target.value)}
-              placeholder="Password"
-              type="password"
-            />
-          </div>
-          <PrimaryButton onClick={() => handleLogin()}>Sign in</PrimaryButton>
+    <PageWrapper>
+      <LogoTitle>
+        Myopia
+        <br />
+        Management
+      </LogoTitle>
+
+      <FormContainer>
+        <LoginInput
+          defaultValue={""}
+          onChange={(e) => (username.current = e.target.value)}
+          placeholder="Username"
+        />
+        <PasswordWrapper>
+          <LoginInput
+            defaultValue={""}
+            onChange={(e) => (password.current = e.target.value)}
+            placeholder="Password"
+            type={showPassword ? "text" : "password"}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleLogin();
+            }}
+          />
+          <EyeButton
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? (
+              <VisibilityOff fontSize="small" />
+            ) : (
+              <Visibility fontSize="small" />
+            )}
+          </EyeButton>
+        </PasswordWrapper>
+
+        <OptionsRow>
+          <CheckboxLabel>
+            <input type="checkbox" /> Stay Sign in
+          </CheckboxLabel>
+          <ForgotLink>Forgot your password?</ForgotLink>
+        </OptionsRow>
+
+        <SubmitButton onClick={() => handleLogin()}>Sign in</SubmitButton>
+
+        <SignupRow>
+          Don't have an account?
+          <SignupLink onClick={() => navigate("/signup")}>Sign up</SignupLink>
+        </SignupRow>
+
+        <Divider>OR</Divider>
+
+        <GoogleButtonWrapper>
           <GoogleLogin
-            shape="pill"
-            text="signin_with"
+            shape="rectangular"
+            size="large"
+            width="460"
+            text="continue_with"
+            locale="ko"
             useOneTap={true}
             onSuccess={(response) => {
               if (response.credential) handleGoogleLogin(response.credential);
             }}
           />
-        </LoginDiv>
-        <Reactive
-          desktop={<VerticalDivider />}
-          mobile={<HorizontalDivider />}
-        />
-        <ButtonsDiv>
-          <p>Don't have an account?</p>
-          <PrimaryButton onClick={() => navigate("/signup")}>
-            Sign up
-          </PrimaryButton>
-          {/* <p>Forgot your password?</p>
-          <PrimaryButton>Forgot password</PrimaryButton> */}
-        </ButtonsDiv>
-      </ContainerDiv>
-    </div>
+        </GoogleButtonWrapper>
+      </FormContainer>
+    </PageWrapper>
   );
 }

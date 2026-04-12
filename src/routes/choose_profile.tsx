@@ -4,14 +4,119 @@ import { useNavigate } from "react-router";
 import { useContext } from "react";
 import { MOBILE_MEDIA } from "../lib/constants";
 import { UserContext } from "../App";
+import { ArrowForward } from "@mui/icons-material";
 
-export const ContainerDiv = styled.div`
-  display: flex;
-  gap: 64px;
+const PageWrapper = styled.div`
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 60px 24px 80px;
 
   @media ${MOBILE_MEDIA} {
-    flex-direction: column;
-    height: fit-content;
+    padding: 32px 16px 60px;
+  }
+`;
+
+const PageTitle = styled.h1`
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: ${theme.textPrimary};
+  margin-bottom: 40px;
+
+  &::after {
+    content: "";
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    background-color: ${theme.primary};
+    border-radius: 50%;
+    margin-left: 4px;
+    vertical-align: super;
+    font-size: 0.5em;
+  }
+
+  @media ${MOBILE_MEDIA} {
+    font-size: 2rem;
+    margin-bottom: 24px;
+  }
+`;
+
+export const ContainerDiv = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+
+  @media ${MOBILE_MEDIA} {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+`;
+
+const CardDiv = styled.div`
+  background-color: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  }
+`;
+
+const CardImage = styled.div`
+  width: 100%;
+  height: 240px;
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+
+  @media ${MOBILE_MEDIA} {
+    height: 200px;
+  }
+`;
+
+const CardContent = styled.div`
+  padding: 28px;
+
+  @media ${MOBILE_MEDIA} {
+    padding: 20px;
+  }
+`;
+
+const CardTitle = styled.h2`
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: ${theme.textPrimary};
+  margin-bottom: 8px;
+`;
+
+const CardDescription = styled.p`
+  font-size: 15px;
+  color: ${theme.textSecondary};
+  line-height: 1.5;
+  margin-bottom: 20px;
+`;
+
+const ChooseButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: ${theme.primary};
+  color: white;
+  border: none;
+  border-radius: 24px;
+  padding: 10px 24px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 0.9;
   }
 `;
 
@@ -19,64 +124,58 @@ export default function ProfileChoice() {
   const navigate = useNavigate();
   const { setRole } = useContext(UserContext);
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "64px",
-        alignItems: "center",
-        justifyContent: "center",
-        height: "100%",
-      }}
-    >
-      <h1>Choose user type</h1>
+    <PageWrapper>
+      <PageTitle>Choose User Type</PageTitle>
       <ContainerDiv>
-        <ProfileCard
-          title="Regular user"
-          description="Register your children and track their axial length growth and treatment."
+        <CardDiv
           onClick={() => {
             setRole("regular_user");
             navigate("/");
           }}
-        />
-        <ProfileCard
-          title="Healthcare professional"
-          description="Manage your patients. Register their axial length growth and treatment data"
+        >
+          <CardImage>
+            <span role="img" aria-label="child">
+              👶
+            </span>
+          </CardImage>
+          <CardContent>
+            <CardTitle>Regular User</CardTitle>
+            <CardDescription>
+              Register your children and track their axial length growth and
+              treatment.
+            </CardDescription>
+            <ChooseButton>
+              Choose <ArrowForward style={{ fontSize: "18px" }} />
+            </ChooseButton>
+          </CardContent>
+        </CardDiv>
+        <CardDiv
           onClick={() => {
             setRole("healthcare_professional");
             navigate("/");
           }}
-        />
+        >
+          <CardImage
+            style={{
+              background: "linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)",
+            }}
+          >
+            <span role="img" aria-label="doctor">
+              🩺
+            </span>
+          </CardImage>
+          <CardContent>
+            <CardTitle>Healthcare Professional</CardTitle>
+            <CardDescription>
+              Manage your patients. Register their axial length growth and
+              treatment data
+            </CardDescription>
+            <ChooseButton>
+              Choose <ArrowForward style={{ fontSize: "18px" }} />
+            </ChooseButton>
+          </CardContent>
+        </CardDiv>
       </ContainerDiv>
-    </div>
-  );
-}
-
-const CardDiv = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  width: 320px;
-  height: 240px;
-  background-color: ${theme.primary};
-  padding: 32px;
-  border-radius: 8px;
-  color: white;
-  cursor: pointer;
-`;
-function ProfileCard({
-  title,
-  description,
-  onClick,
-}: {
-  title: string;
-  description: string;
-  onClick: () => void;
-}) {
-  return (
-    <CardDiv onClick={onClick}>
-      <h2>{title}</h2>
-      <p>{description}</p>
-    </CardDiv>
+    </PageWrapper>
   );
 }
