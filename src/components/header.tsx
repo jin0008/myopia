@@ -1,6 +1,4 @@
 import styled from "styled-components";
-import logo from "../assets/logo.svg";
-
 import { PrimaryButton, GrayButton, OutlinedButton } from "./button";
 import { useNavigate, useLocation } from "react-router";
 import { useContext, useState, useEffect } from "react";
@@ -40,18 +38,24 @@ const NavContent = styled.div`
   }
 `;
 
-const Logo = styled.img`
-  height: 28px;
+const LogoText = styled.div`
   cursor: pointer;
-  transition: opacity 0.2s;
   z-index: 1002;
+  line-height: 1.1;
+  font-weight: 800;
+  color: ${theme.primary};
+  font-size: 16px;
+  letter-spacing: -0.02em;
+  user-select: none;
+  transition: opacity 0.2s;
+  white-space: nowrap;
 
   &:hover {
     opacity: 0.8;
   }
 
   @media ${MOBILE_MEDIA} {
-    height: 22px;
+    font-size: 14px;
   }
 `;
 
@@ -191,7 +195,9 @@ export default function Header() {
         }
       >
         <NavContent>
-          <Logo src={logo} alt="logo" onClick={() => navigate("/")} />
+          <LogoText onClick={() => navigate("/")}>
+            Myopia<br />Management
+          </LogoText>
 
           <DesktopOnly>
             <DesktopNav>
