@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import theme from "../theme";
 import { MOBILE_MEDIA } from "../lib/constants";
+import eyeLogEnglishSvg from "../assets/eyelog-english.svg";
 
 const PageWrapper = styled.div`
   max-width: 980px;
@@ -29,28 +30,40 @@ const fadeInUp = keyframes`
   }
 `;
 
-const HeroTitle = styled.h1`
-  font-size: 3rem;
-  font-weight: 700;
-  color: ${theme.textPrimary};
-  margin-bottom: 16px;
+const HeroLogo = styled.img`
+  height: 72px;
+  width: auto;
+  margin-bottom: 12px;
   animation: ${fadeInUp} 0.8s ease-out;
 
   @media ${MOBILE_MEDIA} {
-    font-size: 2rem;
+    height: 52px;
+  }
+`;
+
+const HeroTitle = styled.h2`
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: ${theme.textSecondary};
+  margin-bottom: 12px;
+  letter-spacing: 0.5px;
+  animation: ${fadeInUp} 0.8s ease-out 0.15s both;
+
+  @media ${MOBILE_MEDIA} {
+    font-size: 1.15rem;
   }
 `;
 
 const HeroSubtitle = styled.p`
-  font-size: 1.15rem;
+  font-size: 1rem;
   color: ${theme.textSecondary};
   line-height: 1.6;
   max-width: 600px;
   margin: 0 auto;
-  animation: ${fadeInUp} 0.8s ease-out 0.2s both;
+  animation: ${fadeInUp} 0.8s ease-out 0.3s both;
 
   @media ${MOBILE_MEDIA} {
-    font-size: 1rem;
+    font-size: 0.9rem;
   }
 `;
 
@@ -272,6 +285,7 @@ export default function Home() {
   return (
     <PageWrapper>
       <HeroSection>
+        <HeroLogo src={eyeLogEnglishSvg} alt="eyelog" />
         <HeroTitle>Myopia Management</HeroTitle>
         <HeroSubtitle>
           Track axial length growth, manage treatments, and monitor myopia
