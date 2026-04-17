@@ -9,6 +9,7 @@ import { Menu, Close, Login, Logout, SwapHoriz } from "@mui/icons-material";
 import { DesktopOnly, MobileOnly } from "./reactive";
 import { MOBILE_MEDIA } from "../lib/constants";
 import theme from "../theme";
+import Logo from "./logo";
 
 const HeaderContainer = styled.header`
   position: sticky;
@@ -16,7 +17,7 @@ const HeaderContainer = styled.header`
   z-index: 1000;
   transition: background-color 0.3s ease;
   width: 100%;
-  height: 60px;
+  height: 64px;
   background-color: white;
   align-content: center;
   flex-shrink: 0;
@@ -35,27 +36,6 @@ const NavContent = styled.div`
   @media ${MOBILE_MEDIA} {
     padding: 0 16px;
     padding-right: 48px;
-  }
-`;
-
-const LogoText = styled.div`
-  cursor: pointer;
-  z-index: 1002;
-  line-height: 1.1;
-  font-weight: 800;
-  color: ${theme.primary};
-  font-size: 16px;
-  letter-spacing: -0.02em;
-  user-select: none;
-  transition: opacity 0.2s;
-  white-space: nowrap;
-
-  &:hover {
-    opacity: 0.8;
-  }
-
-  @media ${MOBILE_MEDIA} {
-    font-size: 14px;
   }
 `;
 
@@ -195,9 +175,7 @@ export default function Header() {
         }
       >
         <NavContent>
-          <LogoText onClick={() => navigate("/")}>
-            Myopia<br />Management
-          </LogoText>
+          <Logo onClick={() => navigate("/")} />
 
           <DesktopOnly>
             <DesktopNav>
@@ -217,7 +195,7 @@ export default function Header() {
             <RightSection>
               {user && (
                 <OutlinedButton
-                  style={{ padding: "6px 16px", fontSize: "13px" }}
+                  style={{ padding: "8px 18px", fontSize: "13px", borderRadius: "20px" }}
                   onClick={() => navigate("/choose_profile")}
                 >
                   <SwapHoriz style={{ fontSize: "16px" }} />
@@ -226,7 +204,7 @@ export default function Header() {
               )}
               {user ? (
                 <GrayButton
-                  style={{ padding: "6px 16px", fontSize: "13px" }}
+                  style={{ padding: "8px 18px", fontSize: "13px", borderRadius: "20px", backgroundColor: "#444" }}
                   onClick={handleLogout}
                 >
                   <Logout style={{ fontSize: "16px" }} />
@@ -234,7 +212,7 @@ export default function Header() {
                 </GrayButton>
               ) : (
                 <PrimaryButton
-                  style={{ padding: "6px 16px", fontSize: "13px" }}
+                  style={{ padding: "8px 18px", fontSize: "13px", borderRadius: "20px" }}
                   onClick={() => navigate("/login")}
                 >
                   <Login style={{ fontSize: "16px" }} />

@@ -8,6 +8,7 @@ import styled from "styled-components";
 import theme from "../theme";
 import { MOBILE_MEDIA } from "../lib/constants";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
+import Logo from "../components/logo";
 
 const PageWrapper = styled.div`
   display: flex;
@@ -18,17 +19,26 @@ const PageWrapper = styled.div`
   padding: 40px 20px;
 `;
 
-const LogoTitle = styled.h1`
-  font-size: 2.2rem;
-  font-weight: 700;
-  color: ${theme.primary};
-  text-align: center;
-  line-height: 1.2;
+const LogoContainer = styled.div`
+  display: flex;
+  justify-content: center;
   margin-bottom: 40px;
 
+  & > div {
+    align-items: center;
+    & span:first-child {
+      font-size: 3rem;
+    }
+    & span:last-child {
+      font-size: 11px;
+    }
+  }
+
   @media ${MOBILE_MEDIA} {
-    font-size: 1.8rem;
     margin-bottom: 32px;
+    & > div span:first-child {
+      font-size: 2.4rem;
+    }
   }
 `;
 
@@ -180,11 +190,9 @@ export default function Signup() {
 
   return (
     <PageWrapper>
-      <LogoTitle>
-        Myopia
-        <br />
-        Management
-      </LogoTitle>
+      <LogoContainer>
+        <Logo />
+      </LogoContainer>
 
       <FormContainer>
         <LoginInput

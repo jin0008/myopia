@@ -4,7 +4,7 @@
   --primary-text: #1d1d1f;
   --secondary-text: #86868b;
   --link-color: #00B167;
-  --bg-color: #f5f5f7;
+  --bg-color: #fafafa;
   --card-bg: #ffffff;
   --header-bg: rgba(255, 255, 255, 0.8);
   --glass-border: rgba(0, 0, 0, 0.05);
@@ -68,10 +68,9 @@ a:hover {
 }
 
 .container {
-  max-width: 980px;
-  /* Apps style max width */
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 24px;
 }
 
 /* Scrollbar */

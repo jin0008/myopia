@@ -1,8 +1,9 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { UserContext } from "../../App";
-import { PrimaryButton, PrimaryNagativeButton } from "../../components/button";
+import { PrimaryButton, PrimaryNagativeButton, BlackButton, DangerButton } from "../../components/button";
 import { CenteredDiv } from "../../components/div";
 import { SearchInput, TextInput } from "../../components/input";
+import { Search, Add } from "@mui/icons-material";
 import styled from "styled-components";
 import {
   Dialog,
@@ -75,6 +76,21 @@ export default function ProfessionalProfile() {
   }
 }
 
+const SearchWrapper = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+`;
+
+const SearchIcon = styled.div`
+  position: absolute;
+  right: 14px;
+  color: #86868b;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+`;
+
 function PatientSearch({
   value,
   onChange,
@@ -83,20 +99,34 @@ function PatientSearch({
   onChange: (value: string) => void;
 }) {
   return (
-    <SearchInput
-      placeholder="search by registration #"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-    ></SearchInput>
+    <SearchWrapper>
+      <SearchInput
+        placeholder="Search by registration #"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{ paddingRight: "40px" }}
+      />
+      <SearchIcon>
+        <Search style={{ fontSize: "20px" }} />
+      </SearchIcon>
+    </SearchWrapper>
   );
 }
 
 const PatientOrderBySelect = styled.select`
-  padding: 8px;
-  border-radius: 16px;
-  border: 1px solid #ccc;
+  padding: 10px 16px;
+  border-radius: 24px;
+  border: 1px solid #e0e0e0;
   background-color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+  color: #1d1d1f;
+  cursor: pointer;
+  transition: border-color 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: #00B167;
+  }
 `;
 
 function PatientOrderBy({
@@ -117,16 +147,14 @@ function PatientOrderBy({
 
   return (
     <PatientOrderBySelect onChange={handleChange}>
-      <option value="created_at-desc">created(desc)</option>
-      <option value="created_at-asc">created(asc)</option>
-      <option value="registration_number-desc">
-        registration number(desc)
-      </option>
-      <option value="registration_number-asc">registration number(asc)</option>
-      <option value="date_of_birth-desc">date of birth(desc)</option>
-      <option value="date_of_birth-asc">date of birth(asc)</option>
-      <option value="sex-desc">sex(desc)</option>
-      <option value="sex-asc">sex(asc)</option>
+      <option value="created_at-desc">Created (Desc)</option>
+      <option value="created_at-asc">Created (Asc)</option>
+      <option value="registration_number-desc">Registration # (Desc)</option>
+      <option value="registration_number-asc">Registration # (Asc)</option>
+      <option value="date_of_birth-desc">Date of Birth (Desc)</option>
+      <option value="date_of_birth-asc">Date of Birth (Asc)</option>
+      <option value="sex-desc">Sex (Desc)</option>
+      <option value="sex-asc">Sex (Asc)</option>
     </PatientOrderBySelect>
   );
 }
@@ -214,15 +242,15 @@ function PatientManage() {
           </PatientSearchDiv>
           <div style={{ display: "flex", gap: "12px" }}>
             {user.healthcare_professional?.is_admin && (
-              <PrimaryButton
+              <DangerButton
                 onClick={() => navigate("/patient_delete_request")}
               >
-                pending deletion requests
-              </PrimaryButton>
+                Pending deletion requests
+              </DangerButton>
             )}
-            <PrimaryButton onClick={() => setOpen(true)}>
-              new patient
-            </PrimaryButton>
+            <BlackButton onClick={() => setOpen(true)}>
+              <Add style={{ fontSize: "18px" }} /> New patient
+            </BlackButton>
           </div>
         </PatientManageHeaderDiv>
         <PatientList

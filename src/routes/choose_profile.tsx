@@ -67,15 +67,22 @@ const CardDiv = styled.div`
 
 const CardImage = styled.div`
   width: 100%;
-  height: 240px;
-  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  height: 260px;
+  background: linear-gradient(135deg, #f0f7f4 0%, #e8f5e9 50%, #d4edda 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 4rem;
+  overflow: hidden;
+  position: relative;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 
   @media ${MOBILE_MEDIA} {
-    height: 200px;
+    height: 220px;
   }
 `;
 
@@ -134,12 +141,10 @@ export default function ProfileChoice() {
           }}
         >
           <CardImage>
-            <span role="img" aria-label="child">
-              👶
-            </span>
+            <img src="https://images.unsplash.com/photo-1587654780290-bdf070ec39c5?w=600&h=400&fit=crop&crop=center" alt="Child playing" />
           </CardImage>
           <CardContent>
-            <CardTitle>Regular User</CardTitle>
+            <CardTitle style={{ fontStyle: "italic" }}>Regular User</CardTitle>
             <CardDescription>
               Register your children and track their axial length growth and
               treatment.
@@ -155,20 +160,14 @@ export default function ProfileChoice() {
             navigate("/");
           }}
         >
-          <CardImage
-            style={{
-              background: "linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)",
-            }}
-          >
-            <span role="img" aria-label="doctor">
-              🩺
-            </span>
+          <CardImage>
+            <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=600&h=400&fit=crop&crop=center" alt="Healthcare Professional" />
           </CardImage>
           <CardContent>
-            <CardTitle>Healthcare Professional</CardTitle>
+            <CardTitle style={{ fontStyle: "italic" }}>Healthcare Professional</CardTitle>
             <CardDescription>
               Manage your patients. Register their axial length growth and
-              treatment data
+              treatment data.
             </CardDescription>
             <ChooseButton>
               Choose <ArrowForward style={{ fontSize: "18px" }} />

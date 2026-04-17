@@ -13,7 +13,7 @@ import {
   updateProfessional,
   updateProfessionalHospital,
 } from "../api/healthcare_professional";
-import { PrimaryButton, PrimaryNagativeButton } from "../components/button";
+import { PrimaryButton, PrimaryNagativeButton, BlackButton, DangerButton } from "../components/button";
 import {
   Dialog,
   DialogActions,
@@ -27,6 +27,7 @@ import {
   getMembers,
 } from "../api/hospital";
 import styled from "styled-components";
+import { Edit, DeleteOutline } from "@mui/icons-material";
 import {
   addGoogleAuth,
   addPasswordAuth,
@@ -52,7 +53,7 @@ const PageWrapper = styled.div`
 `;
 
 const PageTitle = styled.h1`
-  font-size: 2rem;
+  font-size: 2.5rem;
   font-weight: 700;
   color: #1d1d1f;
   margin-bottom: 4px;
@@ -60,20 +61,29 @@ const PageTitle = styled.h1`
   &::after {
     content: "";
     display: inline-block;
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
     background-color: #00B167;
     border-radius: 50%;
     margin-left: 4px;
     vertical-align: super;
     font-size: 0.5em;
   }
+
+  @media ${MOBILE_MEDIA} {
+    font-size: 2rem;
+  }
 `;
 
 const UserIdText = styled.p`
   font-size: 14px;
   color: #86868b;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
+
+  span {
+    color: #00B167;
+    font-weight: 500;
+  }
 `;
 
 const SettingsGrid = styled.div`
@@ -93,7 +103,7 @@ export default function Profile() {
   return (
     <PageWrapper>
       <PageTitle>User Profile</PageTitle>
-      <UserIdText>User ID: {user.id}</UserIdText>
+      <UserIdText>User ID  <span>{user.id}</span></UserIdText>
       <SettingsGrid>
         <UserProfile />
         {user.healthcare_professional && <ProfessionalProfile />}
@@ -106,20 +116,20 @@ export default function Profile() {
 const ProfileSettingsDiv = styled.div`
   background: white;
   border: 1px solid #eee;
-  padding: 24px;
+  padding: 28px;
   border-radius: 16px;
 
   h2 {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 20px;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 24px;
     color: #1d1d1f;
   }
 
   h3 {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
-    margin: 16px 0 8px;
+    margin: 0 0 10px;
     color: #1d1d1f;
   }
 
@@ -129,9 +139,24 @@ const ProfileSettingsDiv = styled.div`
     margin-bottom: 8px;
   }
 
+  & > div {
+    padding: 20px;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    margin-bottom: 16px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
   @media ${MOBILE_MEDIA} {
     width: 100%;
     padding: 16px;
+
+    & > div {
+      padding: 16px;
+    }
   }
 `;
 
@@ -200,33 +225,32 @@ function UserProfile() {
 
   return (
     <ProfileSettingsDiv>
-      <h2>User settings</h2>
+      <h2>User Settings</h2>
       <div>
-        <h3>Password auth</h3>
+        <h3>Password Auth</h3>
         {user.password_auth ? (
           <>
             <p>
-              You are using password authentication with username :{" "}
-              <strong>{user.password_auth.username}</strong>
+              Password authentication with username : <strong>{user.password_auth.username}</strong>
             </p>
             <div
               style={{
                 display: "flex",
                 flexDirection: "row",
                 justifyContent: "end",
-                gap: "16px",
+                gap: "12px",
               }}
             >
-              <PrimaryButton
+              <BlackButton
                 onClick={() => setIsChangePasswordDialogOpen(true)}
               >
-                Change Password
-              </PrimaryButton>
-              <PrimaryNagativeButton
+                <Edit style={{ fontSize: "16px" }} /> Change
+              </BlackButton>
+              <DangerButton
                 onClick={() => deletePasswordAuthMutation.mutate()}
               >
-                Remove password auth
-              </PrimaryNagativeButton>
+                <DeleteOutline style={{ fontSize: "16px" }} /> Remove
+              </DangerButton>
             </div>
           </>
         ) : (
@@ -237,7 +261,7 @@ function UserProfile() {
                 display: "flex",
                 flexDirection: "row",
                 justifyContent: "end",
-                gap: "16px",
+                gap: "12px",
               }}
             >
               <PrimaryButton
@@ -258,7 +282,7 @@ function UserProfile() {
         onClose={() => setIsAddPasswordAuthDialogOpen(false)}
       />
       <div>
-        <h3>Google auth</h3>
+        <h3>Google Auth</h3>
         {user.google_auth ? (
           <>
             <p>You are using google authentication.</p>
@@ -298,7 +322,7 @@ function UserProfile() {
         )}
       </div>
       <div>
-        <h3>Email</h3>
+        <h3>E-Mail</h3>
         <div
           style={{
             display: "flex",
@@ -307,47 +331,66 @@ function UserProfile() {
           }}
         >
           <p>
-            Your email is: <strong>{user.email ?? "not registered"}</strong>
+            Your E-Mail : <strong>{user.email ?? "Not Registered"}</strong>
           </p>
-          <PrimaryButton onClick={() => setIsEditEmailDialogOpen(true)}>
-            Edit
+          <PrimaryButton onClick={() => setIsEditEmailDialogOpen(true)} style={{ padding: "8px 16px", fontSize: "13px" }}>
+            +
           </PrimaryButton>
         </div>
         <div style={{ height: "8px" }}></div>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <p>
-            Receive email updates:{" "}
-            <strong>{user.receive_email_updates ? "Yes" : "No"}</strong>
+            Receive E-Mail updates: <strong>{user.receive_email_updates ? "Yes" : "No"}</strong>
           </p>
-          <PrimaryNagativeButton
-            onClick={() =>
-              editSelfMutation.mutate(
-                { receive_email_updates: !user.receive_email_updates },
-                {
-                  onSuccess: () => {
-                    alert(
-                      `You are now ${user.receive_email_updates ? "not " : ""}receiving email updates`,
-                    );
+          <label style={{ position: "relative", display: "inline-block", width: "44px", height: "24px" }}>
+            <input
+              type="checkbox"
+              checked={user.receive_email_updates}
+              onChange={() =>
+                editSelfMutation.mutate(
+                  { receive_email_updates: !user.receive_email_updates },
+                  {
+                    onSuccess: () => {
+                      alert(
+                        `You are now ${user.receive_email_updates ? "not " : ""}receiving email updates`,
+                      );
+                    },
                   },
-                },
-              )
-            }
-          >
-            Change
-          </PrimaryNagativeButton>
+                )
+              }
+              style={{ opacity: 0, width: 0, height: 0 }}
+            />
+            <span style={{
+              position: "absolute",
+              cursor: "pointer",
+              top: 0, left: 0, right: 0, bottom: 0,
+              backgroundColor: user.receive_email_updates ? "#00B167" : "#ccc",
+              borderRadius: "24px",
+              transition: "0.3s",
+            }}>
+              <span style={{
+                position: "absolute",
+                content: '""',
+                height: "18px",
+                width: "18px",
+                left: user.receive_email_updates ? "22px" : "3px",
+                bottom: "3px",
+                backgroundColor: "white",
+                borderRadius: "50%",
+                transition: "0.3s",
+              }} />
+            </span>
+          </label>
         </div>
       </div>
       <div>
-        <h3>Delete account</h3>
-        <div style={{ display: "flex", justifyContent: "end" }}>
-          <PrimaryNagativeButton
-            style={{
-              backgroundColor: "red",
-            }}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ color: "#E53935", fontWeight: 600, fontSize: "15px" }}>Delete account</span>
+          <DangerButton
             onClick={() => setIsDeleteAccountDialogOpen(true)}
           >
-            Delete account
-          </PrimaryNagativeButton>
+            <DeleteOutline style={{ fontSize: "16px" }} /> Delete Account
+          </DangerButton>
         </div>
         <DeleteAccountDialog
           open={isDeleteAccountDialogOpen}
@@ -667,7 +710,7 @@ function ProfessionalProfile() {
 
   return (
     <ProfileSettingsDiv>
-      <h2>Healthcare professional settings</h2>
+      <h2>Healthcare Professional Settings</h2>
       <div
         style={{
           display: "flex",
@@ -929,9 +972,28 @@ function ChangeHospitalDialog({
 }
 
 const Table = styled.table`
+  width: 100%;
   text-align: center;
+  border-collapse: collapse;
+
+  & th {
+    padding: 12px 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #86868b;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+  }
+
   & td {
-    padding: 8px;
+    padding: 14px 8px;
+    font-size: 14px;
+    border-bottom: 1px solid #f5f5f5;
+    text-align: left;
+  }
+
+  & tr:last-child td {
+    border-bottom: none;
   }
 `;
 
@@ -984,10 +1046,10 @@ function MemberListTable({
       <thead>
         <tr>
           <th>User ID</th>
-          <th>name</th>
-          <th>approve</th>
-          <th>reject/kick</th>
-          <th>admin</th>
+          <th>Name</th>
+          <th>Approve</th>
+          <th>Reject/Kick</th>
+          <th>Admin</th>
         </tr>
       </thead>
       <tbody>
@@ -1150,7 +1212,7 @@ function HospitalAdminProfile() {
 
   return (
     <ProfileSettingsDiv>
-      <h2>Hospital admin settings</h2>
+      <h2>Hospital Admin Settings</h2>
       <h3>Member list</h3>
       <Reactive
         desktop={
