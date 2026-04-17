@@ -5,6 +5,8 @@ import { useContext } from "react";
 import { MOBILE_MEDIA } from "../lib/constants";
 import { UserContext } from "../App";
 import { ArrowForward } from "@mui/icons-material";
+import childImage from "../assets/child-placeholder.webp";
+import doctorImage from "../assets/doctor-placeholder.webp";
 
 const PageWrapper = styled.div`
   max-width: 980px;
@@ -141,7 +143,7 @@ export default function ProfileChoice() {
           }}
         >
           <CardImage>
-            <img src="https://images.unsplash.com/photo-1587654780290-bdf070ec39c5?w=600&h=400&fit=crop&crop=center" alt="Child playing" />
+            <img src={childImage} alt="Child playing" />
           </CardImage>
           <CardContent>
             <CardTitle style={{ fontStyle: "italic" }}>Regular User</CardTitle>
@@ -161,7 +163,7 @@ export default function ProfileChoice() {
           }}
         >
           <CardImage>
-            <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=600&h=400&fit=crop&crop=center" alt="Healthcare Professional" />
+            <img src={doctorImage} alt="Healthcare Professional" />
           </CardImage>
           <CardContent>
             <CardTitle style={{ fontStyle: "italic" }}>Healthcare Professional</CardTitle>

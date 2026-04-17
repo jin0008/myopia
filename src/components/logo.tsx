@@ -1,56 +1,43 @@
 import styled from "styled-components";
-import theme from "../theme";
 import { MOBILE_MEDIA } from "../lib/constants";
+import eyeLogSvg from "../assets/eyelog-logo.svg";
 
 const LogoWrapper = styled.div`
   cursor: pointer;
   z-index: 1002;
   user-select: none;
   transition: opacity 0.2s;
-  white-space: nowrap;
   display: flex;
-  flex-direction: column;
-  line-height: 1;
+  align-items: center;
 
   &:hover {
     opacity: 0.8;
   }
 `;
 
-const LogoText = styled.span`
-  font-size: 26px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: ${theme.textPrimary};
+const LogoImage = styled.img`
+  height: 40px;
+  width: auto;
 
   @media ${MOBILE_MEDIA} {
-    font-size: 22px;
+    height: 32px;
   }
 `;
 
-const GreenO = styled.span`
-  color: ${theme.primary};
-`;
-
-const SubText = styled.span`
-  font-size: 9px;
-  font-weight: 500;
-  color: ${theme.primary};
-  letter-spacing: 0.02em;
-  margin-top: 2px;
-
-  @media ${MOBILE_MEDIA} {
-    font-size: 8px;
-  }
-`;
-
-export default function Logo({ onClick }: { onClick?: () => void }) {
+export default function Logo({
+  onClick,
+  size,
+}: {
+  onClick?: () => void;
+  size?: "large" | "default";
+}) {
   return (
     <LogoWrapper onClick={onClick}>
-      <LogoText>
-        eyel<GreenO>o</GreenO>g
-      </LogoText>
-      <SubText>아이로그 근시관리프로그램</SubText>
+      <LogoImage
+        src={eyeLogSvg}
+        alt="eyelog 아이로그 근시관리프로그램"
+        style={size === "large" ? { height: "64px" } : undefined}
+      />
     </LogoWrapper>
   );
 }

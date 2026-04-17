@@ -24,21 +24,8 @@ const LogoContainer = styled.div`
   justify-content: center;
   margin-bottom: 40px;
 
-  & > div {
-    align-items: center;
-    & span:first-child {
-      font-size: 3rem;
-    }
-    & span:last-child {
-      font-size: 11px;
-    }
-  }
-
   @media ${MOBILE_MEDIA} {
     margin-bottom: 32px;
-    & > div span:first-child {
-      font-size: 2.4rem;
-    }
   }
 `;
 
@@ -191,7 +178,7 @@ export default function Signup() {
   return (
     <PageWrapper>
       <LogoContainer>
-        <Logo />
+        <Logo size="large" />
       </LogoContainer>
 
       <FormContainer>
