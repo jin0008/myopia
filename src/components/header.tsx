@@ -10,6 +10,7 @@ import { DesktopOnly, MobileOnly } from "./reactive";
 import { MOBILE_MEDIA } from "../lib/constants";
 import theme from "../theme";
 import Logo from "./logo";
+import { useLanguage } from "../lib/language_context";
 
 const HeaderContainer = styled.header`
   position: sticky;
@@ -63,6 +64,25 @@ const RightSection = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
+`;
+
+const LangToggle = styled.div`
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 20px;
+  overflow: hidden;
+`;
+
+const LangOption = styled.button<{ $active: boolean }>`
+  border: none;
+  background: ${(props) => (props.$active ? theme.primary : "transparent")};
+  color: ${(props) => (props.$active ? "white" : theme.textPrimary)};
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
 `;
 
 const MobileMenuButton = styled.div`
@@ -131,6 +151,7 @@ export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, role } = useContext(UserContext);
+  const { language, setLanguage } = useLanguage();
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -154,14 +175,29 @@ export default function Header() {
       .finally(() => navigate("/login"));
   };
 
+  // Bilingual nav labels. Only these top-level items are translated for now;
+  // the rest of the app stays in English until further localization.
   const navItems = [
-    { label: "Growth Chart", path: `/axial_length_growth/${role}`, show: true },
-    { label: "News", path: "/news", show: true },
-    { label: "Who We Are", path: "/who_we_are", show: true },
-    { label: "Treatments", path: "/treatments", show: true },
-    { label: "User Guide", path: "/user-guide", show: true },
-    { label: "Profile", path: "/profile", show: true },
+    { en: "Growth Chart", ko: "근시성장곡선", path: `/axial_length_growth/${role}`, show: true },
+    { en: "News", ko: "최신논문", path: "/news", show: true },
+    { en: "Who We Are", ko: "참여병원", path: "/who_we_are", show: true },
+    { en: "Treatments", ko: "근시치료", path: "/treatments", show: true },
+    { en: "User Guide", ko: "사용법", path: "/user-guide", show: true },
+    { en: "Profile", ko: "사용자설정", path: "/profile", show: true },
   ];
+  const labelOf = (item: { en: string; ko: string }) =>
+    language === "ko" ? item.ko : item.en;
+
+  const langToggle = (
+    <LangToggle role="group" aria-label="language">
+      <LangOption $active={language === "ko"} onClick={() => setLanguage("ko")}>
+        KOR
+      </LangOption>
+      <LangOption $active={language === "en"} onClick={() => setLanguage("en")}>
+        ENG
+      </LangOption>
+    </LangToggle>
+  );
 
   return (
     <>
@@ -181,11 +217,11 @@ export default function Header() {
             <DesktopNav>
               {navItems.map((item) => (
                 <NavLink
-                  key={item.label}
+                  key={item.en}
                   $isActive={location.pathname.includes(item.path)}
                   onClick={() => navigate(item.path)}
                 >
-                  {item.label}
+                  {labelOf(item)}
                 </NavLink>
               ))}
             </DesktopNav>
@@ -193,6 +229,7 @@ export default function Header() {
 
           <DesktopOnly>
             <RightSection>
+              {langToggle}
               {user && (
                 <OutlinedButton
                   style={{ padding: "8px 18px", fontSize: "13px", borderRadius: "20px" }}
@@ -243,14 +280,15 @@ export default function Header() {
         </div>
         {navItems.map((item) => (
           <MobileNavLink
-            key={item.label}
+            key={item.en}
             $isActive={location.pathname.includes(item.path)}
             onClick={() => navigate(item.path)}
           >
-            {item.label}
+            {labelOf(item)}
           </MobileNavLink>
         ))}
         <MobileButtonsSection>
+          {langToggle}
           {user && (
             <PrimaryButton
               style={{ width: "100%", justifyContent: "center" }}
