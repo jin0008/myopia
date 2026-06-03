@@ -1,8 +1,9 @@
 import { useParams, Link } from "react-router";
 import styled from "styled-components";
-import { treatments } from "../data/treatments";
+import { getTreatments } from "../data/treatments";
 import { MOBILE_MEDIA } from "../lib/constants";
 import theme from "../theme";
+import { useLanguage } from "../lib/language_context";
 
 const Container = styled.div`
   max-width: 800px;
@@ -192,21 +193,24 @@ const OtherCardDesc = styled.p`
 
 export default function TreatmentDetail() {
   const { id } = useParams();
-  const treatment = treatments.find((t) => t.id === id);
+  const { language } = useLanguage();
+  const ko = language === "ko";
+  const list = getTreatments(language);
+  const treatment = list.find((t) => t.id === id);
 
   if (!treatment) {
     return (
       <Container>
-        <Title>Treatment not found</Title>
+        <Title>{ko ? "치료법을 찾을 수 없습니다" : "Treatment not found"}</Title>
       </Container>
     );
   }
 
-  const otherTreatments = treatments.filter((t) => t.id !== id).slice(0, 3);
+  const otherTreatments = list.filter((t) => t.id !== id).slice(0, 3);
 
   return (
     <Container>
-      <Label>Myopia Control Technology</Label>
+      <Label>{ko ? "근시 억제 기술" : "Myopia Control Technology"}</Label>
       <Title>{treatment.title}</Title>
 
       <ImageContainer>
@@ -214,14 +218,14 @@ export default function TreatmentDetail() {
       </ImageContainer>
 
       <SectionWrapper>
-        <SectionLabel>Detail</SectionLabel>
+        <SectionLabel>{ko ? "상세" : "Detail"}</SectionLabel>
         <SectionText>{treatment.longDescription}</SectionText>
       </SectionWrapper>
 
       <SectionWrapper>
         <SubSectionTitle>
           <GreenIcon>⚙</GreenIcon>
-          Mechanism
+          {ko ? "작용 기전" : "Mechanism"}
         </SubSectionTitle>
         <SectionText>{treatment.mechanism}</SectionText>
       </SectionWrapper>
@@ -229,14 +233,14 @@ export default function TreatmentDetail() {
       <SectionWrapper>
         <SubSectionTitle>
           <GreenIcon>📊</GreenIcon>
-          Clinical Efficacy
+          {ko ? "임상 효과" : "Clinical Efficacy"}
         </SubSectionTitle>
         <SectionText>{treatment.efficacy}</SectionText>
       </SectionWrapper>
 
       {otherTreatments.length > 0 && (
         <OtherTreatmentsSection>
-          <OtherTitle>Other Treatments</OtherTitle>
+          <OtherTitle>{ko ? "다른 치료법" : "Other Treatments"}</OtherTitle>
           <OtherGrid>
             {otherTreatments.map((t) => (
               <OtherCard key={t.id} to={`/treatments/${t.id}`}>

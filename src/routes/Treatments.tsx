@@ -1,9 +1,10 @@
 import styled from "styled-components";
 import { MOBILE_MEDIA } from "../lib/constants";
-import { treatments } from "../data/treatments";
+import { getTreatments } from "../data/treatments";
 import { Link } from "react-router";
 import theme from "../theme";
 import { ArrowForward } from "@mui/icons-material";
+import { useLanguage } from "../lib/language_context";
 
 const PageContainer = styled.div`
   max-width: 980px;
@@ -145,15 +146,23 @@ const DetailLink = styled(Link)`
 `;
 
 export default function Treatments() {
+  const { language } = useLanguage();
+  const ko = language === "ko";
+  const items = getTreatments(language);
+
   return (
     <PageContainer>
       <Header>
-        <Title>Treatments</Title>
-        <Subtitle>Advanced solutions for myopia control.</Subtitle>
+        <Title>{ko ? "근시치료" : "Treatments"}</Title>
+        <Subtitle>
+          {ko
+            ? "근시 억제를 위한 첨단 치료법"
+            : "Advanced solutions for myopia control."}
+        </Subtitle>
       </Header>
 
       <TreatmentList>
-        {treatments.map((treatment, index) => (
+        {items.map((treatment, index) => (
           <TreatmentRow key={treatment.id} $reverse={index % 2 === 1}>
             <ImageSection>
               <img src={treatment.imageUrl} alt={treatment.title} />
@@ -165,7 +174,8 @@ export default function Treatments() {
                 {treatment.shortDescription}
               </TreatmentDescription>
               <DetailLink to={`/treatments/${treatment.id}`}>
-                Detail <ArrowForward style={{ fontSize: "16px" }} />
+                {ko ? "자세히 보기" : "Detail"}{" "}
+                <ArrowForward style={{ fontSize: "16px" }} />
               </DetailLink>
             </TextSection>
           </TreatmentRow>
