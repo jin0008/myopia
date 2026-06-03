@@ -4,6 +4,7 @@ import { useState } from "react";
 import theme from "../theme";
 import { MOBILE_MEDIA } from "../lib/constants";
 import { ExpandMore, ExpandLess, OpenInNew } from "@mui/icons-material";
+import { useLanguage } from "../lib/language_context";
 
 interface Article {
   id: string;
@@ -248,6 +249,8 @@ function NewsCard({ article }: { article: Article }) {
 }
 
 export default function News() {
+  const { language } = useLanguage();
+  const ko = language === "ko";
   const {
     data: articles,
     isLoading,
@@ -261,7 +264,7 @@ export default function News() {
     return (
       <PageContainer>
         <Header>
-          <Title>Latest Research</Title>
+          <Title>{ko ? "최신논문" : "Latest Research"}</Title>
         </Header>
         <Loading>Fetching latest updates from PubMed...</Loading>
       </PageContainer>
@@ -271,7 +274,7 @@ export default function News() {
     return (
       <PageContainer>
         <Header>
-          <Title>Latest Research</Title>
+          <Title>{ko ? "최신논문" : "Latest Research"}</Title>
         </Header>
         <ErrorMessage>Unable to load news. Please try again later.</ErrorMessage>
       </PageContainer>
@@ -280,8 +283,12 @@ export default function News() {
   return (
     <PageContainer>
       <Header>
-        <Title>Latest Research</Title>
-        <Subtitle>Curated Myopia Control updates from the last 6 months.</Subtitle>
+        <Title>{ko ? "최신논문" : "Latest Research"}</Title>
+        <Subtitle>
+          {ko
+            ? "최근 6개월간의 근시치료에 관한 최신논문 업데이트"
+            : "Curated Myopia Control updates from the last 6 months."}
+        </Subtitle>
       </Header>
 
       <List>
