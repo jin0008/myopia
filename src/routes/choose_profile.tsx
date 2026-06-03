@@ -4,6 +4,7 @@ import { useNavigate } from "react-router";
 import { useContext } from "react";
 import { MOBILE_MEDIA } from "../lib/constants";
 import { UserContext } from "../App";
+import { useLanguage } from "../lib/language_context";
 import { ArrowForward } from "@mui/icons-material";
 import childImage from "../assets/child-placeholder.webp";
 import doctorImage from "../assets/doctor-placeholder.webp";
@@ -132,9 +133,11 @@ const ChooseButton = styled.button`
 export default function ProfileChoice() {
   const navigate = useNavigate();
   const { setRole } = useContext(UserContext);
+  const { language } = useLanguage();
+  const isKorean = language === "ko";
   return (
     <PageWrapper>
-      <PageTitle>Choose User Type</PageTitle>
+      <PageTitle>{isKorean ? "사용자 유형 선택" : "Choose User Type"}</PageTitle>
       <ContainerDiv>
         <CardDiv
           onClick={() => {
@@ -146,13 +149,16 @@ export default function ProfileChoice() {
             <img src={childImage} alt="Child playing" />
           </CardImage>
           <CardContent>
-            <CardTitle style={{ fontStyle: "italic" }}>Regular User</CardTitle>
+            <CardTitle style={{ fontStyle: "italic" }}>
+              {isKorean ? "일반사용자 (Regular User)" : "Regular User"}
+            </CardTitle>
             <CardDescription>
-              Register your children and track their axial length growth and
-              treatment.
+              {isKorean
+                ? "사용자의 아이를 등록하고, 안축장 길이의 성장 과정과 치료의 효과를 판별할 수 있습니다."
+                : "Register your children and track their axial length growth and treatment."}
             </CardDescription>
             <ChooseButton>
-              Choose <ArrowForward style={{ fontSize: "18px" }} />
+              {isKorean ? "선택" : "Choose"} <ArrowForward style={{ fontSize: "18px" }} />
             </ChooseButton>
           </CardContent>
         </CardDiv>
@@ -166,13 +172,16 @@ export default function ProfileChoice() {
             <img src={doctorImage} alt="Healthcare Professional" />
           </CardImage>
           <CardContent>
-            <CardTitle style={{ fontStyle: "italic" }}>Healthcare Professional</CardTitle>
+            <CardTitle style={{ fontStyle: "italic" }}>
+              {isKorean ? "의료인 (Healthcare Professional)" : "Healthcare Professional"}
+            </CardTitle>
             <CardDescription>
-              Manage your patients. Register their axial length growth and
-              treatment data.
+              {isKorean
+                ? "병원에 등록된 환자의 안축장 길이, 치료 데이터를 입력하세요. 안축장 성장과 치료의 효과를 모니터링할 수 있습니다."
+                : "Manage your patients. Register their axial length growth and treatment data."}
             </CardDescription>
             <ChooseButton>
-              Choose <ArrowForward style={{ fontSize: "18px" }} />
+              {isKorean ? "선택" : "Choose"} <ArrowForward style={{ fontSize: "18px" }} />
             </ChooseButton>
           </CardContent>
         </CardDiv>
