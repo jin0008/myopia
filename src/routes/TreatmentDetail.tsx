@@ -210,7 +210,7 @@ export default function TreatmentDetail() {
 
   return (
     <Container>
-      <Label>{ko ? "근시 억제 기술" : "Myopia Control Technology"}</Label>
+      <Label>{ko ? "근시치료 방법" : "Myopia Control Technology"}</Label>
       <Title>{treatment.title}</Title>
 
       <ImageContainer>

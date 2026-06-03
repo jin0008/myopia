@@ -17,6 +17,7 @@ import {
   AxialLengthRegisterDialog,
   RefractiveErrorRegisterDialog,
 } from "./MeasurementList";
+import { RecentALGrowth } from "./RecentALGrowth";
 import { TreatmentList } from "./TreatmentList";
 import { MYOPIA_STATUS_LABELS, PatientDataInput } from "./PatientDataInput";
 import {
@@ -493,6 +494,12 @@ export default function ChartRoute() {
                     : handleDeleteRefractiveError
                 }
               />
+              {displayAxialLength && (
+                <RecentALGrowth
+                  measurement={sortedAxialLength}
+                  dateOfBirth={patientQuery.data.date_of_birth}
+                />
+              )}
             </MeasurementListWrapper>
           )}
         </ChartAndListWrapper>
