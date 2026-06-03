@@ -5,6 +5,7 @@ import theme from "../theme";
 import type { HospitalSummary } from "../types/hospital";
 import { MOBILE_MEDIA } from "../lib/constants";
 import { LocationOn } from "@mui/icons-material";
+import { useLanguage } from "../lib/language_context";
 
 const PageContainer = styled.div`
   max-width: 1100px;
@@ -125,6 +126,8 @@ const TextSection = styled.div`
 `;
 
 export default function WhoWeAre() {
+  const { language } = useLanguage();
+  const ko = language === "ko";
   const hospitalQuery = useQuery<HospitalSummary[]>({
     queryKey: ["hospital", "public"],
     queryFn: () => getHospitalList(),
@@ -140,16 +143,25 @@ export default function WhoWeAre() {
 
   return (
     <PageContainer>
-      <PageTitle>Partner Hospitals</PageTitle>
+      <PageTitle>{ko ? "참여병원" : "Partner Hospitals"}</PageTitle>
       <TotalBadge>
-        Total registered patients <strong>{totalPatients.toLocaleString()}</strong>
+        {ko ? "총 등록환자수" : "Total registered patients"}{" "}
+        <strong>{totalPatients.toLocaleString()}</strong>
       </TotalBadge>
 
-      {hospitalQuery.isLoading && <p>Loading hospital data...</p>}
-      {hospitalQuery.isError && <p>Unable to load hospital information right now.</p>}
+      {hospitalQuery.isLoading && (
+        <p>{ko ? "병원 데이터를 불러오는 중..." : "Loading hospital data..."}</p>
+      )}
+      {hospitalQuery.isError && (
+        <p>
+          {ko
+            ? "지금은 병원 정보를 불러올 수 없습니다."
+            : "Unable to load hospital information right now."}
+        </p>
+      )}
 
       {hospitalQuery.isSuccess && hospitals.length === 0 && (
-        <p>No hospitals have been registered yet.</p>
+        <p>{ko ? "아직 등록된 병원이 없습니다." : "No hospitals have been registered yet."}</p>
       )}
 
       {hospitalQuery.isSuccess && hospitals.length > 0 && (
@@ -159,11 +171,12 @@ export default function WhoWeAre() {
               <HospitalName>{hospital.name}</HospitalName>
               <HospitalLocation>
                 <LocationOn style={{ fontSize: "16px" }} />
-                {hospital.country?.name ?? "Unknown country"}
+                {hospital.country?.name ?? (ko ? "국가 미상" : "Unknown country")}
                 {hospital.country?.code ? `, ${hospital.country.code}` : ""}
               </HospitalLocation>
               <PatientCount>
-                Patients <strong>{hospital.patientCount.toLocaleString()}</strong>
+                {ko ? "환자수" : "Patients"}{" "}
+                <strong>{hospital.patientCount.toLocaleString()}</strong>
               </PatientCount>
             </HospitalCard>
           ))}
@@ -171,29 +184,56 @@ export default function WhoWeAre() {
       )}
 
       <TextSection>
+        {ko ? (
+          <>
+            <p>
+              귀하는 측정된 안축장(axial length)을 모니터링하고, 이를 에라스무스
+              대학교(네덜란드 로테르담)에서 수집한 데이터셋(The Generation R Study,
+              부모 및 자녀 종단적 연구[Avon Longitudinal Study of Parents and
+              Children], 로테르담 연구 III[The Rotterdam Study III] 포함) [1]과 중국
+              상하이 아동들의 데이터셋 [2]을 참고하여 표준 성장 곡선과 비교해 볼 수
+              있습니다. 이러한 그래프는 부모가 자녀가 직면할 수 있는 근시 위험을 더
+              잘 이해하는 데 도움이 됩니다.
+            </p>
+            <p>
+              백인(Caucasian) 대상의 참조 데이터는 원저작물을 적절히 인용하는 경우
+              어떤 매체에서든 사용, 배포 및 복제를 허용하는 크리에이티브 커먼즈
+              저작자표시(CC BY) 라이선스 조건에 따라 사용되었습니다.
+              동아시아인(East Asian) 대상의 참조 데이터는 원저작물을 적절히
+              인용하고, 적절한 크레딧을 부여하며, 변경 사항이 있는 경우 이를
+              표시하고, 비영리 목적으로 사용하는 경우에 한해 타인이 이 저작물을
+              배포, 리믹스, 적응 및 비영리적으로 기반 확장을 할 수 있도록 허용하는
+              크리에이티브 커먼즈 저작자표시-비영리(CC BY-NC 4.0) 라이선스에 따라
+              사용되었습니다.
+            </p>
+          </>
+        ) : (
+          <>
+            <p>
+              You can monitor the measured axial length and compare it with
+              normative growth curves by referencing datasets collected by
+              Erasmus University (Rotterdam, NL), including The Generation R
+              Study, the Avon Longitudinal Study of Parents and Children, and
+              The Rotterdam Study III [1], as well as datasets from children in
+              Shanghai, China [2]. These graphs help parents better understand
+              the risk of myopia their children may face.
+            </p>
+            <p>
+              The reference data for Caucasian is used under the terms of the
+              Creative Commons Attribution License, which permits use,
+              distribution and reproduction in any medium, provided the
+              original work is properly cited. The reference data for East Asian
+              is used under the Creative Commons Attribution Non Commercial (CC
+              BY-NC 4.0) license, which permits others to distribute, remix,
+              adapt, build upon this work non-commercially, and license their
+              derivative works on different terms, provided the original work is
+              properly cited, appropriate credit is given, any changes made
+              indicated, and the use is non-commercial.
+            </p>
+          </>
+        )}
         <p>
-          You can monitor the measured axial length and compare it with
-          normative growth curves by referencing datasets collected by Erasmus
-          University (Rotterdam, NL), including The Generation R Study, the
-          Avon Longitudinal Study of Parents and Children, and The Rotterdam
-          Study III [1], as well as datasets from children in Shanghai, China
-          [2]. These graphs help parents better understand the risk of myopia
-          their children may face.
-        </p>
-        <p>
-          The reference data for Caucasian is used under the terms of the
-          Creative Commons Attribution License, which permits use,
-          distribution and reproduction in any medium, provided the original
-          work is properly cited. The reference data for East Asian is used
-          under the Creative Commons Attribution Non Commercial (CC BY-NC 4.0)
-          license, which permits others to distribute, remix, adapt, build
-          upon this work non-commercially, and license their derivative works
-          on different terms, provided the original work is properly cited,
-          appropriate credit is given, any changes made indicated, and the use
-          is non-commercial.
-        </p>
-        <p>
-          <strong>References</strong>
+          <strong>{ko ? "참고문헌" : "References"}</strong>
           <br />
           1. Tideman JWL, Polling JR, Vingerling JR, et al. Axial length
           growth and the risk of developing myopia in European children. Acta
