@@ -36,11 +36,17 @@ export function googleLogin(idToken: string) {
   });
 }
 
+export interface SignupConsents {
+  agree_terms: true;
+  agree_privacy: true;
+  agree_marketing: boolean;
+}
+
 export function signupWithPasswordAuth(
   username: string,
   password: string,
   email: string,
-  receive_email_updates: boolean,
+  consents: SignupConsents,
 ) {
   return jsonFetch(
     API_ROOT + "/auth/user/passwordAuth",
@@ -51,16 +57,14 @@ export function signupWithPasswordAuth(
       username,
       password,
       email,
-      receive_email_updates,
+      receive_email_updates: consents.agree_marketing,
+      ...consents,
     },
     false,
   );
 }
 
-export function signupWithGoogleAuth(
-  idToken: string,
-  receive_email_updates: boolean,
-) {
+export function signupWithGoogleAuth(idToken: string, consents: SignupConsents) {
   return jsonFetch(
     API_ROOT + "/auth/user/googleAuth",
     {
@@ -68,7 +72,8 @@ export function signupWithGoogleAuth(
     },
     {
       token: idToken,
-      receive_email_updates,
+      receive_email_updates: consents.agree_marketing,
+      ...consents,
     },
     false,
   );
