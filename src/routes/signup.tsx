@@ -13,8 +13,10 @@ import theme from "../theme";
 import { MOBILE_MEDIA } from "../lib/constants";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import Logo from "../components/logo";
-import ConfirmDialog from "../components/dialog";
-import { TERMS_OF_SERVICE, PRIVACY_CONSENT, MARKETING_CONSENT } from "../consent";
+import ConsentChecklist, {
+  ConsentValue,
+  isRequiredAgreed,
+} from "../components/consent_checklist";
 
 const PageWrapper = styled.div`
   display: flex;
@@ -66,72 +68,8 @@ const EyeButton = styled.button`
   }
 `;
 
-const ConsentBox = styled.div`
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
-  padding: 12px 14px;
+const ConsentWrapper = styled.div`
   margin: 12px 0 4px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-`;
-
-const ConsentAllRow = styled.label`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 15px;
-  font-weight: 600;
-  color: ${theme.textPrimary};
-  cursor: pointer;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #eee;
-`;
-
-const ConsentRow = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 14px;
-`;
-
-const ConsentLeft = styled.label`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: ${theme.textSecondary};
-  cursor: pointer;
-`;
-
-const RequiredTag = styled.span`
-  color: ${theme.primary};
-  font-weight: 600;
-`;
-
-const OptionalTag = styled.span`
-  color: #aaa;
-`;
-
-const ViewLink = styled.button`
-  background: none;
-  border: none;
-  color: ${theme.textSecondary};
-  font-size: 13px;
-  text-decoration: underline;
-  cursor: pointer;
-  padding: 0;
-
-  &:hover {
-    color: ${theme.primary};
-  }
-`;
-
-const ConsentText = styled.div`
-  white-space: pre-wrap;
-  font-size: 13px;
-  line-height: 1.6;
-  color: ${theme.textPrimary};
-  max-width: 520px;
 `;
 
 const SubmitButton = styled.button<{ $enabled: boolean }>`
@@ -196,14 +134,6 @@ const GoogleButtonWrapper = styled.div`
   }
 `;
 
-type DocKey = "terms" | "privacy" | "marketing" | null;
-
-const DOCS = {
-  terms: { title: "이용약관", body: TERMS_OF_SERVICE },
-  privacy: { title: "개인정보 수집·이용 동의", body: PRIVACY_CONSENT },
-  marketing: { title: "마케팅 정보 수신 동의", body: MARKETING_CONSENT },
-};
-
 export default function Signup() {
   const username = useRef("");
   const [password, setPassword] = useState("");
@@ -212,27 +142,21 @@ export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const [agreeTerms, setAgreeTerms] = useState(false);
-  const [agreePrivacy, setAgreePrivacy] = useState(false);
-  const [agreeMarketing, setAgreeMarketing] = useState(false);
-  const [openDoc, setOpenDoc] = useState<DocKey>(null);
+  const [consent, setConsent] = useState<ConsentValue>({
+    terms: false,
+    privacy: false,
+    marketing: false,
+  });
 
   const navigate = useNavigate();
 
-  const requiredAgreed = agreeTerms && agreePrivacy;
-  const allAgreed = agreeTerms && agreePrivacy && agreeMarketing;
-
-  function toggleAll(checked: boolean) {
-    setAgreeTerms(checked);
-    setAgreePrivacy(checked);
-    setAgreeMarketing(checked);
-  }
+  const requiredAgreed = isRequiredAgreed(consent);
 
   function buildConsents(): SignupConsents {
     return {
       agree_terms: true,
       agree_privacy: true,
-      agree_marketing: agreeMarketing,
+      agree_marketing: consent.marketing,
     };
   }
 
@@ -334,64 +258,9 @@ export default function Signup() {
           onChange={(e) => setEmail(e.target.value)}
         />
 
-        <ConsentBox>
-          <ConsentAllRow>
-            <input
-              type="checkbox"
-              checked={allAgreed}
-              onChange={(e) => toggleAll(e.target.checked)}
-            />
-            전체 동의 (선택 항목 포함)
-          </ConsentAllRow>
-
-          <ConsentRow>
-            <ConsentLeft>
-              <input
-                type="checkbox"
-                checked={agreeTerms}
-                onChange={(e) => setAgreeTerms(e.target.checked)}
-              />
-              <span>
-                <RequiredTag>[필수]</RequiredTag> 이용약관 동의
-              </span>
-            </ConsentLeft>
-            <ViewLink type="button" onClick={() => setOpenDoc("terms")}>
-              보기
-            </ViewLink>
-          </ConsentRow>
-
-          <ConsentRow>
-            <ConsentLeft>
-              <input
-                type="checkbox"
-                checked={agreePrivacy}
-                onChange={(e) => setAgreePrivacy(e.target.checked)}
-              />
-              <span>
-                <RequiredTag>[필수]</RequiredTag> 개인정보 수집·이용 동의
-              </span>
-            </ConsentLeft>
-            <ViewLink type="button" onClick={() => setOpenDoc("privacy")}>
-              보기
-            </ViewLink>
-          </ConsentRow>
-
-          <ConsentRow>
-            <ConsentLeft>
-              <input
-                type="checkbox"
-                checked={agreeMarketing}
-                onChange={(e) => setAgreeMarketing(e.target.checked)}
-              />
-              <span>
-                <OptionalTag>[선택]</OptionalTag> 마케팅 정보 수신 동의
-              </span>
-            </ConsentLeft>
-            <ViewLink type="button" onClick={() => setOpenDoc("marketing")}>
-              보기
-            </ViewLink>
-          </ConsentRow>
-        </ConsentBox>
+        <ConsentWrapper>
+          <ConsentChecklist value={consent} onChange={setConsent} />
+        </ConsentWrapper>
 
         <SubmitButton $enabled={requiredAgreed} onClick={handleSignup}>
           Sign up
@@ -417,16 +286,6 @@ export default function Signup() {
           />
         </GoogleButtonWrapper>
       </FormContainer>
-
-      <ConfirmDialog
-        open={openDoc !== null}
-        title={openDoc ? DOCS[openDoc].title : ""}
-        content={
-          <ConsentText>{openDoc ? DOCS[openDoc].body : ""}</ConsentText>
-        }
-        onClose={() => setOpenDoc(null)}
-        onConfirm={() => setOpenDoc(null)}
-      />
     </PageWrapper>
   );
 }

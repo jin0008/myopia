@@ -79,6 +79,18 @@ export function signupWithGoogleAuth(idToken: string, consents: SignupConsents) 
   );
 }
 
+// Records consent for an already-logged-in user (existing-user re-consent).
+export function submitConsent(consents: SignupConsents) {
+  return jsonFetchWithSession(
+    API_ROOT + "/auth/consent",
+    {
+      method: "POST",
+    },
+    consents,
+    false,
+  );
+}
+
 export function addPasswordAuth(username: string, password: string) {
   return jsonFetchWithSession(
     API_ROOT + "/auth/passwordAuth",

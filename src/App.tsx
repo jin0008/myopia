@@ -9,6 +9,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import { getCurrentUser } from "./api/auth";
 import { GOOGLE_CLIENT_ID } from "./lib/google_client_id";
 import type { UserRole } from "./types/user";
+import ConsentGate from "./components/consent_gate";
 
 const Home = lazy(() => import("./routes/home"));
 const HeaderRoute = lazy(() => import("./routes/header_footer"));
@@ -68,6 +69,7 @@ const App = () => {
           }}
         >
           <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+            <ConsentGate />
             <Suspense fallback={<div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading…</div>}>
             <Routes>
               <Route element={<HeaderRoute></HeaderRoute>}>
