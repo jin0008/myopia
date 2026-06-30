@@ -182,6 +182,17 @@ export function AxialLengthRegisterDialog({
       alert("Invalid value detected");
       return;
     }
+    // Hard validation: axial length is physically bounded to 15~35mm, matching
+    // the backend constraint. Out-of-bound values are blocked here with a clear
+    // message (clinically abnormal-but-possible values are handled separately as
+    // a "query" confirmation in the parent's onConfirm).
+    const outOfRange = [odValue, osValue].some(
+      (v) => v !== null && (v < 15 || v > 35),
+    );
+    if (outOfRange) {
+      alert("안축장은 15~35mm 범위로 입력해주세요.");
+      return;
+    }
     onConfirm({
       instrumentId,
       date,

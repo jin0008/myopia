@@ -58,6 +58,59 @@ import {
 import { MagnifyingGlass } from "../../components/magnifying_glass";
 import { Treatment } from "../../types/treatment";
 
+// Clinical "query" thresholds for axial length entries. Values outside the
+// normal range, or changing too fast vs. the previous measurement, raise a
+// confirmation popup so the operator can double-check the entry.
+const AXIAL_QUERY = {
+  minNormal: 20.0, // mm
+  maxNormal: 30.0, // mm
+  decreaseMm: 0.3, // flag if it dropped this much vs. the previous record
+  increaseMmPerYear: 1.0, // flag if annualised increase reaches this
+};
+
+// Returns human-readable warnings for a new axial length entry, comparing it
+// against the patient's most recent prior measurement when available.
+function axialLengthQueryWarnings(
+  next: { od: number | null; os: number | null; date: string },
+  previous: Measurement | undefined,
+): string[] {
+  const warnings: string[] = [];
+  (["od", "os"] as const).forEach((eye) => {
+    const value = next[eye];
+    if (value == null) return;
+    const label = eye.toUpperCase();
+
+    if (value <= AXIAL_QUERY.minNormal || value >= AXIAL_QUERY.maxNormal) {
+      warnings.push(
+        `안축장 ${label} ${value}mm가 기준 범위(${AXIAL_QUERY.minNormal}~${AXIAL_QUERY.maxNormal}mm)를 벗어났습니다.`,
+      );
+    }
+
+    const prevValue = previous?.[eye];
+    if (previous == null || prevValue == null) return;
+
+    const decrease = prevValue - value;
+    if (decrease >= AXIAL_QUERY.decreaseMm) {
+      warnings.push(
+        `안축장 ${label}가 직전 측정(${previous.date.split("T")[0]}, ${prevValue}mm) 대비 ${decrease.toFixed(2)}mm 감소했습니다.`,
+      );
+    }
+
+    const years =
+      (new Date(next.date).getTime() - new Date(previous.date).getTime()) /
+      (365.25 * 24 * 60 * 60 * 1000);
+    if (years > 0) {
+      const rate = (value - prevValue) / years;
+      if (rate >= AXIAL_QUERY.increaseMmPerYear) {
+        warnings.push(
+          `안축장 ${label} 증가 속도가 ${rate.toFixed(2)}mm/year로 기준(${AXIAL_QUERY.increaseMmPerYear}mm/year)을 초과했습니다.`,
+        );
+      }
+    }
+  });
+  return warnings;
+}
+
 export default function ChartRoute() {
   const { patientId } = useParams<{ patientId: string }>();
   const [searchParams] = useSearchParams();
@@ -542,6 +595,22 @@ export default function ChartRoute() {
           if (new Date(date) > new Date()) {
             alert("Can't register future measurement");
             return;
+          }
+          const previous = sortedAxialLength
+            .filter(
+              (m) => m.id !== editTargetId && new Date(m.date) < new Date(date),
+            )
+            .sort(
+              (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+            )[0];
+          const warnings = axialLengthQueryWarnings({ od, os, date }, previous);
+          if (warnings.length > 0) {
+            const proceed = confirm(
+              "다음 항목을 확인해주세요.\n\n" +
+                warnings.join("\n") +
+                "\n\n이대로 저장하시겠습니까?",
+            );
+            if (!proceed) return;
           }
           editTargetId
             ? updateMeasurementMutation.mutate({
