@@ -26,6 +26,11 @@ import {
   getHospitalList,
   getMembers,
 } from "../api/hospital";
+import {
+  getAlertRecipients,
+  addAlertRecipient,
+  deleteAlertRecipient,
+} from "../api/alert_recipient";
 import styled from "styled-components";
 import { Edit, DeleteOutline } from "@mui/icons-material";
 import {
@@ -1210,26 +1215,156 @@ function HospitalAdminProfile() {
     },
   });
 
+  const [tab, setTab] = useState<"members" | "study">("members");
+
   return (
     <ProfileSettingsDiv>
       <h2>Hospital Admin Settings</h2>
-      <h3>Member list</h3>
-      <Reactive
-        desktop={
-          <MemberListTable
-            members={memberListQuery.data ?? []}
-            onEdit={(userId, data) => editMutation.mutate({ userId, data })}
-            onDelete={(userId) => deleteMutation.mutate(userId)}
+      <div>
+        <TabBar>
+          <TabButton
+            $active={tab === "members"}
+            onClick={() => setTab("members")}
+          >
+            Member list
+          </TabButton>
+          <TabButton $active={tab === "study"} onClick={() => setTab("study")}>
+            연구설정
+          </TabButton>
+        </TabBar>
+
+        {tab === "members" ? (
+          <Reactive
+            desktop={
+              <MemberListTable
+                members={memberListQuery.data ?? []}
+                onEdit={(userId, data) => editMutation.mutate({ userId, data })}
+                onDelete={(userId) => deleteMutation.mutate(userId)}
+              />
+            }
+            mobile={
+              <MemberListCards
+                members={memberListQuery.data ?? []}
+                onEdit={(userId, data) => editMutation.mutate({ userId, data })}
+                onDelete={(userId) => deleteMutation.mutate(userId)}
+              />
+            }
           />
-        }
-        mobile={
-          <MemberListCards
-            members={memberListQuery.data ?? []}
-            onEdit={(userId, data) => editMutation.mutate({ userId, data })}
-            onDelete={(userId) => deleteMutation.mutate(userId)}
-          />
-        }
-      />
+        ) : (
+          <StudyAlertSettings />
+        )}
+      </div>
     </ProfileSettingsDiv>
+  );
+}
+
+const TabBar = styled.div`
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 16px;
+`;
+
+const TabButton = styled.button<{ $active: boolean }>`
+  background: none;
+  border: none;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  color: ${(p) => (p.$active ? "#16a34a" : "#6b7280")};
+  border-bottom: 2px solid
+    ${(p) => (p.$active ? "#16a34a" : "transparent")};
+  margin-bottom: -1px;
+`;
+
+const RecipientRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 8px;
+`;
+
+function StudyAlertSettings() {
+  const queryClient = useQueryClient();
+  const [email, setEmail] = useState("");
+
+  const recipientQuery = useQuery({
+    queryKey: ["alert_recipient"],
+    queryFn: getAlertRecipients,
+  });
+
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: ["alert_recipient"] });
+
+  const addMutation = useMutation({
+    mutationFn: addAlertRecipient,
+    onSuccess: () => {
+      setEmail("");
+      invalidate();
+    },
+    onError: (e: any) => {
+      alert(
+        e?.code === 409
+          ? "이미 등록된 이메일입니다."
+          : "이메일을 등록하지 못했습니다. 형식을 확인해주세요.",
+      );
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteAlertRecipient,
+    onSuccess: invalidate,
+  });
+
+  const handleAdd = () => {
+    const trimmed = email.trim();
+    if (!trimmed) return;
+    addMutation.mutate(trimmed);
+  };
+
+  return (
+    <div style={{ marginTop: "24px" }}>
+      <h3>연구설정 — 알림 수신자</h3>
+      <p style={{ fontSize: "13px", color: "#6b7280", margin: "0 0 12px 0" }}>
+        연구 등록 환자에서 이상 값이 입력될 때 query 알림을 받을 이메일을
+        등록합니다.
+      </p>
+
+      <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+        <TextInput
+          type="email"
+          placeholder="이메일 주소"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+          style={{ flex: 1 }}
+        />
+        <PrimaryButton onClick={handleAdd} disabled={addMutation.isPending}>
+          추가
+        </PrimaryButton>
+      </div>
+
+      {recipientQuery.data && recipientQuery.data.length === 0 && (
+        <p style={{ fontSize: "13px", color: "#9ca3af" }}>
+          등록된 수신자가 없습니다.
+        </p>
+      )}
+      {recipientQuery.data?.map((r) => (
+        <RecipientRow key={r.id}>
+          <span>{r.email}</span>
+          <DangerButton
+            onClick={() => deleteMutation.mutate(r.id)}
+            style={{ padding: "4px 12px", fontSize: "13px" }}
+          >
+            삭제
+          </DangerButton>
+        </RecipientRow>
+      ))}
+    </div>
   );
 }
