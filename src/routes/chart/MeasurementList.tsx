@@ -182,6 +182,13 @@ export function AxialLengthRegisterDialog({
       alert("Invalid value detected");
       return;
     }
+    const outOfRange = [odValue, osValue].some(
+      (v) => v !== null && (v < 15 || v > 35),
+    );
+    if (outOfRange) {
+      alert("Axial length must be between 15 and 35 mm.");
+      return;
+    }
     onConfirm({
       instrumentId,
       date,
