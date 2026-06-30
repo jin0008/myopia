@@ -7,6 +7,7 @@ export type AuditStatus = "SUCCESS" | "FAILURE" | "REVERTED";
 export interface AuditLogFilters {
   from?: string;
   to?: string;
+  hospital_id?: string;
   action?: AuditAction;
   status?: AuditStatus;
   actor_id?: string;

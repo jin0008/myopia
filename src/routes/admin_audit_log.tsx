@@ -10,6 +10,7 @@ import {
 } from "../api/audit_log";
 import { PrimaryButton, OutlinedButton } from "../components/button";
 import { TextInput } from "../components/input";
+import { getHospitalList } from "../api/hospital";
 
 const PAGE_SIZE = 50;
 
@@ -158,6 +159,18 @@ export default function AdminAuditLog() {
     placeholderData: keepPreviousData,
   });
 
+  const hospitalQuery = useQuery({
+    queryKey: ["hospital"],
+    queryFn: getHospitalList,
+    staleTime: Infinity,
+  });
+  const hospitalNameById = new Map<string, string>(
+    (hospitalQuery.data ?? []).map((h: any) => [
+      h.id,
+      `${h.name} (${h.code})`,
+    ]),
+  );
+
   const updateDraft = (patch: Partial<AuditLogFilters>) =>
     setDraft((prev) => ({ ...prev, ...patch }));
 
@@ -187,6 +200,23 @@ export default function AdminAuditLog() {
 
       <Card>
         <FilterRow>
+          <Field>
+            Hospital
+            <TextInput
+              as="select"
+              value={draft.hospital_id ?? ""}
+              onChange={(e) =>
+                updateDraft({ hospital_id: e.target.value || undefined })
+              }
+            >
+              <option value="">All hospitals</option>
+              {hospitalQuery.data?.map((h: any) => (
+                <option key={h.id} value={h.id}>
+                  {h.name} ({h.code})
+                </option>
+              ))}
+            </TextInput>
+          </Field>
           <Field>
             From
             <TextInput
@@ -262,6 +292,7 @@ export default function AdminAuditLog() {
             <thead>
               <tr>
                 <th>Time</th>
+                <th>Hospital</th>
                 <th>Actor</th>
                 <th>Role</th>
                 <th>Action</th>
@@ -276,6 +307,11 @@ export default function AdminAuditLog() {
               {query.data?.rows.map((r) => (
                 <tr key={r.id}>
                   <td>{formatTime(r.created_at)}</td>
+                  <td>
+                    {r.hospital_id
+                      ? hospitalNameById.get(r.hospital_id) ?? r.hospital_id
+                      : "-"}
+                  </td>
                   <td>{r.actor_name ?? r.actor?.email ?? "-"}</td>
                   <td>{r.actor_role ?? "-"}</td>
                   <td>
@@ -302,12 +338,12 @@ export default function AdminAuditLog() {
               ))}
               {query.isError && (
                 <tr>
-                  <Empty colSpan={9}>Error loading logs.</Empty>
+                  <Empty colSpan={10}>Error loading logs.</Empty>
                 </tr>
               )}
               {query.data && query.data.rows.length === 0 && (
                 <tr>
-                  <Empty colSpan={9}>No logs found.</Empty>
+                  <Empty colSpan={10}>No logs found.</Empty>
                 </tr>
               )}
             </tbody>
