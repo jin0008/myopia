@@ -15,13 +15,46 @@ import downloadIcon from "../assets/download.svg";
 import { getMeasurementsByHospital } from "../api/measurement";
 import ExcelJS from "exceljs";
 import { getEthnicityList, getInstrumentList } from "../api/static";
+import AdminAuditLog from "./admin_audit_log";
 
 const Table = styled.table`
-  text-align: center;
-  height: fit-content;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  & th,
   & td {
-    padding: 8px;
+    padding: 10px 12px;
+    text-align: center;
+    white-space: nowrap;
   }
+  & thead th {
+    background: #f3f4f6;
+    color: #374151;
+    font-weight: 600;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  & tbody tr:nth-child(even) {
+    background: #fafafa;
+  }
+  & tbody tr:hover {
+    background: #f0f9ff;
+  }
+  & tbody td {
+    border-bottom: 1px solid #f0f0f0;
+    color: #374151;
+  }
+`;
+
+const Card = styled.div`
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  padding: 20px;
+`;
+
+const SectionTitle = styled.h2`
+  margin: 0 0 16px 0;
 `;
 
 export default function Admin() {
@@ -74,14 +107,14 @@ export default function Admin() {
         style={{
           display: "flex",
           width: "80%",
-          flexGrow: 1,
-          height: 0,
+          gap: "24px",
           justifyContent: "space-between",
+          alignItems: "flex-start",
         }}
       >
         <HospitalList onSelect={setSelectedHospitalId} />
-        <div>
-          <h2>Member List</h2>
+        <Card style={{ flex: 1 }}>
+          <SectionTitle>Member List</SectionTitle>
           <Table>
             <thead>
               <tr>
@@ -153,7 +186,10 @@ export default function Admin() {
               ))}
             </tbody>
           </Table>
-        </div>
+        </Card>
+      </div>
+      <div style={{ width: "80%", marginTop: "32px" }}>
+        <AdminAuditLog />
       </div>
     </TopDiv>
   );
@@ -164,12 +200,15 @@ const HospitalCardDiv = styled.div`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding: 8px;
-  border: 1px solid black;
+  padding: 12px 14px;
+  border: 1px solid #e5e7eb;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  transition: background 0.15s, border-color 0.15s;
   &:hover {
-    background-color: lightgray;
+    background-color: #f0f9ff;
+    border-color: #bae6fd;
   }
 `;
 
@@ -311,12 +350,13 @@ function HospitalList({ onSelect }: { onSelect: (hospitalId: any) => void }) {
     return <div>Error: {query.error.message}</div>;
   }
   return (
-    <div>
-      <h2>Hospital List</h2>
+    <Card style={{ minWidth: "320px" }}>
+      <SectionTitle>Hospital List</SectionTitle>
       <SearchInput
         placeholder="Search hospital by name or code"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
+        style={{ marginBottom: "12px", width: "100%" }}
       />
       <div>
         {filteredData.map((hospital: any) => (
@@ -327,6 +367,6 @@ function HospitalList({ onSelect }: { onSelect: (hospitalId: any) => void }) {
           />
         ))}
       </div>
-    </div>
+    </Card>
   );
 }
