@@ -66,6 +66,8 @@ const AXIAL_QUERY = {
   maxNormal: 30.0, // mm
   decreaseMm: 0.3, // flag if it dropped this much vs. the previous record
   increaseMmPerYear: 1.0, // flag if annualised increase reaches this
+  minIntervalYears: 0.25, // only evaluate rate when measurements are ≥3mo apart
+  minIncreaseMm: 0.1, // and the raw increase exceeds measurement noise
 };
 
 // Returns human-readable warnings for a new axial length entry, comparing it
@@ -89,18 +91,25 @@ function axialLengthQueryWarnings(
     const prevValue = previous?.[eye];
     if (previous == null || prevValue == null) return;
 
-    const decrease = prevValue - value;
+    // Round to 3 decimals to avoid float error (e.g. 24.15 - 24.05 = 0.0999…).
+    const decrease = Math.round((prevValue - value) * 1000) / 1000;
     if (decrease >= AXIAL_QUERY.decreaseMm) {
       warnings.push(
         `안축장 ${label}가 직전 측정(${previous.date.split("T")[0]}, ${prevValue}mm) 대비 ${decrease.toFixed(2)}mm 감소했습니다.`,
       );
     }
 
+    // Guard against false positives: require a minimum interval (so a few-days
+    // gap doesn't blow up the annualised rate) and a raw increase above noise.
     const years =
       (new Date(next.date).getTime() - new Date(previous.date).getTime()) /
       (365.25 * 24 * 60 * 60 * 1000);
-    if (years > 0) {
-      const rate = (value - prevValue) / years;
+    const increase = Math.round((value - prevValue) * 1000) / 1000;
+    if (
+      years >= AXIAL_QUERY.minIntervalYears &&
+      increase >= AXIAL_QUERY.minIncreaseMm
+    ) {
+      const rate = increase / years;
       if (rate >= AXIAL_QUERY.increaseMmPerYear) {
         warnings.push(
           `안축장 ${label} 증가 속도가 ${rate.toFixed(2)}mm/year로 기준(${AXIAL_QUERY.increaseMmPerYear}mm/year)을 초과했습니다.`,
