@@ -1,5 +1,5 @@
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
-import { TopDiv } from "../components/div";
+// TopDiv removed - using custom PageWrapper
 import { UserContext } from "../App";
 import NotLoggedIn from "../components/not_logged_in";
 import {
@@ -13,7 +13,7 @@ import {
   updateProfessional,
   updateProfessionalHospital,
 } from "../api/healthcare_professional";
-import { PrimaryButton, PrimaryNagativeButton } from "../components/button";
+import { PrimaryButton, PrimaryNagativeButton, BlackButton, DangerButton } from "../components/button";
 import {
   Dialog,
   DialogActions,
@@ -26,7 +26,13 @@ import {
   getHospitalList,
   getMembers,
 } from "../api/hospital";
+import {
+  getAlertRecipients,
+  addAlertRecipient,
+  deleteAlertRecipient,
+} from "../api/alert_recipient";
 import styled from "styled-components";
+import { Edit, DeleteOutline } from "@mui/icons-material";
 import {
   addGoogleAuth,
   addPasswordAuth,
@@ -41,31 +47,121 @@ import { professionalRoleList, MOBILE_MEDIA } from "../lib/constants";
 import HospitalSelector from "../components/hospital_selector";
 import { Reactive } from "../components/reactive";
 
+const PageWrapper = styled.div`
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 60px 24px 100px;
+
+  @media ${MOBILE_MEDIA} {
+    padding: 32px 16px 60px;
+  }
+`;
+
+const PageTitle = styled.h1`
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1d1d1f;
+  margin-bottom: 4px;
+
+  &::after {
+    content: "";
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    background-color: #00B167;
+    border-radius: 50%;
+    margin-left: 4px;
+    vertical-align: super;
+    font-size: 0.5em;
+  }
+
+  @media ${MOBILE_MEDIA} {
+    font-size: 2rem;
+  }
+`;
+
+const UserIdText = styled.p`
+  font-size: 14px;
+  color: #86868b;
+  margin-bottom: 32px;
+
+  span {
+    color: #00B167;
+    font-weight: 500;
+  }
+`;
+
+const SettingsGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+
+  @media ${MOBILE_MEDIA} {
+    grid-template-columns: 1fr;
+  }
+`;
+
 export default function Profile() {
   const { user } = useContext(UserContext);
   if (user == null) return <NotLoggedIn />;
 
   return (
-    <TopDiv style={{ margin: "0 16px" }}>
-      <h1 style={{ margin: "16px 0" }}>Your User Profile</h1>
-      <p>
-        Your user id is <strong>{user.id}</strong>
-      </p>
-      <UserProfile />
-      {user.healthcare_professional && <ProfessionalProfile />}
+    <PageWrapper>
+      <PageTitle>User Profile</PageTitle>
+      <UserIdText>User ID  <span>{user.id}</span></UserIdText>
+      <SettingsGrid>
+        <UserProfile />
+        {user.healthcare_professional && <ProfessionalProfile />}
+      </SettingsGrid>
       {user.healthcare_professional?.is_admin && <HospitalAdminProfile />}
-    </TopDiv>
+    </PageWrapper>
   );
 }
 
 const ProfileSettingsDiv = styled.div`
-  border: 1px solid lightgray;
-  padding: 16px;
+  background: white;
+  border: 1px solid #eee;
+  padding: 28px;
   border-radius: 16px;
-  margin: 16px 0;
+
+  h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    color: #1d1d1f;
+  }
+
+  h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 10px;
+    color: #1d1d1f;
+  }
+
+  p {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 8px;
+  }
+
+  & > div {
+    padding: 20px;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    margin-bottom: 16px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
 
   @media ${MOBILE_MEDIA} {
     width: 100%;
+    padding: 16px;
+
+    & > div {
+      padding: 16px;
+    }
   }
 `;
 
@@ -134,33 +230,32 @@ function UserProfile() {
 
   return (
     <ProfileSettingsDiv>
-      <h2>User settings</h2>
+      <h2>User Settings</h2>
       <div>
-        <h3>Password auth</h3>
+        <h3>Password Auth</h3>
         {user.password_auth ? (
           <>
             <p>
-              You are using password authentication with username :{" "}
-              <strong>{user.password_auth.username}</strong>
+              Password authentication with username : <strong>{user.password_auth.username}</strong>
             </p>
             <div
               style={{
                 display: "flex",
                 flexDirection: "row",
                 justifyContent: "end",
-                gap: "16px",
+                gap: "12px",
               }}
             >
-              <PrimaryButton
+              <BlackButton
                 onClick={() => setIsChangePasswordDialogOpen(true)}
               >
-                Change Password
-              </PrimaryButton>
-              <PrimaryNagativeButton
+                <Edit style={{ fontSize: "16px" }} /> Change
+              </BlackButton>
+              <DangerButton
                 onClick={() => deletePasswordAuthMutation.mutate()}
               >
-                Remove password auth
-              </PrimaryNagativeButton>
+                <DeleteOutline style={{ fontSize: "16px" }} /> Remove
+              </DangerButton>
             </div>
           </>
         ) : (
@@ -171,7 +266,7 @@ function UserProfile() {
                 display: "flex",
                 flexDirection: "row",
                 justifyContent: "end",
-                gap: "16px",
+                gap: "12px",
               }}
             >
               <PrimaryButton
@@ -192,7 +287,7 @@ function UserProfile() {
         onClose={() => setIsAddPasswordAuthDialogOpen(false)}
       />
       <div>
-        <h3>Google auth</h3>
+        <h3>Google Auth</h3>
         {user.google_auth ? (
           <>
             <p>You are using google authentication.</p>
@@ -232,7 +327,7 @@ function UserProfile() {
         )}
       </div>
       <div>
-        <h3>Email</h3>
+        <h3>E-Mail</h3>
         <div
           style={{
             display: "flex",
@@ -241,47 +336,66 @@ function UserProfile() {
           }}
         >
           <p>
-            Your email is: <strong>{user.email ?? "not registered"}</strong>
+            Your E-Mail : <strong>{user.email ?? "Not Registered"}</strong>
           </p>
-          <PrimaryButton onClick={() => setIsEditEmailDialogOpen(true)}>
-            Edit
+          <PrimaryButton onClick={() => setIsEditEmailDialogOpen(true)} style={{ padding: "8px 16px", fontSize: "13px" }}>
+            +
           </PrimaryButton>
         </div>
         <div style={{ height: "8px" }}></div>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <p>
-            Receive email updates:{" "}
-            <strong>{user.receive_email_updates ? "Yes" : "No"}</strong>
+            Receive E-Mail updates: <strong>{user.receive_email_updates ? "Yes" : "No"}</strong>
           </p>
-          <PrimaryNagativeButton
-            onClick={() =>
-              editSelfMutation.mutate(
-                { receive_email_updates: !user.receive_email_updates },
-                {
-                  onSuccess: () => {
-                    alert(
-                      `You are now ${user.receive_email_updates ? "not " : ""}receiving email updates`,
-                    );
+          <label style={{ position: "relative", display: "inline-block", width: "44px", height: "24px" }}>
+            <input
+              type="checkbox"
+              checked={user.receive_email_updates}
+              onChange={() =>
+                editSelfMutation.mutate(
+                  { receive_email_updates: !user.receive_email_updates },
+                  {
+                    onSuccess: () => {
+                      alert(
+                        `You are now ${user.receive_email_updates ? "not " : ""}receiving email updates`,
+                      );
+                    },
                   },
-                },
-              )
-            }
-          >
-            Change
-          </PrimaryNagativeButton>
+                )
+              }
+              style={{ opacity: 0, width: 0, height: 0 }}
+            />
+            <span style={{
+              position: "absolute",
+              cursor: "pointer",
+              top: 0, left: 0, right: 0, bottom: 0,
+              backgroundColor: user.receive_email_updates ? "#00B167" : "#ccc",
+              borderRadius: "24px",
+              transition: "0.3s",
+            }}>
+              <span style={{
+                position: "absolute",
+                content: '""',
+                height: "18px",
+                width: "18px",
+                left: user.receive_email_updates ? "22px" : "3px",
+                bottom: "3px",
+                backgroundColor: "white",
+                borderRadius: "50%",
+                transition: "0.3s",
+              }} />
+            </span>
+          </label>
         </div>
       </div>
       <div>
-        <h3>Delete account</h3>
-        <div style={{ display: "flex", justifyContent: "end" }}>
-          <PrimaryNagativeButton
-            style={{
-              backgroundColor: "red",
-            }}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ color: "#E53935", fontWeight: 600, fontSize: "15px" }}>Delete account</span>
+          <DangerButton
             onClick={() => setIsDeleteAccountDialogOpen(true)}
           >
-            Delete account
-          </PrimaryNagativeButton>
+            <DeleteOutline style={{ fontSize: "16px" }} /> Delete Account
+          </DangerButton>
         </div>
         <DeleteAccountDialog
           open={isDeleteAccountDialogOpen}
@@ -601,7 +715,7 @@ function ProfessionalProfile() {
 
   return (
     <ProfileSettingsDiv>
-      <h2>Healthcare professional settings</h2>
+      <h2>Healthcare Professional Settings</h2>
       <div
         style={{
           display: "flex",
@@ -863,9 +977,28 @@ function ChangeHospitalDialog({
 }
 
 const Table = styled.table`
+  width: 100%;
   text-align: center;
+  border-collapse: collapse;
+
+  & th {
+    padding: 12px 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #86868b;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+  }
+
   & td {
-    padding: 8px;
+    padding: 14px 8px;
+    font-size: 14px;
+    border-bottom: 1px solid #f5f5f5;
+    text-align: left;
+  }
+
+  & tr:last-child td {
+    border-bottom: none;
   }
 `;
 
@@ -918,10 +1051,10 @@ function MemberListTable({
       <thead>
         <tr>
           <th>User ID</th>
-          <th>name</th>
-          <th>approve</th>
-          <th>reject/kick</th>
-          <th>admin</th>
+          <th>Name</th>
+          <th>Approve</th>
+          <th>Reject/Kick</th>
+          <th>Admin</th>
         </tr>
       </thead>
       <tbody>
@@ -1082,26 +1215,156 @@ function HospitalAdminProfile() {
     },
   });
 
+  const [tab, setTab] = useState<"members" | "study">("members");
+
   return (
     <ProfileSettingsDiv>
-      <h2>Hospital admin settings</h2>
-      <h3>Member list</h3>
-      <Reactive
-        desktop={
-          <MemberListTable
-            members={memberListQuery.data ?? []}
-            onEdit={(userId, data) => editMutation.mutate({ userId, data })}
-            onDelete={(userId) => deleteMutation.mutate(userId)}
+      <h2>Hospital Admin Settings</h2>
+      <div>
+        <TabBar>
+          <TabButton
+            $active={tab === "members"}
+            onClick={() => setTab("members")}
+          >
+            Member list
+          </TabButton>
+          <TabButton $active={tab === "study"} onClick={() => setTab("study")}>
+            연구설정
+          </TabButton>
+        </TabBar>
+
+        {tab === "members" ? (
+          <Reactive
+            desktop={
+              <MemberListTable
+                members={memberListQuery.data ?? []}
+                onEdit={(userId, data) => editMutation.mutate({ userId, data })}
+                onDelete={(userId) => deleteMutation.mutate(userId)}
+              />
+            }
+            mobile={
+              <MemberListCards
+                members={memberListQuery.data ?? []}
+                onEdit={(userId, data) => editMutation.mutate({ userId, data })}
+                onDelete={(userId) => deleteMutation.mutate(userId)}
+              />
+            }
           />
-        }
-        mobile={
-          <MemberListCards
-            members={memberListQuery.data ?? []}
-            onEdit={(userId, data) => editMutation.mutate({ userId, data })}
-            onDelete={(userId) => deleteMutation.mutate(userId)}
-          />
-        }
-      />
+        ) : (
+          <StudyAlertSettings />
+        )}
+      </div>
     </ProfileSettingsDiv>
+  );
+}
+
+const TabBar = styled.div`
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 16px;
+`;
+
+const TabButton = styled.button<{ $active: boolean }>`
+  background: none;
+  border: none;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  color: ${(p) => (p.$active ? "#16a34a" : "#6b7280")};
+  border-bottom: 2px solid
+    ${(p) => (p.$active ? "#16a34a" : "transparent")};
+  margin-bottom: -1px;
+`;
+
+const RecipientRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 8px;
+`;
+
+function StudyAlertSettings() {
+  const queryClient = useQueryClient();
+  const [email, setEmail] = useState("");
+
+  const recipientQuery = useQuery({
+    queryKey: ["alert_recipient"],
+    queryFn: getAlertRecipients,
+  });
+
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: ["alert_recipient"] });
+
+  const addMutation = useMutation({
+    mutationFn: addAlertRecipient,
+    onSuccess: () => {
+      setEmail("");
+      invalidate();
+    },
+    onError: (e: any) => {
+      alert(
+        e?.code === 409
+          ? "이미 등록된 이메일입니다."
+          : "이메일을 등록하지 못했습니다. 형식을 확인해주세요.",
+      );
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteAlertRecipient,
+    onSuccess: invalidate,
+  });
+
+  const handleAdd = () => {
+    const trimmed = email.trim();
+    if (!trimmed) return;
+    addMutation.mutate(trimmed);
+  };
+
+  return (
+    <div style={{ marginTop: "24px" }}>
+      <h3>연구설정 — 알림 수신자</h3>
+      <p style={{ fontSize: "13px", color: "#6b7280", margin: "0 0 12px 0" }}>
+        연구 등록 환자에서 이상 값이 입력될 때 query 알림을 받을 이메일을
+        등록합니다.
+      </p>
+
+      <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+        <TextInput
+          type="email"
+          placeholder="이메일 주소"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+          style={{ flex: 1 }}
+        />
+        <PrimaryButton onClick={handleAdd} disabled={addMutation.isPending}>
+          추가
+        </PrimaryButton>
+      </div>
+
+      {recipientQuery.data && recipientQuery.data.length === 0 && (
+        <p style={{ fontSize: "13px", color: "#9ca3af" }}>
+          등록된 수신자가 없습니다.
+        </p>
+      )}
+      {recipientQuery.data?.map((r) => (
+        <RecipientRow key={r.id}>
+          <span>{r.email}</span>
+          <DangerButton
+            onClick={() => deleteMutation.mutate(r.id)}
+            style={{ padding: "4px 12px", fontSize: "13px" }}
+          >
+            삭제
+          </DangerButton>
+        </RecipientRow>
+      ))}
+    </div>
   );
 }

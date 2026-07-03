@@ -1,15 +1,16 @@
 import styled from "styled-components";
-import logo from "../assets/logo.svg";
-
-import { PrimaryButton } from "./button";
-import { Link, useNavigate, useLocation } from "react-router";
+import { PrimaryButton, GrayButton, OutlinedButton } from "./button";
+import { useNavigate, useLocation } from "react-router";
 import { useContext, useState, useEffect } from "react";
 import { UserContext } from "../App";
 import { logout } from "../api/auth";
 import { useQueryClient } from "@tanstack/react-query";
-import { Menu, Close } from "@mui/icons-material";
+import { Menu, Close, Login, Logout, SwapHoriz } from "@mui/icons-material";
 import { DesktopOnly, MobileOnly } from "./reactive";
 import { MOBILE_MEDIA } from "../lib/constants";
+import theme from "../theme";
+import Logo from "./logo";
+import { useLanguage } from "../lib/language_context";
 
 const HeaderContainer = styled.header`
   position: sticky;
@@ -17,55 +18,79 @@ const HeaderContainer = styled.header`
   z-index: 1000;
   transition: background-color 0.3s ease;
   width: 100%;
-  height: 54px;
-
+  height: 64px;
+  background-color: white;
   align-content: center;
-
   flex-shrink: 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 `;
 
 const NavContent = styled.div`
   width: 100%;
-  max-width: 1080px;
+  max-width: 1200px;
   margin: 0 auto;
-
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 20px;
+  padding: 0 24px;
 
   @media ${MOBILE_MEDIA} {
+    padding: 0 16px;
     padding-right: 48px;
   }
 `;
 
-const Logo = styled.img`
-  height: 24px;
+const DesktopNav = styled.nav`
+  display: flex;
+  align-items: center;
+  gap: 32px;
+`;
+
+const NavLink = styled.span<{ $isActive?: boolean }>`
+  font-size: 14px;
+  color: ${(props) =>
+    props.$isActive ? theme.primary : theme.textPrimary};
   cursor: pointer;
-  transition: opacity 0.2s;
-  z-index: 1002; /* Above mobile menu */
+  transition: color 0.2s;
+  font-weight: ${(props) => (props.$isActive ? "600" : "400")};
+  white-space: nowrap;
 
   &:hover {
-    opacity: 0.8;
-  }
-
-  @media ${MOBILE_MEDIA} {
-    height: 20px;
+    color: ${theme.primary};
   }
 `;
 
-const DesktopLinks = styled.div`
+const RightSection = styled.div`
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 10px;
+`;
+
+const LangToggle = styled.div`
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 20px;
+  overflow: hidden;
+`;
+
+const LangOption = styled.button<{ $active: boolean }>`
+  border: none;
+  background: ${(props) => (props.$active ? theme.primary : "transparent")};
+  color: ${(props) => (props.$active ? "white" : theme.textPrimary)};
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
 `;
 
 const MobileMenuButton = styled.div`
   position: absolute;
   height: 24px;
   width: 24px;
-  top: 15px;
-  right: 10px;
+  top: 18px;
+  right: 16px;
   cursor: pointer;
   z-index: 1002;
   color: var(--primary-text);
@@ -74,28 +99,39 @@ const MobileMenuButton = styled.div`
 const MobileOverlay = styled.div<{ $isOpen: boolean }>`
   position: fixed;
   top: 0;
-  left: 0;
-  width: 100vw;
+  right: 0;
+  width: 70%;
+  max-width: 300px;
   height: 100vh;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: white;
   z-index: 1001;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 40px;
+  padding: 80px 32px 32px;
+  gap: 32px;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.1);
+  transform: translateX(${(props) => (props.$isOpen ? "0" : "100%")});
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+`;
+
+const MobileBackdrop = styled.div<{ $isOpen: boolean }>`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1000;
   opacity: ${(props) => (props.$isOpen ? 1 : 0)};
   pointer-events: ${(props) => (props.$isOpen ? "all" : "none")};
   transition: opacity 0.3s ease;
 `;
 
 const MobileNavLink = styled.span<{ $isActive?: boolean }>`
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: ${(props) => (props.$isActive ? "600" : "400")};
   color: ${(props) =>
-    props.$isActive ? "var(--link-color)" : "var(--primary-text)"};
+    props.$isActive ? theme.primary : theme.textPrimary};
   cursor: pointer;
 
   &:active {
@@ -103,23 +139,11 @@ const MobileNavLink = styled.span<{ $isActive?: boolean }>`
   }
 `;
 
-const NavLink = styled.span<{ $isActive?: boolean }>`
-  font-size: 13px;
-  gap: 16px;
-  color: ${(props) =>
-    props.$isActive ? "var(--primary-text)" : "var(--secondary-text)"};
-  cursor: pointer;
-  transition: color 0.2s;
-  font-weight: 500;
-
-  &:hover {
-    color: var(--link-color);
-  }
-`;
-
-const UserInfo = styled.div`
-  font-size: 11px;
-  color: var(--secondary-text);
+const MobileButtonsSection = styled.div`
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 `;
 
 export default function Header() {
@@ -127,6 +151,7 @@ export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, role } = useContext(UserContext);
+  const { language, setLanguage } = useLanguage();
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -139,7 +164,6 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close mobile menu when route changes
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
@@ -151,71 +175,88 @@ export default function Header() {
       .finally(() => navigate("/login"));
   };
 
+  // Bilingual nav labels. Only these top-level items are translated for now;
+  // the rest of the app stays in English until further localization.
   const navItems = [
-    { label: "Growth Chart", path: `/axial_length_growth/${role}`, show: true },
-    { label: "News", path: "/news", show: true },
-    { label: "Who We Are", path: "/who_we_are", show: true },
-    { label: "Treatments", path: "/treatments", show: true },
-    { label: "User Guide", path: "/user-guide", show: true },
-    { label: "Profile", path: "/profile", show: true },
+    { en: "Growth Chart", ko: "근시성장곡선", path: `/axial_length_growth/${role}`, show: true },
+    { en: "News", ko: "최신논문", path: "/news", show: true },
+    { en: "Who We Are", ko: "참여병원", path: "/who_we_are", show: true },
+    { en: "Treatments", ko: "근시치료", path: "/treatments", show: true },
+    { en: "User Guide", ko: "사용법", path: "/user-guide", show: true },
+    { en: "Profile", ko: "사용자설정", path: "/profile", show: true },
   ];
+  const labelOf = (item: { en: string; ko: string }) =>
+    language === "ko" ? item.ko : item.en;
+
+  const langToggle = (
+    <LangToggle role="group" aria-label="language">
+      <LangOption $active={language === "ko"} onClick={() => setLanguage("ko")}>
+        KOR
+      </LangOption>
+      <LangOption $active={language === "en"} onClick={() => setLanguage("en")}>
+        ENG
+      </LangOption>
+    </LangToggle>
+  );
 
   return (
     <>
-      <HeaderContainer className={isScrolled ? "glass" : ""}>
+      <HeaderContainer
+        style={
+          isScrolled
+            ? {
+                boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+              }
+            : undefined
+        }
+      >
         <NavContent>
-          <Logo src={logo} alt="logo" onClick={() => navigate("/")} />
+          <Logo onClick={() => navigate("/")} />
 
           <DesktopOnly>
-            <DesktopLinks>
+            <DesktopNav>
               {navItems.map((item) => (
                 <NavLink
-                  key={item.label}
+                  key={item.en}
                   $isActive={location.pathname.includes(item.path)}
                   onClick={() => navigate(item.path)}
                 >
-                  {item.label}
+                  {labelOf(item)}
                 </NavLink>
               ))}
-            </DesktopLinks>
+            </DesktopNav>
           </DesktopOnly>
 
-          {user && (
-            <UserInfo>
-              <Link
-                to="/choose_profile"
-                style={{ color: "inherit", textDecoration: "underline" }}
-              >
-                change user type
-              </Link>
-            </UserInfo>
-          )}
           <DesktopOnly>
-            {user ? (
-              <PrimaryButton
-                style={{
-                  padding: "4px 12px",
-                  fontSize: "12px",
-                  height: "auto",
-                  borderRadius: "12px",
-                }}
-                onClick={handleLogout}
-              >
-                Logout
-              </PrimaryButton>
-            ) : (
-              <PrimaryButton
-                style={{
-                  padding: "4px 12px",
-                  fontSize: "12px",
-                  height: "auto",
-                  borderRadius: "12px",
-                }}
-                onClick={() => navigate("/login")}
-              >
-                Login
-              </PrimaryButton>
-            )}
+            <RightSection>
+              {langToggle}
+              {user && (
+                <OutlinedButton
+                  style={{ padding: "8px 18px", fontSize: "13px", borderRadius: "20px" }}
+                  onClick={() => navigate("/choose_profile")}
+                >
+                  <SwapHoriz style={{ fontSize: "16px" }} />
+                  User Type
+                </OutlinedButton>
+              )}
+              {user ? (
+                <GrayButton
+                  style={{ padding: "8px 18px", fontSize: "13px", borderRadius: "20px", backgroundColor: "#444" }}
+                  onClick={handleLogout}
+                >
+                  <Logout style={{ fontSize: "16px" }} />
+                  Logout
+                </GrayButton>
+              ) : (
+                <PrimaryButton
+                  style={{ padding: "8px 18px", fontSize: "13px", borderRadius: "20px" }}
+                  onClick={() => navigate("/login")}
+                >
+                  <Login style={{ fontSize: "16px" }} />
+                  Login
+                </PrimaryButton>
+              )}
+            </RightSection>
           </DesktopOnly>
 
           <MobileOnly>
@@ -226,31 +267,55 @@ export default function Header() {
         </NavContent>
       </HeaderContainer>
 
+      <MobileBackdrop
+        $isOpen={isMobileMenuOpen}
+        onClick={() => setIsMobileMenuOpen(false)}
+      />
       <MobileOverlay $isOpen={isMobileMenuOpen}>
-        <MobileMenuButton onClick={() => setIsMobileMenuOpen(false)}>
+        <div
+          style={{ position: "absolute", top: "18px", right: "16px", cursor: "pointer" }}
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
           <Close />
-        </MobileMenuButton>
+        </div>
         {navItems.map((item) => (
           <MobileNavLink
-            key={item.label}
+            key={item.en}
             $isActive={location.pathname.includes(item.path)}
             onClick={() => navigate(item.path)}
           >
-            {item.label}
+            {labelOf(item)}
           </MobileNavLink>
         ))}
-        {user ? (
-          <PrimaryButton onClick={handleLogout} style={{ marginTop: "20px" }}>
-            Logout
-          </PrimaryButton>
-        ) : (
-          <PrimaryButton
-            onClick={() => navigate("/login")}
-            style={{ marginTop: "20px" }}
-          >
-            Login
-          </PrimaryButton>
-        )}
+        <MobileButtonsSection>
+          {langToggle}
+          {user && (
+            <PrimaryButton
+              style={{ width: "100%", justifyContent: "center" }}
+              onClick={() => navigate("/choose_profile")}
+            >
+              <SwapHoriz style={{ fontSize: "18px" }} />
+              User Type
+            </PrimaryButton>
+          )}
+          {user ? (
+            <GrayButton
+              style={{ width: "100%", justifyContent: "center" }}
+              onClick={handleLogout}
+            >
+              <Logout style={{ fontSize: "18px" }} />
+              Logout
+            </GrayButton>
+          ) : (
+            <PrimaryButton
+              style={{ width: "100%", justifyContent: "center" }}
+              onClick={() => navigate("/login")}
+            >
+              <Login style={{ fontSize: "18px" }} />
+              Login
+            </PrimaryButton>
+          )}
+        </MobileButtonsSection>
       </MobileOverlay>
     </>
   );

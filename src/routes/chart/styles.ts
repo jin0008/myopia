@@ -10,7 +10,9 @@ export const HeaderTextDiv = styled.div`
   color: white;
   padding: 8px 0;
   text-align: center;
-  border-radius: 8px;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: 500;
   @media ${MOBILE_MEDIA} {
     width: 100%;
     max-width: 100%;
@@ -43,7 +45,7 @@ export const ChartTitleDiv = styled.div`
   font-size: large;
   margin-top: 32px;
   padding-bottom: 16px;
-  border-bottom: 2px solid #e6e6e6;
+  border-bottom: 2px solid #eee;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -129,15 +131,23 @@ export const KInputGrid = styled.div`
 
 export const TextButton = styled.button<{ $active: boolean }>`
   text-align: center;
-  color: ${({ $active }) => ($active ? "white" : "black")};
+  color: ${({ $active }) => ($active ? "white" : "#555")};
   background-color: ${({ $active }) => ($active ? theme.primary : "white")};
-  border: ${({ $active }) => ($active ? "none" : "1px solid lightgray")};
-  border-radius: 20px;
-  padding: 12px 24px;
-  font-weight: normal;
+  border: ${({ $active }) => ($active ? "none" : "1px solid #e0e0e0")};
+  border-radius: 24px;
+  padding: 10px 20px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: ${theme.primary};
+  }
+
   @media ${MOBILE_MEDIA} {
-    padding: 10px 18px;
-    font-size: 14px;
+    padding: 8px 16px;
+    font-size: 13px;
   }
 `;
 
@@ -159,13 +169,14 @@ export const GridDiv = styled.div`
 export const GridItemDiv = styled.div`
   text-align: center;
   background-color: white;
-  border: 1px solid lightgray;
-  border-radius: 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 24px;
   padding: 8px 0;
+  font-size: 14px;
   @media ${MOBILE_MEDIA} {
     padding: 6px 4px;
-    border-radius: 12px;
-    font-size: 14px;
+    border-radius: 16px;
+    font-size: 13px;
   }
 `;
 
@@ -190,12 +201,18 @@ export const TreatmentCardDiv = styled.div`
   justify-content: space-between;
   align-items: center;
   background-color: white;
-  border: 1px solid lightgray;
-  border-radius: 20px;
-  padding: 8px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 16px;
+  padding: 12px 20px;
   margin: 8px 0;
   flex-wrap: wrap;
   gap: 8px;
+  transition: box-shadow 0.2s;
+
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+
   @media ${MOBILE_MEDIA} {
     padding: 10px 12px;
     border-radius: 12px;
@@ -203,12 +220,13 @@ export const TreatmentCardDiv = styled.div`
 `;
 
 export const PatientDataSection = styled.div`
-  padding: 16px;
-  border: 1px solid #e6e6e6;
-  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid #eee;
+  border-radius: 16px;
+  background: white;
   @media ${MOBILE_MEDIA} {
     margin-top: 16px;
-    padding: 12px;
+    padding: 16px;
   }
 `;
 
@@ -240,14 +258,15 @@ export const RadioField = styled.label`
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
   font-size: 0.875rem;
+  transition: background-color 0.15s;
   input[type="radio"] {
     accent-color: ${theme.primary};
   }
   &:has(input:checked) {
-    background-color: ${theme.primary50};
+    background-color: ${theme.primary10};
     font-weight: 500;
   }
   @media ${MOBILE_MEDIA} {
@@ -274,6 +293,7 @@ export const PatientDataFieldLabel = styled.div`
   font-size: 0.875rem;
   font-weight: 500;
   margin-bottom: 8px;
+  color: ${theme.textPrimary};
   @media ${MOBILE_MEDIA} {
     margin-bottom: 6px;
     font-size: 0.8125rem;

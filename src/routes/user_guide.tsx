@@ -26,28 +26,6 @@ const Subtitle = styled.p`
   margin-bottom: 24px;
 `;
 
-const LanguageToggle = styled.div`
-  display: flex;
-  gap: 12px;
-  margin-bottom: 32px;
-`;
-
-const LanguageButton = styled.button<{ $active: boolean }>`
-  padding: 8px 20px;
-  border: 2px solid ${(props) => (props.$active ? "#5c7c4f" : "#ddd")};
-  background: ${(props) => (props.$active ? "#5c7c4f" : "white")};
-  color: ${(props) => (props.$active ? "white" : "#666")};
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    border-color: #5c7c4f;
-    ${(props) => !props.$active && "background: #f5f5f5;"}
-  }
-`;
-
 const TOC = styled.div`
   background: #f8f9fa;
   padding: 24px;
@@ -122,7 +100,8 @@ const StepImage = styled.img`
 `;
 
 export default function UserGuide() {
-  const { language, setLanguage } = useLanguage();
+  // Language follows the global KOR/ENG toggle in the header.
+  const { language } = useLanguage();
   const isKorean = language === "ko";
 
   return (
@@ -132,26 +111,7 @@ export default function UserGuide() {
           <Title>
             {isKorean ? "Myopiamanage 사용방법" : "Myopiamanage User Guide"}
           </Title>
-          <Subtitle>
-            {isKorean
-              ? "Ver 1.2 (updated in Jan 18th 2026)"
-              : "Ver 1.2 (updated in Jan 18th 2026)"}
-          </Subtitle>
-
-          <LanguageToggle>
-            <LanguageButton
-              $active={isKorean}
-              onClick={() => setLanguage("ko")}
-            >
-              한국어 (Korean)
-            </LanguageButton>
-            <LanguageButton
-              $active={!isKorean}
-              onClick={() => setLanguage("en")}
-            >
-              English
-            </LanguageButton>
-          </LanguageToggle>
+          <Subtitle>Ver 1.2 (updated in Jan 18th 2026)</Subtitle>
         </Header>
 
         <TOC>
