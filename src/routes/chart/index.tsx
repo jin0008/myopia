@@ -91,7 +91,8 @@ function axialLengthQueryWarnings(
     const prevValue = previous?.[eye];
     if (previous == null || prevValue == null) return;
 
-    const decrease = prevValue - value;
+    // Round to 3 decimals to avoid float error (e.g. 24.15 - 24.05 = 0.0999…).
+    const decrease = Math.round((prevValue - value) * 1000) / 1000;
     if (decrease >= AXIAL_QUERY.decreaseMm) {
       warnings.push(
         `안축장 ${label}가 직전 측정(${previous.date.split("T")[0]}, ${prevValue}mm) 대비 ${decrease.toFixed(2)}mm 감소했습니다.`,
@@ -103,7 +104,7 @@ function axialLengthQueryWarnings(
     const years =
       (new Date(next.date).getTime() - new Date(previous.date).getTime()) /
       (365.25 * 24 * 60 * 60 * 1000);
-    const increase = value - prevValue;
+    const increase = Math.round((value - prevValue) * 1000) / 1000;
     if (
       years >= AXIAL_QUERY.minIntervalYears &&
       increase >= AXIAL_QUERY.minIncreaseMm
