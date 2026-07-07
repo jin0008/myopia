@@ -66,15 +66,24 @@ const methodNameMap: Record<string, "Auto" | "MR" | "CR"> = {
   "Manifest refraction": "MR",
 };
 
-/** Parse a numeric field. Empty → null (N.D.). Returns ok=false if invalid. */
+/**
+ * Parse a numeric field. Empty → null (N.D.). Returns ok=false if invalid.
+ * When `maxDecimals` is given, more than that many decimal places is rejected
+ * (e.g. VA/IOP/accommodation are limited to one decimal place).
+ */
 function parseNum(
   v: string,
   min: number,
   max: number,
+  maxDecimals?: number,
 ): { ok: boolean; value: number | null } {
   if (v.trim() === "") return { ok: true, value: null };
   const n = Number(v);
   if (Number.isNaN(n) || n < min || n > max) return { ok: false, value: null };
+  if (maxDecimals != null) {
+    const decimals = (v.split(".")[1] ?? "").length;
+    if (decimals > maxDecimals) return { ok: false, value: null };
+  }
   return { ok: true, value: n };
 }
 
@@ -280,9 +289,18 @@ export default function StudyVisit() {
 
   const handleSubmit = () => {
     const errors: string[] = [];
-    const num = (key: keyof typeof EMPTY_FORM, min: number, max: number) => {
-      const r = parseNum(form[key], min, max);
-      if (!r.ok) errors.push(`${key}: ${min}~${max} 범위의 숫자만 입력하세요.`);
+    const num = (
+      key: keyof typeof EMPTY_FORM,
+      min: number,
+      max: number,
+      maxDecimals?: number,
+    ) => {
+      const r = parseNum(form[key], min, max, maxDecimals);
+      if (!r.ok) {
+        const dec =
+          maxDecimals != null ? `, 소수점 ${maxDecimals}자리까지` : "";
+        errors.push(`${key}: ${min}~${max}${dec} 숫자만 입력하세요.`);
+      }
       return r.value;
     };
     const axis = (key: keyof typeof EMPTY_FORM) => {
@@ -298,10 +316,10 @@ export default function StudyVisit() {
 
     const payload: VisitInput = {
       visit_date: visitDate,
-      va_od: num("va_od", 0, 1.5),
-      va_os: num("va_os", 0, 1.5),
-      bcva_od: num("bcva_od", 0, 1.5),
-      bcva_os: num("bcva_os", 0, 1.5),
+      va_od: num("va_od", 0, 1.5, 1),
+      va_os: num("va_os", 0, 1.5, 1),
+      bcva_od: num("bcva_od", 0, 1.5, 1),
+      bcva_os: num("bcva_os", 0, 1.5, 1),
       refraction_method: method,
       ref_od_sph: num("ref_od_sph", -30, 30),
       ref_od_cyl: num("ref_od_cyl", -30, 30),
@@ -315,10 +333,10 @@ export default function StudyVisit() {
       slitlamp_os_normal: slitOsNormal,
       slitlamp_os_finding:
         slitOsNormal === false ? form.slit_os_finding || null : null,
-      iop_od: num("iop_od", 0, 50),
-      iop_os: num("iop_os", 0, 50),
-      accom_od: num("accom_od", 0, 20),
-      accom_os: num("accom_os", 0, 20),
+      iop_od: num("iop_od", 0, 50, 1),
+      iop_os: num("iop_os", 0, 50, 1),
+      accom_od: num("accom_od", 0, 20, 1),
+      accom_os: num("accom_os", 0, 20, 1),
       concomitant_meds: form.concomitant_meds || null,
       adverse_event: form.adverse_event || null,
     };
@@ -383,7 +401,9 @@ export default function StudyVisit() {
 
         {/* 1) Snellen VA */}
         <Section>
-          <SectionHead>1) 시력검사 (Snellen visual acuity) · 0~1.5</SectionHead>
+          <SectionHead>
+            1) 시력검사 (Snellen visual acuity) · 0~1.5 · 소수점 1자리
+          </SectionHead>
           <EyeRow>
             <Field>
               OD
@@ -399,7 +419,7 @@ export default function StudyVisit() {
         {/* 2) BCVA */}
         <Section>
           <SectionHead>
-            2) 최대교정시력 (Best corrected visual acuity) · 0~1.5
+            2) 최대교정시력 (Best corrected visual acuity) · 0~1.5 · 소수점 1자리
           </SectionHead>
           <EyeRow>
             <Field>
@@ -503,7 +523,7 @@ export default function StudyVisit() {
 
         {/* 5) IOP */}
         <Section>
-          <SectionHead>5) 안압검사 (mmHg) · 0.0~50.0</SectionHead>
+          <SectionHead>5) 안압검사 (mmHg) · 0.0~50.0 · 소수점 1자리</SectionHead>
           <EyeRow>
             <Field>
               OD
@@ -518,7 +538,7 @@ export default function StudyVisit() {
 
         {/* 6) Accommodation */}
         <Section>
-          <SectionHead>6) 조절력검사 (Diopters) · 0.0~20.0</SectionHead>
+          <SectionHead>6) 조절력검사 (Diopters) · 0.0~20.0 · 소수점 1자리</SectionHead>
           <EyeRow>
             <Field>
               OD
