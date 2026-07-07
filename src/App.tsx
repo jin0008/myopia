@@ -20,6 +20,7 @@ const ProfessionalProfile = lazy(
   () => import("./routes/axial_length_growth/healthcare_professional"),
 );
 const ChartRoute = lazy(() => import("./routes/chart/index"));
+const StudyVisit = lazy(() => import("./routes/study_visit/index"));
 const RegularProfile = lazy(
   () => import("./routes/axial_length_growth/regular_user"),
 );
@@ -89,6 +90,10 @@ const App = () => {
                   element={<PatientDeleteRequest />}
                 />
                 <Route path="/chart/:patientId" element={<ChartRoute />} />
+                <Route
+                  path="/study-visit/:enrollmentId"
+                  element={<StudyVisit />}
+                />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/who_we_are" element={<WhoWeAre />} />

@@ -8,7 +8,7 @@ import {
 } from "../api/healthcare_professional";
 import { PrimaryButton, PrimaryNagativeButton } from "../components/button";
 import { TopDiv } from "../components/div";
-import { SearchInput } from "../components/input";
+import { SearchInput, TextInput } from "../components/input";
 import { UserContext } from "../App";
 
 import downloadIcon from "../assets/download.svg";
@@ -16,6 +16,14 @@ import { getMeasurementsByHospital } from "../api/measurement";
 import ExcelJS from "exceljs";
 import { getEthnicityList, getInstrumentList } from "../api/static";
 import AdminAuditLog from "./admin_audit_log";
+import {
+  createStudy,
+  getStudies,
+  getStudyHospitals,
+  setStudyHospitals,
+  updateStudy,
+  type Study,
+} from "../api/study";
 
 const Table = styled.table`
   width: 100%;
@@ -189,6 +197,9 @@ export default function Admin() {
         </Card>
       </div>
       <div style={{ width: "80%", marginTop: "32px" }}>
+        <StudyManagement />
+      </div>
+      <div style={{ width: "80%", marginTop: "32px" }}>
         <AdminAuditLog />
       </div>
     </TopDiv>
@@ -322,6 +333,251 @@ function HospitalCard({
         }}
       />
     </HospitalCardDiv>
+  );
+}
+
+const StudyLayout = styled.div`
+  display: flex;
+  flex-direction: row;
+  gap: 24px;
+  align-items: flex-start;
+`;
+
+const StudyCardDiv = styled.div<{ $selected: boolean }>`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid ${(p) => (p.$selected ? "#0284c7" : "#e5e7eb")};
+  background-color: ${(p) => (p.$selected ? "#f0f9ff" : "#fff")};
+  cursor: pointer;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  transition: background 0.15s, border-color 0.15s;
+  &:hover {
+    border-color: #bae6fd;
+  }
+`;
+
+const HospitalCheckRow = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  cursor: pointer;
+  color: #374151;
+`;
+
+function StudyManagement() {
+  const queryClient = useQueryClient();
+  const [selectedStudyId, setSelectedStudyId] = useState<string | null>(null);
+
+  const studiesQuery = useQuery({
+    queryKey: ["study", "admin"],
+    queryFn: getStudies,
+  });
+
+  const [newName, setNewName] = useState("");
+  const [newCode, setNewCode] = useState("");
+
+  const createMutation = useMutation({
+    mutationFn: () =>
+      createStudy({
+        name: newName.trim(),
+        code: newCode.trim() || undefined,
+      }),
+    onSuccess: () => {
+      setNewName("");
+      setNewCode("");
+      queryClient.invalidateQueries({ queryKey: ["study", "admin"] });
+    },
+    onError: (e: any) => alert(e?.message ?? "연구 생성 실패"),
+  });
+
+  const toggleActiveMutation = useMutation({
+    mutationFn: (study: Study) =>
+      updateStudy(study.id, { active: !study.active }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["study", "admin"] }),
+    onError: () => alert("상태 변경 실패"),
+  });
+
+  return (
+    <Card>
+      <SectionTitle>Study Management (연구 관리)</SectionTitle>
+      <StudyLayout>
+        <div style={{ minWidth: 340 }}>
+          <h3 style={{ marginTop: 0 }}>연구 목록</h3>
+          {studiesQuery.data?.map((study) => (
+            <StudyCardDiv
+              key={study.id}
+              $selected={selectedStudyId === study.id}
+              onClick={() => setSelectedStudyId(study.id)}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                <b style={{ opacity: study.active ? 1 : 0.5 }}>{study.name}</b>
+                <PrimaryNagativeButton
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleActiveMutation.mutate(study);
+                  }}
+                >
+                  {study.active ? "비활성화" : "활성화"}
+                </PrimaryNagativeButton>
+              </div>
+              <small style={{ color: "#6b7280" }}>
+                {study.code ? `code: ${study.code} · ` : ""}
+                참여병원 {study._count?.study_hospital ?? 0}곳
+                {study.active ? "" : " · (비활성)"}
+              </small>
+            </StudyCardDiv>
+          ))}
+
+          <div
+            style={{
+              marginTop: 16,
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+            }}
+          >
+            <h4 style={{ margin: 0 }}>새 연구 추가</h4>
+            <TextInput
+              placeholder="연구명 (예: LPTAT-OS: 마이오클리어 0.05% PMS)"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+            />
+            <TextInput
+              placeholder="코드 (선택)"
+              value={newCode}
+              onChange={(e) => setNewCode(e.target.value)}
+            />
+            <PrimaryButton
+              onClick={() => newName.trim() && createMutation.mutate()}
+            >
+              추가
+            </PrimaryButton>
+          </div>
+        </div>
+
+        <div style={{ flex: 1, alignSelf: "stretch" }}>
+          {selectedStudyId ? (
+            <StudyHospitalAssign key={selectedStudyId} studyId={selectedStudyId} />
+          ) : (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: 180,
+                height: "100%",
+                color: "#6b7280",
+              }}
+            >
+              연구를 선택하면 참여 병원을 지정할 수 있습니다.
+            </div>
+          )}
+        </div>
+      </StudyLayout>
+    </Card>
+  );
+}
+
+function StudyHospitalAssign({ studyId }: { studyId: string }) {
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState("");
+
+  const hospitalsQuery = useQuery({
+    queryKey: ["hospital"],
+    queryFn: getHospitalList,
+  });
+
+  const assignedQuery = useQuery({
+    queryKey: ["study", studyId, "hospital"],
+    queryFn: () => getStudyHospitals(studyId),
+  });
+
+  // Local editable set, seeded from the server once loaded.
+  const [checked, setChecked] = useState<Set<string> | null>(null);
+  const effectiveChecked = useMemo(
+    () => checked ?? new Set(assignedQuery.data ?? []),
+    [checked, assignedQuery.data],
+  );
+
+  const saveMutation = useMutation({
+    mutationFn: () => setStudyHospitals(studyId, Array.from(effectiveChecked)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["study", studyId, "hospital"],
+      });
+      queryClient.invalidateQueries({ queryKey: ["study", "admin"] });
+      alert("저장되었습니다.");
+    },
+    onError: () => alert("저장 실패"),
+  });
+
+  const toggle = (hospitalId: string) => {
+    const next = new Set(effectiveChecked);
+    next.has(hospitalId) ? next.delete(hospitalId) : next.add(hospitalId);
+    setChecked(next);
+  };
+
+  const filtered = useMemo(() => {
+    const list = (hospitalsQuery.data as any[]) ?? [];
+    if (!search) return list;
+    return list.filter(
+      (h) =>
+        h.name.toLowerCase().includes(search.toLowerCase()) ||
+        h.code.includes(search),
+    );
+  }, [hospitalsQuery.data, search]);
+
+  if (assignedQuery.isLoading || hospitalsQuery.isLoading)
+    return <div>Loading...</div>;
+
+  return (
+    <div>
+      <h3 style={{ marginTop: 0 }}>참여 병원 지정</h3>
+      <SearchInput
+        placeholder="병원 이름/코드 검색"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        style={{ width: "100%", marginBottom: 8 }}
+      />
+      <div
+        style={{
+          maxHeight: 320,
+          overflowY: "auto",
+          border: "1px solid #e5e7eb",
+          borderRadius: 10,
+          padding: "8px 14px",
+          margin: "8px 0",
+        }}
+      >
+        {filtered.map((h: any) => (
+          <HospitalCheckRow key={h.id}>
+            <input
+              type="checkbox"
+              checked={effectiveChecked.has(h.id)}
+              onChange={() => toggle(h.id)}
+            />
+            <span>
+              {h.name} ({h.code})
+            </span>
+          </HospitalCheckRow>
+        ))}
+      </div>
+      <PrimaryButton onClick={() => saveMutation.mutate()}>
+        저장 ({effectiveChecked.size}곳 선택됨)
+      </PrimaryButton>
+    </div>
   );
 }
 

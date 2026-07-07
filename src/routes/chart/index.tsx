@@ -18,6 +18,7 @@ import {
   RefractiveErrorRegisterDialog,
 } from "./MeasurementList";
 import { RecentALGrowth } from "./RecentALGrowth";
+import { StudyButtons } from "./StudyButtons";
 import { TreatmentList } from "./TreatmentList";
 import { MYOPIA_STATUS_LABELS, PatientDataInput } from "./PatientDataInput";
 import {
@@ -379,6 +380,7 @@ export default function ChartRoute() {
           <ChartTitleMain>
             <h1 style={{ fontWeight: "normal" }}>Eye growth chart</h1>
             <span>{new Date().toLocaleDateString()}</span>
+            <StudyButtons patientId={patientId!} />
           </ChartTitleMain>
           <div style={{ display: "flex", flexDirection: "row", gap: "16px" }}>
             <TextButton
