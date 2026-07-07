@@ -18,6 +18,7 @@ import { getEthnicityList, getInstrumentList } from "../api/static";
 import AdminAuditLog from "./admin_audit_log";
 import {
   createStudy,
+  deleteStudy,
   getStudies,
   getStudyHospitals,
   setStudyHospitals,
@@ -402,6 +403,15 @@ function StudyManagement() {
     onError: () => alert("상태 변경 실패"),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (studyId: string) => deleteStudy(studyId),
+    onSuccess: (_data, studyId) => {
+      if (selectedStudyId === studyId) setSelectedStudyId(null);
+      queryClient.invalidateQueries({ queryKey: ["study", "admin"] });
+    },
+    onError: () => alert("삭제 실패"),
+  });
+
   return (
     <Card>
       <SectionTitle>Study Management (연구 관리)</SectionTitle>
@@ -423,14 +433,30 @@ function StudyManagement() {
                 }}
               >
                 <b style={{ opacity: study.active ? 1 : 0.5 }}>{study.name}</b>
-                <PrimaryNagativeButton
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleActiveMutation.mutate(study);
-                  }}
-                >
-                  {study.active ? "비활성화" : "활성화"}
-                </PrimaryNagativeButton>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <PrimaryNagativeButton
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleActiveMutation.mutate(study);
+                    }}
+                  >
+                    {study.active ? "비활성화" : "활성화"}
+                  </PrimaryNagativeButton>
+                  <PrimaryNagativeButton
+                    style={{ background: "#dc2626" }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (
+                        confirm(
+                          `"${study.name}" 연구를 삭제할까요?\n등록된 환자·방문 데이터가 모두 함께 삭제되며 되돌릴 수 없습니다.`,
+                        )
+                      )
+                        deleteMutation.mutate(study.id);
+                    }}
+                  >
+                    삭제
+                  </PrimaryNagativeButton>
+                </div>
               </div>
               <small style={{ color: "#6b7280" }}>
                 {study.code ? `code: ${study.code} · ` : ""}

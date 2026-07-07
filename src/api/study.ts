@@ -42,6 +42,15 @@ export function updateStudy(
   );
 }
 
+export function deleteStudy(studyId: string) {
+  return jsonFetchWithSession(
+    API_ROOT + `/study/admin/${studyId}`,
+    { method: "DELETE" },
+    undefined,
+    false,
+  );
+}
+
 export function getStudyHospitals(studyId: string) {
   return jsonFetchWithSession<string[]>(
     API_ROOT + `/study/admin/${studyId}/hospital`,
