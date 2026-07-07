@@ -147,3 +147,15 @@ export function createVisit(enrollmentId: string, data: VisitInput) {
     data,
   );
 }
+
+export function updateVisit(
+  enrollmentId: string,
+  visitId: string,
+  data: VisitInput,
+) {
+  return jsonFetchWithSession(
+    API_ROOT + `/study/enrollment/${enrollmentId}/visit/${visitId}`,
+    { method: "PATCH" },
+    data,
+  );
+}

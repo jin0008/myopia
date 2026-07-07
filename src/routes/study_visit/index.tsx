@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import styled from "styled-components";
@@ -14,6 +14,7 @@ import {
 import {
   createVisit,
   getEnrollment,
+  updateVisit,
   type VisitInput,
 } from "../../api/study";
 
@@ -48,6 +49,23 @@ const NarrowInput = styled(TextInput)`
   width: 90px;
 `;
 
+const VisitRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const methodNameMap: Record<string, "Auto" | "MR" | "CR"> = {
+  Autorefraction: "Auto",
+  "Cycloplegic refraction": "CR",
+  "Manifest refraction": "MR",
+};
+
 /** Parse a numeric field. Empty → null (N.D.). Returns ok=false if invalid. */
 function parseNum(
   v: string,
@@ -66,6 +84,8 @@ function parseAxis(v: string): { ok: boolean; value: number | null } {
   if (!Number.isInteger(n) || n < 0 || n > 180) return { ok: false, value: null };
   return { ok: true, value: n };
 }
+
+const nd = (v: number | null | undefined) => (v == null ? "N.D." : String(v));
 
 const EMPTY_FORM = {
   va_od: "",
@@ -104,6 +124,7 @@ export default function StudyVisit() {
     enabled: !!enrollmentId,
   });
   const patientId = enrollmentQuery.data?.patient_id;
+  const visits = enrollmentQuery.data?.visits ?? [];
 
   const patientQuery = useQuery({
     queryKey: ["patient", patientId],
@@ -122,9 +143,6 @@ export default function StudyVisit() {
     staleTime: Infinity,
   });
 
-  // Measurements newest-first. `latest` is used to PREFILL the AL fields (any
-  // date); `today` is the write-back target when a measurement already exists
-  // for today (so an older reading is never overwritten).
   const sortedMeasurements = useMemo(
     () =>
       [...(patientQuery.data?.measurement ?? [])].sort(
@@ -139,8 +157,6 @@ export default function StudyVisit() {
     [sortedMeasurements, today],
   );
 
-  // Most recent refractive error, to prefill sph/cyl/method (axis has no
-  // source in the existing data, so it stays blank).
   const latestRE = useMemo(() => {
     const list = [...(patientQuery.data?.refractive_error ?? [])].sort(
       (a: any, b: any) =>
@@ -154,44 +170,46 @@ export default function StudyVisit() {
   const [slitOdNormal, setSlitOdNormal] = useState<boolean | null>(null);
   const [slitOsNormal, setSlitOsNormal] = useState<boolean | null>(null);
   const [instrumentId, setInstrumentId] = useState<string>();
-  // AL values as prefilled, to detect whether the user changed them on save.
   const [alInitial, setAlInitial] = useState({ od: "", os: "" });
+  const [editingVisitId, setEditingVisitId] = useState<string | null>(null);
 
   const set =
     (k: keyof typeof EMPTY_FORM) =>
     (e: React.ChangeEvent<HTMLInputElement>) =>
       setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  // 7) Prefill AL from the most recent measurement (any date).
-  useEffect(() => {
+  // Fresh "new visit" form, prefilled from the most recent chart data.
+  const applyNewMode = useCallback(() => {
+    setEditingVisitId(null);
+    setSlitOdNormal(null);
+    setSlitOsNormal(null);
+    const next = { ...EMPTY_FORM };
     if (latestMeasurement) {
-      const od = latestMeasurement.od?.toString() ?? "";
-      const os = latestMeasurement.os?.toString() ?? "";
-      setForm((f) => ({ ...f, al_od: od, al_os: os }));
-      setAlInitial({ od, os });
+      next.al_od = latestMeasurement.od?.toString() ?? "";
+      next.al_os = latestMeasurement.os?.toString() ?? "";
     }
-  }, [latestMeasurement]);
-
-  // 3) Prefill refraction sph/cyl/method from the most recent record.
-  useEffect(() => {
-    if (!latestRE) return;
-    setForm((f) => ({
-      ...f,
-      ref_od_sph: latestRE.od_sph?.toString() ?? "",
-      ref_od_cyl: latestRE.od_cyl?.toString() ?? "",
-      ref_os_sph: latestRE.os_sph?.toString() ?? "",
-      ref_os_cyl: latestRE.os_cyl?.toString() ?? "",
-    }));
-    const methodNameMap: Record<string, "Auto" | "MR" | "CR"> = {
-      Autorefraction: "Auto",
-      "Cycloplegic refraction": "CR",
-      "Manifest refraction": "MR",
-    };
+    if (latestRE) {
+      next.ref_od_sph = latestRE.od_sph?.toString() ?? "";
+      next.ref_od_cyl = latestRE.od_cyl?.toString() ?? "";
+      next.ref_os_sph = latestRE.os_sph?.toString() ?? "";
+      next.ref_os_cyl = latestRE.os_cyl?.toString() ?? "";
+    }
+    setForm(next);
+    setAlInitial({ od: next.al_od, os: next.al_os });
     const name = methodListQuery.data?.find(
-      (m: any) => m.id === latestRE.method_id,
+      (m: any) => m.id === latestRE?.method_id,
     )?.name;
-    if (name && methodNameMap[name]) setMethod(methodNameMap[name]);
-  }, [latestRE, methodListQuery.data]);
+    setMethod(name && methodNameMap[name] ? methodNameMap[name] : null);
+  }, [latestMeasurement, latestRE, methodListQuery.data]);
+
+  // One-time prefill once patient data is available.
+  const initialized = useRef(false);
+  useEffect(() => {
+    if (!initialized.current && patientQuery.isSuccess) {
+      initialized.current = true;
+      applyNewMode();
+    }
+  }, [patientQuery.isSuccess, applyNewMode]);
 
   useEffect(() => {
     setInstrumentId(
@@ -200,12 +218,54 @@ export default function StudyVisit() {
     );
   }, [instrumentQuery.data, user]);
 
+  // Load an existing visit into the form for editing.
+  const loadVisit = (v: any) => {
+    const linked = sortedMeasurements.find((m: any) => m.id === v.measurement_id);
+    setForm({
+      va_od: v.va_od?.toString() ?? "",
+      va_os: v.va_os?.toString() ?? "",
+      bcva_od: v.bcva_od?.toString() ?? "",
+      bcva_os: v.bcva_os?.toString() ?? "",
+      ref_od_sph: v.ref_od_sph?.toString() ?? "",
+      ref_od_cyl: v.ref_od_cyl?.toString() ?? "",
+      ref_od_axis: v.ref_od_axis?.toString() ?? "",
+      ref_os_sph: v.ref_os_sph?.toString() ?? "",
+      ref_os_cyl: v.ref_os_cyl?.toString() ?? "",
+      ref_os_axis: v.ref_os_axis?.toString() ?? "",
+      iop_od: v.iop_od?.toString() ?? "",
+      iop_os: v.iop_os?.toString() ?? "",
+      accom_od: v.accom_od?.toString() ?? "",
+      accom_os: v.accom_os?.toString() ?? "",
+      al_od: linked?.od?.toString() ?? "",
+      al_os: linked?.os?.toString() ?? "",
+      slit_od_finding: v.slitlamp_od_finding ?? "",
+      slit_os_finding: v.slitlamp_os_finding ?? "",
+      concomitant_meds: v.concomitant_meds ?? "",
+      adverse_event: v.adverse_event ?? "",
+    });
+    setAlInitial({
+      od: linked?.od?.toString() ?? "",
+      os: linked?.os?.toString() ?? "",
+    });
+    setMethod(v.refraction_method ?? null);
+    setSlitOdNormal(v.slitlamp_od_normal);
+    setSlitOsNormal(v.slitlamp_os_normal);
+    setEditingVisitId(v.id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const mutation = useMutation({
-    mutationFn: (data: VisitInput) => createVisit(enrollmentId!, data),
+    mutationFn: (data: VisitInput) =>
+      editingVisitId
+        ? updateVisit(enrollmentId!, editingVisitId, data)
+        : createVisit(enrollmentId!, data),
     onSuccess: () => {
       alert("저장되었습니다.");
+      queryClient.invalidateQueries({
+        queryKey: ["study", "enrollment", "detail", enrollmentId],
+      });
       queryClient.invalidateQueries({ queryKey: ["patient", patientId] });
-      navigate(`/chart/${patientId}?edit=true`);
+      applyNewMode();
     },
     onError: (e: any) => alert(e?.message ?? "저장에 실패했습니다."),
   });
@@ -223,8 +283,13 @@ export default function StudyVisit() {
       return r.value;
     };
 
+    const visitDate = editingVisitId
+      ? visits.find((v: any) => v.id === editingVisitId)?.visit_date.split("T")[0] ??
+        today
+      : today;
+
     const payload: VisitInput = {
-      visit_date: today,
+      visit_date: visitDate,
       va_od: num("va_od", 0, 1.5),
       va_os: num("va_os", 0, 1.5),
       bcva_od: num("bcva_od", 0, 1.5),
@@ -255,24 +320,18 @@ export default function StudyVisit() {
     const alOs = num("al_os", 15, 35);
     const alUnchanged =
       form.al_od === alInitial.od && form.al_os === alInitial.os;
+    const editingVisit = visits.find((v: any) => v.id === editingVisitId);
+    const linkedId = editingVisit?.measurement_id ?? todayMeasurement?.id ?? null;
     if (alOd != null || alOs != null) {
-      if (todayMeasurement) {
-        // A reading already exists for today → update it in place.
-        payload.axial_length = {
-          measurement_id: todayMeasurement.id,
-          od: alOd,
-          os: alOs,
-        };
-      } else if (latestMeasurement && alUnchanged) {
-        // Prefilled from an older reading and left unchanged → just link to it,
-        // don't fabricate a duplicate point on the growth chart.
+      if (linkedId) {
+        payload.axial_length = { measurement_id: linkedId, od: alOd, os: alOs };
+      } else if (!editingVisitId && latestMeasurement && alUnchanged) {
         payload.axial_length = {
           measurement_id: latestMeasurement.id,
           od: alOd,
           os: alOs,
         };
       } else if (instrumentId) {
-        // New/changed value → record it as today's measurement.
         payload.axial_length = { instrument_id: instrumentId, od: alOd, os: alOs };
       } else {
         errors.push("Axial length 저장을 위한 측정기기를 선택하세요.");
@@ -297,7 +356,21 @@ export default function StudyVisit() {
       <div style={{ width: "min(760px, 92%)", padding: "16px 0 48px" }}>
         <h1 style={{ marginBottom: 4 }}>{study.name}</h1>
         <p style={{ color: "#6b7280", marginTop: 0 }}>
-          측정일(금일): <b>{today}</b> · 미입력 항목은 N.D.로 저장됩니다.
+          {editingVisitId ? (
+            <>
+              <b>방문 수정 중</b> — 저장하면 해당 방문이 덮어써집니다.{" "}
+              <span
+                style={{ textDecoration: "underline", cursor: "pointer" }}
+                onClick={applyNewMode}
+              >
+                새 방문으로 전환
+              </span>
+            </>
+          ) : (
+            <>
+              측정일(금일): <b>{today}</b> · 미입력 항목은 N.D.로 저장됩니다.
+            </>
+          )}
         </p>
 
         {/* 1) Snellen VA */}
@@ -306,19 +379,11 @@ export default function StudyVisit() {
           <EyeRow>
             <Field>
               OD
-              <NarrowInput
-                inputMode="decimal"
-                value={form.va_od}
-                onChange={set("va_od")}
-              />
+              <NarrowInput inputMode="decimal" value={form.va_od} onChange={set("va_od")} />
             </Field>
             <Field>
               OS
-              <NarrowInput
-                inputMode="decimal"
-                value={form.va_os}
-                onChange={set("va_os")}
-              />
+              <NarrowInput inputMode="decimal" value={form.va_os} onChange={set("va_os")} />
             </Field>
           </EyeRow>
         </Section>
@@ -331,19 +396,11 @@ export default function StudyVisit() {
           <EyeRow>
             <Field>
               OD
-              <NarrowInput
-                inputMode="decimal"
-                value={form.bcva_od}
-                onChange={set("bcva_od")}
-              />
+              <NarrowInput inputMode="decimal" value={form.bcva_od} onChange={set("bcva_od")} />
             </Field>
             <Field>
               OS
-              <NarrowInput
-                inputMode="decimal"
-                value={form.bcva_os}
-                onChange={set("bcva_os")}
-              />
+              <NarrowInput inputMode="decimal" value={form.bcva_os} onChange={set("bcva_os")} />
             </Field>
           </EyeRow>
         </Section>
@@ -351,7 +408,7 @@ export default function StudyVisit() {
         {/* 3) Refraction */}
         <Section>
           <SectionHead>3) 굴절검사</SectionHead>
-          {latestRE && (
+          {latestRE && !editingVisitId && (
             <p style={{ color: "#6b7280", marginTop: 0, fontSize: 13 }}>
               가장 최근 굴절값({latestRE.date.split("T")[0]})의 sph/cyl/method를
               불러왔습니다. axis는 기존 데이터에 없어 빈칸입니다.
@@ -361,10 +418,7 @@ export default function StudyVisit() {
             {(["Auto", "MR", "CR"] as const).map((m) => (
               <PrimaryButton
                 key={m}
-                style={{
-                  opacity: method === m ? 1 : 0.45,
-                  padding: "4px 16px",
-                }}
+                style={{ opacity: method === m ? 1 : 0.45, padding: "4px 16px" }}
                 onClick={() => setMethod(method === m ? null : m)}
               >
                 {m}
@@ -445,19 +499,11 @@ export default function StudyVisit() {
           <EyeRow>
             <Field>
               OD
-              <NarrowInput
-                inputMode="decimal"
-                value={form.iop_od}
-                onChange={set("iop_od")}
-              />
+              <NarrowInput inputMode="decimal" value={form.iop_od} onChange={set("iop_od")} />
             </Field>
             <Field>
               OS
-              <NarrowInput
-                inputMode="decimal"
-                value={form.iop_os}
-                onChange={set("iop_os")}
-              />
+              <NarrowInput inputMode="decimal" value={form.iop_os} onChange={set("iop_os")} />
             </Field>
           </EyeRow>
         </Section>
@@ -468,19 +514,11 @@ export default function StudyVisit() {
           <EyeRow>
             <Field>
               OD
-              <NarrowInput
-                inputMode="decimal"
-                value={form.accom_od}
-                onChange={set("accom_od")}
-              />
+              <NarrowInput inputMode="decimal" value={form.accom_od} onChange={set("accom_od")} />
             </Field>
             <Field>
               OS
-              <NarrowInput
-                inputMode="decimal"
-                value={form.accom_os}
-                onChange={set("accom_os")}
-              />
+              <NarrowInput inputMode="decimal" value={form.accom_os} onChange={set("accom_os")} />
             </Field>
           </EyeRow>
         </Section>
@@ -489,30 +527,24 @@ export default function StudyVisit() {
         <Section>
           <SectionHead>7) Axial length (mm) · 15~35</SectionHead>
           <p style={{ color: "#6b7280", marginTop: 0, fontSize: 13 }}>
-            {todayMeasurement
-              ? "오늘 측정된 값을 불러왔습니다. 수정 시 오늘 데이터가 갱신됩니다."
-              : latestMeasurement
-                ? `가장 최근 측정값(${latestMeasurement.date.split("T")[0]})을 불러왔습니다. 값을 바꾸면 오늘자 측정으로 새로 저장됩니다.`
-                : "측정값이 없습니다. 입력하면 오늘자 측정으로 저장됩니다."}
+            {editingVisitId
+              ? "이 방문에 연결된 측정값입니다. 수정 시 해당 측정 데이터가 갱신됩니다."
+              : todayMeasurement
+                ? "오늘 측정된 값을 불러왔습니다. 수정 시 오늘 데이터가 갱신됩니다."
+                : latestMeasurement
+                  ? `가장 최근 측정값(${latestMeasurement.date.split("T")[0]})을 불러왔습니다. 값을 바꾸면 오늘자 측정으로 새로 저장됩니다.`
+                  : "측정값이 없습니다. 입력하면 오늘자 측정으로 저장됩니다."}
           </p>
           <EyeRow>
             <Field>
               OD
-              <NarrowInput
-                inputMode="decimal"
-                value={form.al_od}
-                onChange={set("al_od")}
-              />
+              <NarrowInput inputMode="decimal" value={form.al_od} onChange={set("al_od")} />
             </Field>
             <Field>
               OS
-              <NarrowInput
-                inputMode="decimal"
-                value={form.al_os}
-                onChange={set("al_os")}
-              />
+              <NarrowInput inputMode="decimal" value={form.al_os} onChange={set("al_os")} />
             </Field>
-            {!todayMeasurement && (
+            {!todayMeasurement && !editingVisitId && (
               <Field>
                 측정기기
                 <TextInput
@@ -554,13 +586,43 @@ export default function StudyVisit() {
         </Section>
 
         <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
-          <PrimaryNagativeButton onClick={() => navigate(`/chart/${patientId}?edit=true`)}>
-            취소
+          <PrimaryNagativeButton
+            onClick={() => navigate(`/chart/${patientId}?edit=true`)}
+          >
+            차트로
           </PrimaryNagativeButton>
           <PrimaryButton onClick={handleSubmit} disabled={mutation.isPending}>
-            등록
+            {editingVisitId ? "수정 저장" : "등록"}
           </PrimaryButton>
         </div>
+
+        {/* Visit history */}
+        <Section style={{ marginTop: 32 }}>
+          <SectionHead>방문 기록</SectionHead>
+          {visits.length === 0 ? (
+            <p style={{ color: "#6b7280" }}>저장된 방문이 없습니다.</p>
+          ) : (
+            visits.map((v: any) => (
+              <VisitRow key={v.id}>
+                <b style={{ minWidth: 96 }}>{v.visit_date.split("T")[0]}</b>
+                <span style={{ flex: 1, color: "#374151", fontSize: 13 }}>
+                  시력 {nd(v.va_od)}/{nd(v.va_os)} · 안압 {nd(v.iop_od)}/
+                  {nd(v.iop_os)} · 조절력 {nd(v.accom_od)}/{nd(v.accom_os)}
+                  {v.adverse_event ? " · ⚠ 이상사례" : ""}
+                </span>
+                <PrimaryButton
+                  style={{
+                    padding: "4px 14px",
+                    opacity: editingVisitId === v.id ? 1 : 0.85,
+                  }}
+                  onClick={() => loadVisit(v)}
+                >
+                  {editingVisitId === v.id ? "수정 중" : "수정"}
+                </PrimaryButton>
+              </VisitRow>
+            ))
+          )}
+        </Section>
       </div>
     </TopDiv>
   );
