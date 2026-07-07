@@ -16,6 +16,7 @@ import { getMeasurementsByHospital } from "../api/measurement";
 import ExcelJS from "exceljs";
 import { getEthnicityList, getInstrumentList } from "../api/static";
 import AdminAuditLog from "./admin_audit_log";
+import StudyAuditLog from "./study_audit_log";
 import {
   createStudy,
   deleteStudy,
@@ -199,6 +200,9 @@ export default function Admin() {
       </div>
       <div style={{ width: "80%", marginTop: "32px" }}>
         <StudyManagement />
+      </div>
+      <div style={{ width: "80%", marginTop: "32px" }}>
+        <StudyAuditLog />
       </div>
       <div style={{ width: "80%", marginTop: "32px" }}>
         <AdminAuditLog />
