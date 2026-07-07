@@ -9,6 +9,9 @@ import {
   List,
   ListItemButton,
   ListItemText,
+  Menu,
+  MenuItem,
+  Divider,
 } from "@mui/material";
 import { PrimaryButton, PrimaryNagativeButton } from "../../components/button";
 import {
@@ -29,6 +32,7 @@ export function StudyButtons({ patientId }: { patientId: string }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const enrollmentsQuery = useQuery({
     queryKey: ["study", "enrollment", patientId],
@@ -65,22 +69,40 @@ export function StudyButtons({ patientId }: { patientId: string }) {
   // Nothing to show: no enrolments and no studies available to enrol into.
   if (enrollments.length === 0 && !showEnrollButton) return null;
 
-  return (
-    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-      {enrollments.map((e) => (
-        <PrimaryButton
-          key={e.id}
-          onClick={() => navigate(`/study-visit/${e.id}`)}
-        >
-          {e.study.name}
-        </PrimaryButton>
-      ))}
+  const closeMenu = () => setAnchorEl(null);
 
-      {showEnrollButton && (
-        <PrimaryNagativeButton onClick={() => setDialogOpen(true)}>
-          + 연구 등록
-        </PrimaryNagativeButton>
-      )}
+  return (
+    <div style={{ marginTop: 8 }}>
+      <PrimaryButton onClick={(e) => setAnchorEl(e.currentTarget)}>
+        연구{enrollments.length > 0 ? ` (${enrollments.length})` : ""} ▾
+      </PrimaryButton>
+
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={closeMenu}>
+        {enrollments.map((e) => (
+          <MenuItem
+            key={e.id}
+            onClick={() => {
+              closeMenu();
+              navigate(`/study-visit/${e.id}`);
+            }}
+          >
+            {e.study.name}
+          </MenuItem>
+        ))}
+
+        {enrollments.length > 0 && showEnrollButton && <Divider />}
+
+        {showEnrollButton && (
+          <MenuItem
+            onClick={() => {
+              closeMenu();
+              setDialogOpen(true);
+            }}
+          >
+            + 연구 등록
+          </MenuItem>
+        )}
+      </Menu>
 
       <Dialog
         open={dialogOpen}

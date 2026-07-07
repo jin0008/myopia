@@ -342,8 +342,8 @@ export default function StudyVisit() {
     };
 
     // 7) Axial length write-back.
-    const alOd = num("al_od", 15, 35);
-    const alOs = num("al_os", 15, 35);
+    const alOd = num("al_od", 15, 40);
+    const alOs = num("al_os", 15, 40);
     const alUnchanged =
       form.al_od === alInitial.od && form.al_os === alInitial.os;
     const editingVisit = visits.find((v: any) => v.id === editingVisitId);
@@ -553,7 +553,7 @@ export default function StudyVisit() {
 
         {/* 7) Axial length */}
         <Section>
-          <SectionHead>7) Axial length (mm) · 15~35</SectionHead>
+          <SectionHead>7) Axial length (mm) · 15~40</SectionHead>
           <p style={{ color: "#6b7280", marginTop: 0, fontSize: 13 }}>
             {editingVisitId
               ? "이 방문에 연결된 측정값입니다. 수정 시 해당 측정 데이터가 갱신됩니다."
