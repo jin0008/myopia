@@ -71,10 +71,33 @@ export function StudyButtons({ patientId }: { patientId: string }) {
 
   const closeMenu = () => setAnchorEl(null);
 
+  const enrolledNames = enrollments.map((e) => e.study.name);
+  const buttonLabel = enrolledNames.length
+    ? `연구 (${enrolledNames.length}): ${enrolledNames.join(", ")}`
+    : "연구";
+
   return (
     <div style={{ marginTop: 8 }}>
-      <PrimaryButton onClick={(e) => setAnchorEl(e.currentTarget)}>
-        연구{enrollments.length > 0 ? ` (${enrollments.length})` : ""} ▾
+      <PrimaryButton
+        onClick={(e) => setAnchorEl(e.currentTarget)}
+        title={enrolledNames.join(", ")}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
+          maxWidth: 380,
+        }}
+      >
+        <span
+          style={{
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {buttonLabel}
+        </span>
+        <span aria-hidden>▾</span>
       </PrimaryButton>
 
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={closeMenu}>
