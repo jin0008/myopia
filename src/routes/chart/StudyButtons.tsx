@@ -33,6 +33,7 @@ export function StudyButtons({ patientId }: { patientId: string }) {
   const enrollmentsQuery = useQuery({
     queryKey: ["study", "enrollment", patientId],
     queryFn: () => getEnrollments(patientId),
+    enabled: !!patientId,
     retry: false,
   });
 

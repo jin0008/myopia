@@ -116,7 +116,9 @@ export default function StudyVisit() {
   const queryClient = useQueryClient();
   const { user } = useContext(UserContext);
 
-  const today = new Date().toISOString().slice(0, 10);
+  // Local date (YYYY-MM-DD). Using toISOString() would give the UTC date,
+  // which in KST mornings (before 09:00) resolves to the previous day.
+  const today = new Date().toLocaleDateString("sv-SE");
 
   const enrollmentQuery = useQuery({
     queryKey: ["study", "enrollment", "detail", enrollmentId],
@@ -205,11 +207,17 @@ export default function StudyVisit() {
   // One-time prefill once patient data is available.
   const initialized = useRef(false);
   useEffect(() => {
-    if (!initialized.current && patientQuery.isSuccess) {
+    // Wait for BOTH queries: applyNewMode needs the method list to prefill the
+    // refraction method, otherwise a slower methodListQuery misses the one-shot.
+    if (
+      !initialized.current &&
+      patientQuery.isSuccess &&
+      methodListQuery.isSuccess
+    ) {
       initialized.current = true;
       applyNewMode();
     }
-  }, [patientQuery.isSuccess, applyNewMode]);
+  }, [patientQuery.isSuccess, methodListQuery.isSuccess, applyNewMode]);
 
   useEffect(() => {
     setInstrumentId(
