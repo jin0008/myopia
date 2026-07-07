@@ -168,3 +168,12 @@ export function updateVisit(
     data,
   );
 }
+
+export function deleteVisit(enrollmentId: string, visitId: string) {
+  return jsonFetchWithSession(
+    API_ROOT + `/study/enrollment/${enrollmentId}/visit/${visitId}`,
+    { method: "DELETE" },
+    undefined,
+    false,
+  );
+}

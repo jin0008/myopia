@@ -13,6 +13,7 @@ import {
 } from "../../api/static";
 import {
   createVisit,
+  deleteVisit,
   getEnrollment,
   updateVisit,
   type VisitInput,
@@ -133,6 +134,9 @@ export default function StudyVisit() {
     queryKey: ["study", "enrollment", "detail", enrollmentId],
     queryFn: () => getEnrollment(enrollmentId!),
     enabled: !!enrollmentId,
+    // Each fetch records a READ (열람) log server-side; cache for 5 min so a
+    // refetch on window focus doesn't spam the audit trail.
+    staleTime: 5 * 60 * 1000,
   });
   const patientId = enrollmentQuery.data?.patient_id;
   const visits = enrollmentQuery.data?.visits ?? [];
@@ -285,6 +289,17 @@ export default function StudyVisit() {
       applyNewMode();
     },
     onError: (e: any) => alert(e?.message ?? "저장에 실패했습니다."),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (visitId: string) => deleteVisit(enrollmentId!, visitId),
+    onSuccess: (_data, visitId) => {
+      if (editingVisitId === visitId) applyNewMode();
+      queryClient.invalidateQueries({
+        queryKey: ["study", "enrollment", "detail", enrollmentId],
+      });
+    },
+    onError: () => alert("삭제에 실패했습니다."),
   });
 
   const handleSubmit = () => {
@@ -638,15 +653,30 @@ export default function StudyVisit() {
                   {nd(v.iop_os)} · 조절력 {nd(v.accom_od)}/{nd(v.accom_os)}
                   {v.adverse_event ? " · ⚠ 이상사례" : ""}
                 </span>
-                <PrimaryButton
-                  style={{
-                    padding: "4px 14px",
-                    opacity: editingVisitId === v.id ? 1 : 0.85,
-                  }}
-                  onClick={() => loadVisit(v)}
-                >
-                  {editingVisitId === v.id ? "수정 중" : "수정"}
-                </PrimaryButton>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <PrimaryButton
+                    style={{
+                      padding: "4px 14px",
+                      opacity: editingVisitId === v.id ? 1 : 0.85,
+                    }}
+                    onClick={() => loadVisit(v)}
+                  >
+                    {editingVisitId === v.id ? "수정 중" : "수정"}
+                  </PrimaryButton>
+                  <PrimaryNagativeButton
+                    style={{ padding: "4px 14px", background: "#dc2626" }}
+                    onClick={() => {
+                      if (
+                        confirm(
+                          `${v.visit_date.split("T")[0]} 방문 기록을 삭제할까요?\n(안축장 측정값은 차트에 그대로 남습니다.)`,
+                        )
+                      )
+                        deleteMutation.mutate(v.id);
+                    }}
+                  >
+                    삭제
+                  </PrimaryNagativeButton>
+                </div>
               </VisitRow>
             ))
           )}
