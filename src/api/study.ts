@@ -13,7 +13,7 @@ export interface Study {
 
 export interface StudyInput {
   name: string;
-  code?: string;
+  code: string;
   description?: string;
 }
 

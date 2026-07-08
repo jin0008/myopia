@@ -389,7 +389,7 @@ function StudyManagement() {
     mutationFn: () =>
       createStudy({
         name: newName.trim(),
-        code: newCode.trim() || undefined,
+        code: newCode.trim(),
       }),
     onSuccess: () => {
       setNewName("");
@@ -485,12 +485,18 @@ function StudyManagement() {
               onChange={(e) => setNewName(e.target.value)}
             />
             <TextInput
-              placeholder="코드 (선택)"
+              placeholder="코드 (필수, 예: LPTAT) — 연구번호 접두어로 사용됩니다"
               value={newCode}
               onChange={(e) => setNewCode(e.target.value)}
             />
             <PrimaryButton
-              onClick={() => newName.trim() && createMutation.mutate()}
+              onClick={() => {
+                if (!newName.trim() || !newCode.trim()) {
+                  alert("연구명과 코드를 모두 입력해주세요. 코드는 연구번호 접두어로 사용됩니다.");
+                  return;
+                }
+                createMutation.mutate();
+              }}
             >
               추가
             </PrimaryButton>
