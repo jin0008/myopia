@@ -396,6 +396,11 @@ export default function StudyVisit() {
     <TopDiv>
       <div style={{ width: "min(760px, 92%)", padding: "16px 0 48px" }}>
         <h1 style={{ marginBottom: 4 }}>{study.name}</h1>
+        {enrollmentQuery.data.subject_number && (
+          <p style={{ color: "#6b7280", margin: "0 0 4px", fontWeight: 600 }}>
+            연구번호: {enrollmentQuery.data.subject_number}
+          </p>
+        )}
         <p style={{ color: "#6b7280", marginTop: 0 }}>
           {editingVisitId ? (
             <>

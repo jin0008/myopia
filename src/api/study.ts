@@ -85,6 +85,7 @@ export interface Enrollment {
   patient_id: string;
   enrolled_at: string;
   status: string;
+  subject_number: string | null;
   study: { id: string; name: string; code: string | null };
 }
 
@@ -109,6 +110,7 @@ export interface EnrollmentDetail {
   study: { id: string; name: string; code: string | null };
   patient_id: string;
   enrolled_at: string;
+  subject_number: string | null;
   visits: any[];
 }
 

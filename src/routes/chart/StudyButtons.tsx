@@ -87,6 +87,7 @@ export function StudyButtons({ patientId }: { patientId: string }) {
             }}
           >
             {e.study.name}
+            {e.subject_number ? ` · ${e.subject_number}` : ""}
           </MenuItem>
         ))}
 
