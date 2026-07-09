@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getHospitalList, getMembersByHospital } from "../api/hospital";
-import { useCallback, useContext, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import {
   deleteProfessional,
@@ -17,6 +17,12 @@ import ExcelJS from "exceljs";
 import { getEthnicityList, getInstrumentList } from "../api/static";
 import AdminAuditLog from "./admin_audit_log";
 import StudyAuditLog from "./study_audit_log";
+import {
+  AlertSetting,
+  AlertSettingInput,
+  getAlertSetting,
+  updateAlertSetting,
+} from "../api/alert_setting";
 import {
   createStudy,
   deleteStudy,
@@ -199,6 +205,9 @@ export default function Admin() {
         </Card>
       </div>
       <div style={{ width: "80%", marginTop: "32px" }}>
+        <AlertSettingManagement />
+      </div>
+      <div style={{ width: "80%", marginTop: "32px" }}>
         <StudyManagement />
       </div>
       <div style={{ width: "80%", marginTop: "32px" }}>
@@ -373,6 +382,124 @@ const HospitalCheckRow = styled.label`
   color: #374151;
 `;
 
+const ALERT_FIELDS: {
+  key: keyof AlertSettingInput;
+  label: string;
+  step: string;
+}[] = [
+  { key: "axial_min", label: "안축장 정상범위 하한 (mm)", step: "0.1" },
+  { key: "axial_max", label: "안축장 정상범위 상한 (mm)", step: "0.1" },
+  { key: "axial_decrease_mm", label: "안축장 직전대비 감소 경고 (mm)", step: "0.1" },
+  {
+    key: "axial_increase_mm_per_year",
+    label: "안축장 증가속도 경고 (mm/year)",
+    step: "0.1",
+  },
+  { key: "se_min", label: "SE 고도근시 임계 (D, 음수)", step: "0.25" },
+  {
+    key: "se_progression_d_per_year",
+    label: "SE 진행속도 경고 (D/year)",
+    step: "0.25",
+  },
+];
+
+function AlertSettingManagement() {
+  const queryClient = useQueryClient();
+  const settingQuery = useQuery({
+    queryKey: ["alert_setting"],
+    queryFn: getAlertSetting,
+  });
+
+  const [form, setForm] = useState<AlertSettingInput | null>(null);
+
+  // Seed the editable form once the current setting loads.
+  useEffect(() => {
+    if (settingQuery.data) {
+      const { id: _id, ...rest } = settingQuery.data as AlertSetting;
+      setForm(rest);
+    }
+  }, [settingQuery.data]);
+
+  const mutation = useMutation({
+    mutationFn: (data: AlertSettingInput) => updateAlertSetting(data),
+    onSuccess: () => {
+      alert("알림 기준이 저장되었습니다.");
+      queryClient.invalidateQueries({ queryKey: ["alert_setting"] });
+    },
+    onError: (e: any) => alert(e?.message ?? "저장 실패"),
+  });
+
+  return (
+    <Card>
+      <SectionTitle>Alert Threshold (알림 기준 설정)</SectionTitle>
+      <p style={{ color: "#6b7280", marginTop: 0 }}>
+        측정값 저장 시 이메일 알림과 차트 입력 경고 팝업이 아래 기준을 따릅니다.
+        (전역 공통 설정)
+      </p>
+      {form == null ? (
+        <p>불러오는 중…</p>
+      ) : (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+            gap: 12,
+            maxWidth: 720,
+          }}
+        >
+          {ALERT_FIELDS.map(({ key, label, step }) => (
+            <label
+              key={key}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+                fontSize: 13,
+                fontWeight: 600,
+                color: "#374151",
+              }}
+            >
+              {label}
+              <TextInput
+                type="number"
+                step={step}
+                value={String(form[key])}
+                onChange={(e) =>
+                  setForm({ ...form, [key]: Number(e.target.value) })
+                }
+              />
+            </label>
+          ))}
+          <div style={{ gridColumn: "1 / -1", display: "flex", gap: 8 }}>
+            <PrimaryButton
+              onClick={() => {
+                if (form.axial_min >= form.axial_max) {
+                  alert("안축장 정상범위 하한은 상한보다 작아야 합니다.");
+                  return;
+                }
+                mutation.mutate(form);
+              }}
+            >
+              저장
+            </PrimaryButton>
+            <PrimaryNagativeButton
+              onClick={() => {
+                if (settingQuery.data) {
+                  const { id: _id, ...rest } =
+                    settingQuery.data as AlertSetting;
+                  setForm(rest);
+                }
+              }}
+            >
+              되돌리기
+            </PrimaryNagativeButton>
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 function StudyManagement() {
   const queryClient = useQueryClient();
   const [selectedStudyId, setSelectedStudyId] = useState<string | null>(null);
@@ -385,13 +512,13 @@ function StudyManagement() {
   const [newName, setNewName] = useState("");
   const [newCode, setNewCode] = useState("");
 
-  // Inline edit of an existing study's name/code.
-  const [editingId, setEditingId] = useState<string | null>(null);
+  // Selecting a study opens it for editing (name/code) on the left card while
+  // the right panel assigns its hospitals — there is no separate 수정 button.
   const [editName, setEditName] = useState("");
   const [editCode, setEditCode] = useState("");
 
-  const startEdit = (study: Study) => {
-    setEditingId(study.id);
+  const selectStudy = (study: Study) => {
+    setSelectedStudyId(study.id);
     setEditName(study.name);
     setEditCode(study.code ?? "");
   };
@@ -422,8 +549,9 @@ function StudyManagement() {
     mutationFn: (vars: { id: string; name: string; code: string }) =>
       updateStudy(vars.id, { name: vars.name, code: vars.code }),
     onSuccess: () => {
-      setEditingId(null);
       queryClient.invalidateQueries({ queryKey: ["study", "admin"] });
+      alert("저장되었습니다.");
+      setSelectedStudyId(null); // 저장 후 요약 목록으로 복귀
     },
     onError: (e: any) => alert(e?.message ?? "수정 실패"),
   });
@@ -441,18 +569,19 @@ function StudyManagement() {
     <Card>
       <SectionTitle>Study Management (연구 관리)</SectionTitle>
       <StudyLayout>
-        <div style={{ minWidth: 340 }}>
+        <div style={{ flex: 3, minWidth: 0 }}>
           <h3 style={{ marginTop: 0 }}>연구 목록</h3>
           {studiesQuery.data?.map((study) => (
             <StudyCardDiv
               key={study.id}
               $selected={selectedStudyId === study.id}
-              onClick={() => setSelectedStudyId(study.id)}
+              onClick={() => {
+                if (selectedStudyId !== study.id) selectStudy(study);
+              }}
             >
-              {editingId === study.id ? (
+              {selectedStudyId === study.id ? (
                 <div
                   style={{ display: "flex", flexDirection: "column", gap: 6 }}
-                  onClick={(e) => e.stopPropagation()}
                 >
                   <TextInput
                     placeholder="연구명"
@@ -464,7 +593,7 @@ function StudyManagement() {
                     value={editCode}
                     onChange={(e) => setEditCode(e.target.value)}
                   />
-                  <div style={{ display: "flex", gap: 6 }}>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     <PrimaryButton
                       onClick={() => {
                         if (!editName.trim() || !editCode.trim()) {
@@ -480,62 +609,38 @@ function StudyManagement() {
                     >
                       저장
                     </PrimaryButton>
-                    <PrimaryNagativeButton onClick={() => setEditingId(null)}>
-                      취소
+                    <PrimaryNagativeButton
+                      onClick={() => toggleActiveMutation.mutate(study)}
+                    >
+                      {study.active ? "비활성화" : "활성화"}
+                    </PrimaryNagativeButton>
+                    <PrimaryNagativeButton
+                      style={{ background: "#dc2626" }}
+                      onClick={() => {
+                        if (
+                          confirm(
+                            `"${study.name}" 연구를 삭제할까요?\n등록된 환자·방문 데이터가 모두 함께 삭제되며 되돌릴 수 없습니다.`,
+                          )
+                        )
+                          deleteMutation.mutate(study.id);
+                      }}
+                    >
+                      삭제
                     </PrimaryNagativeButton>
                   </div>
                   <small style={{ color: "#9ca3af" }}>
-                    ※ 코드를 바꿔도 이미 부여된 기존 연구번호는 변경되지 않고,
-                    이후 등록되는 환자부터 새 코드가 적용됩니다.
+                    참여병원 {study._count?.study_hospital ?? 0}곳
+                    {study.active ? "" : " · (비활성)"} · 우측에서 참여병원을
+                    지정하세요. ※ 코드를 바꿔도 이미 부여된 기존 연구번호는
+                    변경되지 않고, 이후 등록되는 환자부터 새 코드가 적용됩니다.
                   </small>
                 </div>
               ) : (
                 <>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      gap: 8,
-                    }}
-                  >
-                    <b style={{ opacity: study.active ? 1 : 0.5 }}>
-                      {study.name}
-                    </b>
-                    <div style={{ display: "flex", gap: 6 }}>
-                      <PrimaryNagativeButton
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          startEdit(study);
-                        }}
-                      >
-                        수정
-                      </PrimaryNagativeButton>
-                      <PrimaryNagativeButton
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleActiveMutation.mutate(study);
-                        }}
-                      >
-                        {study.active ? "비활성화" : "활성화"}
-                      </PrimaryNagativeButton>
-                      <PrimaryNagativeButton
-                        style={{ background: "#dc2626" }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (
-                            confirm(
-                              `"${study.name}" 연구를 삭제할까요?\n등록된 환자·방문 데이터가 모두 함께 삭제되며 되돌릴 수 없습니다.`,
-                            )
-                          )
-                            deleteMutation.mutate(study.id);
-                        }}
-                      >
-                        삭제
-                      </PrimaryNagativeButton>
-                    </div>
-                  </div>
-                  <small style={{ color: "#6b7280" }}>
+                  <b style={{ opacity: study.active ? 1 : 0.5 }}>
+                    {study.name}
+                  </b>
+                  <small style={{ color: "#6b7280", display: "block" }}>
                     {study.code ? `code: ${study.code} · ` : "code: (없음) · "}
                     참여병원 {study._count?.study_hospital ?? 0}곳
                     {study.active ? "" : " · (비활성)"}
@@ -578,9 +683,13 @@ function StudyManagement() {
           </div>
         </div>
 
-        <div style={{ flex: 1, alignSelf: "stretch" }}>
+        <div style={{ flex: 7, minWidth: 0, alignSelf: "stretch" }}>
           {selectedStudyId ? (
-            <StudyHospitalAssign key={selectedStudyId} studyId={selectedStudyId} />
+            <StudyHospitalAssign
+              key={selectedStudyId}
+              studyId={selectedStudyId}
+              onSaved={() => setSelectedStudyId(null)}
+            />
           ) : (
             <div
               style={{
@@ -601,7 +710,13 @@ function StudyManagement() {
   );
 }
 
-function StudyHospitalAssign({ studyId }: { studyId: string }) {
+function StudyHospitalAssign({
+  studyId,
+  onSaved,
+}: {
+  studyId: string;
+  onSaved: () => void;
+}) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
 
@@ -630,6 +745,7 @@ function StudyHospitalAssign({ studyId }: { studyId: string }) {
       });
       queryClient.invalidateQueries({ queryKey: ["study", "admin"] });
       alert("저장되었습니다.");
+      onSaved(); // 저장 후 요약 목록으로 복귀
     },
     onError: () => alert("저장 실패"),
   });
@@ -699,6 +815,8 @@ function HospitalList({ onSelect }: { onSelect: (hospitalId: any) => void }) {
   });
 
   const [search, setSearch] = useState("");
+  const [expanded, setExpanded] = useState(false);
+  const COLLAPSED_COUNT = 5;
 
   const filteredData = useMemo(() => {
     if (query.data) {
@@ -716,6 +834,14 @@ function HospitalList({ onSelect }: { onSelect: (hospitalId: any) => void }) {
   if (query.isError) {
     return <div>Error: {query.error.message}</div>;
   }
+
+  // Collapse the (long) list to a few rows; searching always shows all matches.
+  const isSearching = search.trim().length > 0;
+  const visibleData =
+    expanded || isSearching ? filteredData : filteredData.slice(0, COLLAPSED_COUNT);
+  const hiddenCount = filteredData.length - visibleData.length;
+  const showToggle = !isSearching && filteredData.length > COLLAPSED_COUNT;
+
   return (
     <Card style={{ minWidth: "320px" }}>
       <SectionTitle>Hospital List</SectionTitle>
@@ -726,7 +852,7 @@ function HospitalList({ onSelect }: { onSelect: (hospitalId: any) => void }) {
         style={{ marginBottom: "12px", width: "100%" }}
       />
       <div>
-        {filteredData.map((hospital: any) => (
+        {visibleData.map((hospital: any) => (
           <HospitalCard
             key={hospital.id}
             hospital={hospital}
@@ -734,6 +860,26 @@ function HospitalList({ onSelect }: { onSelect: (hospitalId: any) => void }) {
           />
         ))}
       </div>
+      {showToggle && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          style={{
+            width: "100%",
+            marginTop: 8,
+            padding: "8px",
+            background: "transparent",
+            border: "1px solid #e5e7eb",
+            borderRadius: 8,
+            cursor: "pointer",
+            color: "#374151",
+            fontSize: 13,
+            fontWeight: 600,
+          }}
+        >
+          {expanded ? "접기 ▲" : `더보기 (${hiddenCount}개 더) ▼`}
+        </button>
+      )}
     </Card>
   );
 }

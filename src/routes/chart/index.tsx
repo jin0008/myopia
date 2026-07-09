@@ -8,6 +8,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import ExcelJS from "exceljs";
 import { getLatestPatientData, getPatientDetail } from "../../api/patient";
+import { getAlertSetting } from "../../api/alert_setting";
 import { getGrowthDataEthnicityList } from "../../api/growth_data";
 import { upsertPatientK } from "../../api/mean_k";
 import { Chart } from "./Chart";
@@ -76,6 +77,10 @@ const AXIAL_QUERY = {
 function axialLengthQueryWarnings(
   next: { od: number | null; os: number | null; date: string },
   previous: Measurement | undefined,
+  // Thresholds default to the compiled-in values but are overridden with the
+  // admin-configured `alert_setting` so this popup stays in sync with the email
+  // alert criteria.
+  q: typeof AXIAL_QUERY = AXIAL_QUERY,
 ): string[] {
   const warnings: string[] = [];
   (["od", "os"] as const).forEach((eye) => {
@@ -83,9 +88,9 @@ function axialLengthQueryWarnings(
     if (value == null) return;
     const label = eye.toUpperCase();
 
-    if (value <= AXIAL_QUERY.minNormal || value >= AXIAL_QUERY.maxNormal) {
+    if (value <= q.minNormal || value >= q.maxNormal) {
       warnings.push(
-        `안축장 ${label} ${value}mm가 기준 범위(${AXIAL_QUERY.minNormal}~${AXIAL_QUERY.maxNormal}mm)를 벗어났습니다.`,
+        `안축장 ${label} ${value}mm가 기준 범위(${q.minNormal}~${q.maxNormal}mm)를 벗어났습니다.`,
       );
     }
 
@@ -94,7 +99,7 @@ function axialLengthQueryWarnings(
 
     // Round to 3 decimals to avoid float error (e.g. 24.15 - 24.05 = 0.0999…).
     const decrease = Math.round((prevValue - value) * 1000) / 1000;
-    if (decrease >= AXIAL_QUERY.decreaseMm) {
+    if (decrease >= q.decreaseMm) {
       warnings.push(
         `안축장 ${label}가 직전 측정(${previous.date.split("T")[0]}, ${prevValue}mm) 대비 ${decrease.toFixed(2)}mm 감소했습니다.`,
       );
@@ -106,14 +111,11 @@ function axialLengthQueryWarnings(
       (new Date(next.date).getTime() - new Date(previous.date).getTime()) /
       (365.25 * 24 * 60 * 60 * 1000);
     const increase = Math.round((value - prevValue) * 1000) / 1000;
-    if (
-      years >= AXIAL_QUERY.minIntervalYears &&
-      increase >= AXIAL_QUERY.minIncreaseMm
-    ) {
+    if (years >= q.minIntervalYears && increase >= q.minIncreaseMm) {
       const rate = increase / years;
-      if (rate >= AXIAL_QUERY.increaseMmPerYear) {
+      if (rate >= q.increaseMmPerYear) {
         warnings.push(
-          `안축장 ${label} 증가 속도가 ${rate.toFixed(2)}mm/year로 기준(${AXIAL_QUERY.increaseMmPerYear}mm/year)을 초과했습니다.`,
+          `안축장 ${label} 증가 속도가 ${rate.toFixed(2)}mm/year로 기준(${q.increaseMmPerYear}mm/year)을 초과했습니다.`,
         );
       }
     }
@@ -138,6 +140,25 @@ export default function ChartRoute() {
     queryFn: () => getPatientDetail(patientId as string),
     enabled: !!patientId,
   });
+
+  // Admin-configured alert thresholds; the input popup uses these so its
+  // warnings match the email alert criteria. Falls back to AXIAL_QUERY defaults.
+  const alertSettingQuery = useQuery({
+    queryKey: ["alert_setting"],
+    queryFn: getAlertSetting,
+    staleTime: 5 * 60 * 1000,
+  });
+  const axialThresholds = useMemo(() => {
+    const s = alertSettingQuery.data;
+    if (!s) return AXIAL_QUERY;
+    return {
+      ...AXIAL_QUERY,
+      minNormal: s.axial_min,
+      maxNormal: s.axial_max,
+      decreaseMm: s.axial_decrease_mm,
+      increaseMmPerYear: s.axial_increase_mm_per_year,
+    };
+  }, [alertSettingQuery.data]);
 
   const meanKValue = useMemo(() => {
     if (!patientQuery.data) return "(No data)";
@@ -614,7 +635,11 @@ export default function ChartRoute() {
             .sort(
               (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
             )[0];
-          const warnings = axialLengthQueryWarnings({ od, os, date }, previous);
+          const warnings = axialLengthQueryWarnings(
+            { od, os, date },
+            previous,
+            axialThresholds,
+          );
           if (warnings.length > 0) {
             const proceed = confirm(
               "다음 항목을 확인해주세요.\n\n" +
