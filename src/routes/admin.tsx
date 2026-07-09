@@ -550,6 +550,8 @@ function StudyManagement() {
       updateStudy(vars.id, { name: vars.name, code: vars.code }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["study", "admin"] });
+      alert("저장되었습니다.");
+      setSelectedStudyId(null); // 저장 후 요약 목록으로 복귀
     },
     onError: (e: any) => alert(e?.message ?? "수정 실패"),
   });
@@ -683,7 +685,11 @@ function StudyManagement() {
 
         <div style={{ flex: 7, minWidth: 0, alignSelf: "stretch" }}>
           {selectedStudyId ? (
-            <StudyHospitalAssign key={selectedStudyId} studyId={selectedStudyId} />
+            <StudyHospitalAssign
+              key={selectedStudyId}
+              studyId={selectedStudyId}
+              onSaved={() => setSelectedStudyId(null)}
+            />
           ) : (
             <div
               style={{
@@ -704,7 +710,13 @@ function StudyManagement() {
   );
 }
 
-function StudyHospitalAssign({ studyId }: { studyId: string }) {
+function StudyHospitalAssign({
+  studyId,
+  onSaved,
+}: {
+  studyId: string;
+  onSaved: () => void;
+}) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
 
@@ -733,6 +745,7 @@ function StudyHospitalAssign({ studyId }: { studyId: string }) {
       });
       queryClient.invalidateQueries({ queryKey: ["study", "admin"] });
       alert("저장되었습니다.");
+      onSaved(); // 저장 후 요약 목록으로 복귀
     },
     onError: () => alert("저장 실패"),
   });
