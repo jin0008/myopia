@@ -625,6 +625,11 @@ function StudyManagement() {
                     >
                       삭제
                     </PrimaryNagativeButton>
+                    <PrimaryNagativeButton
+                      onClick={() => setSelectedStudyId(null)}
+                    >
+                      닫기
+                    </PrimaryNagativeButton>
                   </div>
                   <small style={{ color: "#9ca3af" }}>
                     참여병원 {study._count?.study_hospital ?? 0}곳
