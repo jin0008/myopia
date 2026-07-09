@@ -802,6 +802,8 @@ function HospitalList({ onSelect }: { onSelect: (hospitalId: any) => void }) {
   });
 
   const [search, setSearch] = useState("");
+  const [expanded, setExpanded] = useState(false);
+  const COLLAPSED_COUNT = 5;
 
   const filteredData = useMemo(() => {
     if (query.data) {
@@ -819,6 +821,14 @@ function HospitalList({ onSelect }: { onSelect: (hospitalId: any) => void }) {
   if (query.isError) {
     return <div>Error: {query.error.message}</div>;
   }
+
+  // Collapse the (long) list to a few rows; searching always shows all matches.
+  const isSearching = search.trim().length > 0;
+  const visibleData =
+    expanded || isSearching ? filteredData : filteredData.slice(0, COLLAPSED_COUNT);
+  const hiddenCount = filteredData.length - visibleData.length;
+  const showToggle = !isSearching && filteredData.length > COLLAPSED_COUNT;
+
   return (
     <Card style={{ minWidth: "320px" }}>
       <SectionTitle>Hospital List</SectionTitle>
@@ -829,7 +839,7 @@ function HospitalList({ onSelect }: { onSelect: (hospitalId: any) => void }) {
         style={{ marginBottom: "12px", width: "100%" }}
       />
       <div>
-        {filteredData.map((hospital: any) => (
+        {visibleData.map((hospital: any) => (
           <HospitalCard
             key={hospital.id}
             hospital={hospital}
@@ -837,6 +847,26 @@ function HospitalList({ onSelect }: { onSelect: (hospitalId: any) => void }) {
           />
         ))}
       </div>
+      {showToggle && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          style={{
+            width: "100%",
+            marginTop: 8,
+            padding: "8px",
+            background: "transparent",
+            border: "1px solid #e5e7eb",
+            borderRadius: 8,
+            cursor: "pointer",
+            color: "#374151",
+            fontSize: 13,
+            fontWeight: 600,
+          }}
+        >
+          {expanded ? "접기 ▲" : `더보기 (${hiddenCount}개 더) ▼`}
+        </button>
+      )}
     </Card>
   );
 }
