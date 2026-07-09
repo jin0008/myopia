@@ -567,7 +567,7 @@ function StudyManagement() {
     <Card>
       <SectionTitle>Study Management (연구 관리)</SectionTitle>
       <StudyLayout>
-        <div style={{ minWidth: 340 }}>
+        <div style={{ flex: 3, minWidth: 0 }}>
           <h3 style={{ marginTop: 0 }}>연구 목록</h3>
           {studiesQuery.data?.map((study) => (
             <StudyCardDiv
@@ -681,7 +681,7 @@ function StudyManagement() {
           </div>
         </div>
 
-        <div style={{ flex: 1, alignSelf: "stretch" }}>
+        <div style={{ flex: 7, minWidth: 0, alignSelf: "stretch" }}>
           {selectedStudyId ? (
             <StudyHospitalAssign key={selectedStudyId} studyId={selectedStudyId} />
           ) : (
