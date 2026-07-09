@@ -385,13 +385,13 @@ function StudyManagement() {
   const [newName, setNewName] = useState("");
   const [newCode, setNewCode] = useState("");
 
-  // Inline edit of an existing study's name/code.
-  const [editingId, setEditingId] = useState<string | null>(null);
+  // Selecting a study opens it for editing (name/code) on the left card while
+  // the right panel assigns its hospitals — there is no separate 수정 button.
   const [editName, setEditName] = useState("");
   const [editCode, setEditCode] = useState("");
 
-  const startEdit = (study: Study) => {
-    setEditingId(study.id);
+  const selectStudy = (study: Study) => {
+    setSelectedStudyId(study.id);
     setEditName(study.name);
     setEditCode(study.code ?? "");
   };
@@ -422,7 +422,6 @@ function StudyManagement() {
     mutationFn: (vars: { id: string; name: string; code: string }) =>
       updateStudy(vars.id, { name: vars.name, code: vars.code }),
     onSuccess: () => {
-      setEditingId(null);
       queryClient.invalidateQueries({ queryKey: ["study", "admin"] });
     },
     onError: (e: any) => alert(e?.message ?? "수정 실패"),
@@ -447,12 +446,13 @@ function StudyManagement() {
             <StudyCardDiv
               key={study.id}
               $selected={selectedStudyId === study.id}
-              onClick={() => setSelectedStudyId(study.id)}
+              onClick={() => {
+                if (selectedStudyId !== study.id) selectStudy(study);
+              }}
             >
-              {editingId === study.id ? (
+              {selectedStudyId === study.id ? (
                 <div
                   style={{ display: "flex", flexDirection: "column", gap: 6 }}
-                  onClick={(e) => e.stopPropagation()}
                 >
                   <TextInput
                     placeholder="연구명"
@@ -464,7 +464,7 @@ function StudyManagement() {
                     value={editCode}
                     onChange={(e) => setEditCode(e.target.value)}
                   />
-                  <div style={{ display: "flex", gap: 6 }}>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     <PrimaryButton
                       onClick={() => {
                         if (!editName.trim() || !editCode.trim()) {
@@ -480,62 +480,38 @@ function StudyManagement() {
                     >
                       저장
                     </PrimaryButton>
-                    <PrimaryNagativeButton onClick={() => setEditingId(null)}>
-                      취소
+                    <PrimaryNagativeButton
+                      onClick={() => toggleActiveMutation.mutate(study)}
+                    >
+                      {study.active ? "비활성화" : "활성화"}
+                    </PrimaryNagativeButton>
+                    <PrimaryNagativeButton
+                      style={{ background: "#dc2626" }}
+                      onClick={() => {
+                        if (
+                          confirm(
+                            `"${study.name}" 연구를 삭제할까요?\n등록된 환자·방문 데이터가 모두 함께 삭제되며 되돌릴 수 없습니다.`,
+                          )
+                        )
+                          deleteMutation.mutate(study.id);
+                      }}
+                    >
+                      삭제
                     </PrimaryNagativeButton>
                   </div>
                   <small style={{ color: "#9ca3af" }}>
-                    ※ 코드를 바꿔도 이미 부여된 기존 연구번호는 변경되지 않고,
-                    이후 등록되는 환자부터 새 코드가 적용됩니다.
+                    참여병원 {study._count?.study_hospital ?? 0}곳
+                    {study.active ? "" : " · (비활성)"} · 우측에서 참여병원을
+                    지정하세요. ※ 코드를 바꿔도 이미 부여된 기존 연구번호는
+                    변경되지 않고, 이후 등록되는 환자부터 새 코드가 적용됩니다.
                   </small>
                 </div>
               ) : (
                 <>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      gap: 8,
-                    }}
-                  >
-                    <b style={{ opacity: study.active ? 1 : 0.5 }}>
-                      {study.name}
-                    </b>
-                    <div style={{ display: "flex", gap: 6 }}>
-                      <PrimaryNagativeButton
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          startEdit(study);
-                        }}
-                      >
-                        수정
-                      </PrimaryNagativeButton>
-                      <PrimaryNagativeButton
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleActiveMutation.mutate(study);
-                        }}
-                      >
-                        {study.active ? "비활성화" : "활성화"}
-                      </PrimaryNagativeButton>
-                      <PrimaryNagativeButton
-                        style={{ background: "#dc2626" }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (
-                            confirm(
-                              `"${study.name}" 연구를 삭제할까요?\n등록된 환자·방문 데이터가 모두 함께 삭제되며 되돌릴 수 없습니다.`,
-                            )
-                          )
-                            deleteMutation.mutate(study.id);
-                        }}
-                      >
-                        삭제
-                      </PrimaryNagativeButton>
-                    </div>
-                  </div>
-                  <small style={{ color: "#6b7280" }}>
+                  <b style={{ opacity: study.active ? 1 : 0.5 }}>
+                    {study.name}
+                  </b>
+                  <small style={{ color: "#6b7280", display: "block" }}>
                     {study.code ? `code: ${study.code} · ` : "code: (없음) · "}
                     참여병원 {study._count?.study_hospital ?? 0}곳
                     {study.active ? "" : " · (비활성)"}
