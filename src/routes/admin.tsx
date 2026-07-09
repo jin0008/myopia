@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getHospitalList, getMembersByHospital } from "../api/hospital";
-import { useCallback, useContext, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import {
   deleteProfessional,
@@ -17,6 +17,12 @@ import ExcelJS from "exceljs";
 import { getEthnicityList, getInstrumentList } from "../api/static";
 import AdminAuditLog from "./admin_audit_log";
 import StudyAuditLog from "./study_audit_log";
+import {
+  AlertSetting,
+  AlertSettingInput,
+  getAlertSetting,
+  updateAlertSetting,
+} from "../api/alert_setting";
 import {
   createStudy,
   deleteStudy,
@@ -199,6 +205,9 @@ export default function Admin() {
         </Card>
       </div>
       <div style={{ width: "80%", marginTop: "32px" }}>
+        <AlertSettingManagement />
+      </div>
+      <div style={{ width: "80%", marginTop: "32px" }}>
         <StudyManagement />
       </div>
       <div style={{ width: "80%", marginTop: "32px" }}>
@@ -372,6 +381,124 @@ const HospitalCheckRow = styled.label`
   cursor: pointer;
   color: #374151;
 `;
+
+const ALERT_FIELDS: {
+  key: keyof AlertSettingInput;
+  label: string;
+  step: string;
+}[] = [
+  { key: "axial_min", label: "안축장 정상범위 하한 (mm)", step: "0.1" },
+  { key: "axial_max", label: "안축장 정상범위 상한 (mm)", step: "0.1" },
+  { key: "axial_decrease_mm", label: "안축장 직전대비 감소 경고 (mm)", step: "0.1" },
+  {
+    key: "axial_increase_mm_per_year",
+    label: "안축장 증가속도 경고 (mm/year)",
+    step: "0.1",
+  },
+  { key: "se_min", label: "SE 고도근시 임계 (D, 음수)", step: "0.25" },
+  {
+    key: "se_progression_d_per_year",
+    label: "SE 진행속도 경고 (D/year)",
+    step: "0.25",
+  },
+];
+
+function AlertSettingManagement() {
+  const queryClient = useQueryClient();
+  const settingQuery = useQuery({
+    queryKey: ["alert_setting"],
+    queryFn: getAlertSetting,
+  });
+
+  const [form, setForm] = useState<AlertSettingInput | null>(null);
+
+  // Seed the editable form once the current setting loads.
+  useEffect(() => {
+    if (settingQuery.data) {
+      const { id: _id, ...rest } = settingQuery.data as AlertSetting;
+      setForm(rest);
+    }
+  }, [settingQuery.data]);
+
+  const mutation = useMutation({
+    mutationFn: (data: AlertSettingInput) => updateAlertSetting(data),
+    onSuccess: () => {
+      alert("알림 기준이 저장되었습니다.");
+      queryClient.invalidateQueries({ queryKey: ["alert_setting"] });
+    },
+    onError: (e: any) => alert(e?.message ?? "저장 실패"),
+  });
+
+  return (
+    <Card>
+      <SectionTitle>Alert Threshold (알림 기준 설정)</SectionTitle>
+      <p style={{ color: "#6b7280", marginTop: 0 }}>
+        측정값 저장 시 이메일 알림과 차트 입력 경고 팝업이 아래 기준을 따릅니다.
+        (전역 공통 설정)
+      </p>
+      {form == null ? (
+        <p>불러오는 중…</p>
+      ) : (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+            gap: 12,
+            maxWidth: 720,
+          }}
+        >
+          {ALERT_FIELDS.map(({ key, label, step }) => (
+            <label
+              key={key}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+                fontSize: 13,
+                fontWeight: 600,
+                color: "#374151",
+              }}
+            >
+              {label}
+              <TextInput
+                type="number"
+                step={step}
+                value={String(form[key])}
+                onChange={(e) =>
+                  setForm({ ...form, [key]: Number(e.target.value) })
+                }
+              />
+            </label>
+          ))}
+          <div style={{ gridColumn: "1 / -1", display: "flex", gap: 8 }}>
+            <PrimaryButton
+              onClick={() => {
+                if (form.axial_min >= form.axial_max) {
+                  alert("안축장 정상범위 하한은 상한보다 작아야 합니다.");
+                  return;
+                }
+                mutation.mutate(form);
+              }}
+            >
+              저장
+            </PrimaryButton>
+            <PrimaryNagativeButton
+              onClick={() => {
+                if (settingQuery.data) {
+                  const { id: _id, ...rest } =
+                    settingQuery.data as AlertSetting;
+                  setForm(rest);
+                }
+              }}
+            >
+              되돌리기
+            </PrimaryNagativeButton>
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
 
 function StudyManagement() {
   const queryClient = useQueryClient();
