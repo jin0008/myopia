@@ -73,6 +73,31 @@ const SectionTitle = styled.h2`
   margin: 0 0 16px 0;
 `;
 
+// Full-width-ish section container that widens on smaller screens so content
+// isn't cramped into 80% on narrow viewports.
+const AdminSection = styled.div`
+  width: 80%;
+  @media (max-width: 1100px) {
+    width: 94%;
+  }
+`;
+
+// Top row (hospital list + member list) wraps to a single column when narrow.
+const TopRow = styled.div`
+  display: flex;
+  width: 80%;
+  gap: 24px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  @media (max-width: 1100px) {
+    width: 94%;
+  }
+`;
+
+const TableScroll = styled.div`
+  overflow-x: auto;
+`;
+
 export default function Admin() {
   const { user } = useContext(UserContext);
   const [selectedHospitalId, setSelectedHospitalId] = useState("");
@@ -119,18 +144,11 @@ export default function Admin() {
   return (
     <TopDiv>
       <h1>Admin Page</h1>
-      <div
-        style={{
-          display: "flex",
-          width: "80%",
-          gap: "24px",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-        }}
-      >
+      <TopRow>
         <HospitalList onSelect={setSelectedHospitalId} />
-        <Card style={{ flex: 1 }}>
+        <Card style={{ flex: 1, minWidth: 0 }}>
           <SectionTitle>Member List</SectionTitle>
+          <TableScroll>
           <Table>
             <thead>
               <tr>
@@ -202,20 +220,21 @@ export default function Admin() {
               ))}
             </tbody>
           </Table>
+          </TableScroll>
         </Card>
-      </div>
-      <div style={{ width: "80%", marginTop: "32px" }}>
+      </TopRow>
+      <AdminSection style={{ marginTop: 32 }}>
         <AlertSettingManagement />
-      </div>
-      <div style={{ width: "80%", marginTop: "32px" }}>
+      </AdminSection>
+      <AdminSection style={{ marginTop: 32 }}>
         <StudyManagement />
-      </div>
-      <div style={{ width: "80%", marginTop: "32px" }}>
+      </AdminSection>
+      <AdminSection style={{ marginTop: 32 }}>
         <StudyAuditLog />
-      </div>
-      <div style={{ width: "80%", marginTop: "32px" }}>
+      </AdminSection>
+      <AdminSection style={{ marginTop: 32 }}>
         <AdminAuditLog />
-      </div>
+      </AdminSection>
     </TopDiv>
   );
 }
@@ -355,6 +374,14 @@ const StudyLayout = styled.div`
   flex-direction: row;
   gap: 24px;
   align-items: flex-start;
+  @media (max-width: 900px) {
+    flex-direction: column;
+    align-items: stretch;
+    & > div {
+      flex: none;
+      width: 100%;
+    }
+  }
 `;
 
 const StudyCardDiv = styled.div<{ $selected: boolean }>`
@@ -410,14 +437,24 @@ function AlertSettingManagement() {
     queryFn: getAlertSetting,
   });
 
-  const [form, setForm] = useState<AlertSettingInput | null>(null);
+  // Form holds raw strings (not numbers) so that intermediate entries like
+  // "-", "-6", or "6." are preserved while typing — Number()-ing on every
+  // keystroke would turn "-" into NaN and block negative/decimal input.
+  type FormState = Record<keyof AlertSettingInput, string>;
+  const toFormState = (s: AlertSetting): FormState => ({
+    axial_min: String(s.axial_min),
+    axial_max: String(s.axial_max),
+    axial_decrease_mm: String(s.axial_decrease_mm),
+    axial_increase_mm_per_year: String(s.axial_increase_mm_per_year),
+    se_min: String(s.se_min),
+    se_progression_d_per_year: String(s.se_progression_d_per_year),
+  });
+
+  const [form, setForm] = useState<FormState | null>(null);
 
   // Seed the editable form once the current setting loads.
   useEffect(() => {
-    if (settingQuery.data) {
-      const { id: _id, ...rest } = settingQuery.data as AlertSetting;
-      setForm(rest);
-    }
+    if (settingQuery.data) setForm(toFormState(settingQuery.data));
   }, [settingQuery.data]);
 
   const mutation = useMutation({
@@ -463,32 +500,38 @@ function AlertSettingManagement() {
               <TextInput
                 type="number"
                 step={step}
-                value={String(form[key])}
-                onChange={(e) =>
-                  setForm({ ...form, [key]: Number(e.target.value) })
-                }
+                inputMode="decimal"
+                value={form[key]}
+                onChange={(e) => setForm({ ...form, [key]: e.target.value })}
               />
             </label>
           ))}
           <div style={{ gridColumn: "1 / -1", display: "flex", gap: 8 }}>
             <PrimaryButton
               onClick={() => {
-                if (form.axial_min >= form.axial_max) {
+                // Parse strings → numbers at save time and validate.
+                const parsed = {} as AlertSettingInput;
+                for (const { key, label } of ALERT_FIELDS) {
+                  const n = Number(form[key]);
+                  if (form[key].trim() === "" || Number.isNaN(n)) {
+                    alert(`"${label}" 값이 올바른 숫자가 아닙니다.`);
+                    return;
+                  }
+                  parsed[key] = n;
+                }
+                if (parsed.axial_min >= parsed.axial_max) {
                   alert("안축장 정상범위 하한은 상한보다 작아야 합니다.");
                   return;
                 }
-                mutation.mutate(form);
+                mutation.mutate(parsed);
               }}
             >
               저장
             </PrimaryButton>
             <PrimaryNagativeButton
               onClick={() => {
-                if (settingQuery.data) {
-                  const { id: _id, ...rest } =
-                    settingQuery.data as AlertSetting;
-                  setForm(rest);
-                }
+                if (settingQuery.data)
+                  setForm(toFormState(settingQuery.data));
               }}
             >
               되돌리기
