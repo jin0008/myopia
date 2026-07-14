@@ -32,6 +32,7 @@ body {
   /* min-height (not fixed height) so #root grows with content and the sticky
      header stays stuck for the whole scroll — a fixed 100dvh box would cut the
      sticky range at one viewport. */
+  min-height: 100vh; /* fallback for browsers without dvh (iOS Safari < 15.4) */
   min-height: 100dvh;
   width: 100%;
   display: flex;
