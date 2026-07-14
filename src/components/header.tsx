@@ -7,7 +7,7 @@ import { logout } from "../api/auth";
 import { useQueryClient } from "@tanstack/react-query";
 import { Menu, Close, Login, Logout, SwapHoriz } from "@mui/icons-material";
 import { DesktopOnly, MobileOnly } from "./reactive";
-import { MOBILE_MEDIA } from "../lib/constants";
+import { COMPACT_MEDIA } from "../lib/constants";
 import theme from "../theme";
 import Logo from "./logo";
 import { useLanguage } from "../lib/language_context";
@@ -34,7 +34,7 @@ const NavContent = styled.div`
   align-items: center;
   padding: 0 24px;
 
-  @media ${MOBILE_MEDIA} {
+  @media ${COMPACT_MEDIA} {
     padding: 0 16px;
     padding-right: 48px;
   }
@@ -43,7 +43,7 @@ const NavContent = styled.div`
 const DesktopNav = styled.nav`
   display: flex;
   align-items: center;
-  gap: 32px;
+  gap: 24px;
 `;
 
 const NavLink = styled.span<{ $isActive?: boolean }>`
