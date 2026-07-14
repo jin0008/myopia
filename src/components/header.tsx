@@ -288,7 +288,9 @@ export default function Header() {
           </MobileNavLink>
         ))}
         <MobileButtonsSection>
-          {langToggle}
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            {langToggle}
+          </div>
           {user && (
             <PrimaryButton
               style={{ width: "100%", justifyContent: "center" }}

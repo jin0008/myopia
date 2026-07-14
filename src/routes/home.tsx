@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import theme from "../theme";
 import { MOBILE_MEDIA } from "../lib/constants";
-import eyeLogEnglishSvg from "../assets/eyelog-english.svg";
+import eyeLogEnglishSvg from "../assets/myopia-management-logo.svg";
 
 const PageWrapper = styled.div`
   max-width: 980px;
