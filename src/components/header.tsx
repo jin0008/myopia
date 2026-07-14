@@ -102,13 +102,14 @@ const MobileOverlay = styled.div<{ $isOpen: boolean }>`
   right: 0;
   width: 70%;
   max-width: 300px;
-  height: 100vh;
+  height: 100dvh;
   background: white;
   z-index: 1001;
   display: flex;
   flex-direction: column;
   padding: 80px 32px 32px;
-  gap: 32px;
+  gap: 20px;
+  overflow-y: auto;
   box-shadow: -4px 0 24px rgba(0, 0, 0, 0.1);
   transform: translateX(${(props) => (props.$isOpen ? "0" : "100%")});
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
