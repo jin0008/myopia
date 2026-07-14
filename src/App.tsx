@@ -10,6 +10,7 @@ import { getCurrentUser } from "./api/auth";
 import { GOOGLE_CLIENT_ID } from "./lib/google_client_id";
 import type { UserRole } from "./types/user";
 import ConsentGate from "./components/consent_gate";
+import ScrollToTop from "./components/scroll_to_top";
 
 const Home = lazy(() => import("./routes/home"));
 const HeaderRoute = lazy(() => import("./routes/header_footer"));
@@ -58,6 +59,7 @@ const App = () => {
 
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <LanguageProvider>
         <UserContext.Provider
           value={{
