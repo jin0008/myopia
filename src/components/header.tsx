@@ -130,7 +130,9 @@ const MobileMenuPortal = styled.div`
   height: 100dvh;
   overflow: hidden;
   pointer-events: none;
-  z-index: 1000;
+  /* Above all page content — the Logo component carries z-index:1002, so the
+     open sidebar must sit higher to cover it. */
+  z-index: 2000;
 `;
 
 const MobileBackdrop = styled.div<{ $isOpen: boolean }>`
