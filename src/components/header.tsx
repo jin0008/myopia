@@ -126,6 +126,7 @@ const MobileMenuPortal = styled.div`
   top: 0;
   left: 0;
   right: 0;
+  height: 100vh; /* fallback for browsers without dvh (iOS Safari < 15.4) */
   height: 100dvh;
   overflow: hidden;
   pointer-events: none;
@@ -137,7 +138,7 @@ const MobileBackdrop = styled.div<{ $isOpen: boolean }>`
   inset: 0;
   background: rgba(0, 0, 0, 0.3);
   opacity: ${(props) => (props.$isOpen ? 1 : 0)};
-  pointer-events: ${(props) => (props.$isOpen ? "all" : "none")};
+  pointer-events: ${(props) => (props.$isOpen ? "auto" : "none")};
   transition: opacity 0.3s ease;
 `;
 
