@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import { MOBILE_MEDIA } from "../lib/constants";
-import eyeLogSvg from "../assets/eyelog-logo.svg";
+import eyeLogSvg from "../assets/myopia-management-logo.svg";
 
 const LogoWrapper = styled.div`
   cursor: pointer;

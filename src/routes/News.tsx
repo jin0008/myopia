@@ -5,6 +5,7 @@ import theme from "../theme";
 import { MOBILE_MEDIA } from "../lib/constants";
 import { ExpandMore, ExpandLess, OpenInNew } from "@mui/icons-material";
 import { useLanguage } from "../lib/language_context";
+import { API_ROOT } from "../api/root";
 
 interface Article {
   id: string;
@@ -17,7 +18,9 @@ interface Article {
 }
 
 const fetchNews = async (): Promise<Article[]> => {
-  const response = await fetch("/api/news");
+  // Use API_ROOT (not a bare "/api/news") so it works in local dev too — locally
+  // API_ROOT points at the prod API; in prod it is "/api", giving "/api/news".
+  const response = await fetch(`${API_ROOT}/news`);
   if (!response.ok) {
     throw new Error("Failed to fetch news");
   }

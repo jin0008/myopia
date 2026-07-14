@@ -7,7 +7,7 @@ import { logout } from "../api/auth";
 import { useQueryClient } from "@tanstack/react-query";
 import { Menu, Close, Login, Logout, SwapHoriz } from "@mui/icons-material";
 import { DesktopOnly, MobileOnly } from "./reactive";
-import { MOBILE_MEDIA } from "../lib/constants";
+import { COMPACT_MEDIA } from "../lib/constants";
 import theme from "../theme";
 import Logo from "./logo";
 import { useLanguage } from "../lib/language_context";
@@ -34,7 +34,7 @@ const NavContent = styled.div`
   align-items: center;
   padding: 0 24px;
 
-  @media ${MOBILE_MEDIA} {
+  @media ${COMPACT_MEDIA} {
     padding: 0 16px;
     padding-right: 48px;
   }
@@ -43,7 +43,7 @@ const NavContent = styled.div`
 const DesktopNav = styled.nav`
   display: flex;
   align-items: center;
-  gap: 32px;
+  gap: 24px;
 `;
 
 const NavLink = styled.span<{ $isActive?: boolean }>`
@@ -116,10 +116,7 @@ const MobileOverlay = styled.div<{ $isOpen: boolean }>`
 
 const MobileBackdrop = styled.div<{ $isOpen: boolean }>`
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
+  inset: 0;
   background: rgba(0, 0, 0, 0.3);
   z-index: 1000;
   opacity: ${(props) => (props.$isOpen ? 1 : 0)};
@@ -288,7 +285,9 @@ export default function Header() {
           </MobileNavLink>
         ))}
         <MobileButtonsSection>
-          {langToggle}
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            {langToggle}
+          </div>
           {user && (
             <PrimaryButton
               style={{ width: "100%", justifyContent: "center" }}

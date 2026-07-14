@@ -6,6 +6,7 @@ import { UserContext } from "../../App";
 import { TopDiv } from "../../components/div";
 import { PrimaryButton, PrimaryNagativeButton } from "../../components/button";
 import { TextInput } from "../../components/input";
+import { MOBILE_MEDIA } from "../../lib/constants";
 import { getPatientDetail } from "../../api/patient";
 import {
   getInstrumentList,
@@ -25,11 +26,17 @@ const Section = styled.div`
   background: #fff;
   padding: 16px 20px;
   margin-bottom: 16px;
+  @media ${MOBILE_MEDIA} {
+    padding: 12px 14px;
+  }
 `;
 
 const SectionHead = styled.h3`
   margin: 0 0 12px 0;
   font-size: 16px;
+  @media ${MOBILE_MEDIA} {
+    font-size: 15px;
+  }
 `;
 
 const EyeRow = styled.div`
@@ -37,6 +44,9 @@ const EyeRow = styled.div`
   gap: 24px;
   flex-wrap: wrap;
   align-items: center;
+  @media ${MOBILE_MEDIA} {
+    gap: 12px;
+  }
 `;
 
 const Field = styled.label`
@@ -48,6 +58,9 @@ const Field = styled.label`
 
 const NarrowInput = styled(TextInput)`
   width: 90px;
+  @media ${MOBILE_MEDIA} {
+    width: 72px;
+  }
 `;
 
 const VisitRow = styled.div`
@@ -58,6 +71,10 @@ const VisitRow = styled.div`
   border-bottom: 1px solid #f0f0f0;
   &:last-child {
     border-bottom: none;
+  }
+  @media ${MOBILE_MEDIA} {
+    flex-wrap: wrap;
+    gap: 8px;
   }
 `;
 
@@ -637,7 +654,7 @@ export default function StudyVisit() {
           <PrimaryNagativeButton
             onClick={() => navigate(`/chart/${patientId}?edit=true`)}
           >
-            차트로
+            근시성장곡선
           </PrimaryNagativeButton>
           <PrimaryButton onClick={handleSubmit} disabled={mutation.isPending}>
             {editingVisitId ? "수정 저장" : "등록"}
