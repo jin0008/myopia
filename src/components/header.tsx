@@ -97,29 +97,45 @@ const MobileMenuButton = styled.div`
 `;
 
 const MobileOverlay = styled.div<{ $isOpen: boolean }>`
-  position: fixed;
+  position: absolute;
   top: 0;
   right: 0;
   width: 70%;
   max-width: 300px;
-  height: 100dvh;
+  height: 100%;
   background: white;
-  z-index: 1001;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  padding: 80px 32px 32px;
+  padding: 80px 32px calc(24px + env(safe-area-inset-bottom, 0px));
   gap: 20px;
   overflow-y: auto;
+  pointer-events: ${(props) => (props.$isOpen ? "auto" : "none")};
   box-shadow: -4px 0 24px rgba(0, 0, 0, 0.1);
   transform: translateX(${(props) => (props.$isOpen ? "0" : "100%")});
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 `;
 
-const MobileBackdrop = styled.div<{ $isOpen: boolean }>`
+// Viewport-sized clipping layer for the off-canvas menu. The closed overlay is
+// translated 100% to the right (off-screen); without this wrapper it widens the
+// document and causes a horizontal scrollbar on browsers that don't support
+// `overflow: clip` (e.g. older iOS Safari). Being `position: fixed` it doesn't
+// affect the sticky header.
+const MobileMenuPortal = styled.div`
   position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100dvh;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1000;
+`;
+
+const MobileBackdrop = styled.div<{ $isOpen: boolean }>`
+  position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.3);
-  z-index: 1000;
   opacity: ${(props) => (props.$isOpen ? 1 : 0)};
   pointer-events: ${(props) => (props.$isOpen ? "all" : "none")};
   transition: opacity 0.3s ease;
@@ -138,7 +154,9 @@ const MobileNavLink = styled.span<{ $isActive?: boolean }>`
 `;
 
 const MobileButtonsSection = styled.div`
-  margin-top: auto;
+  /* Sit right below the nav (not pinned to the bottom) so the login/logout
+     button is always visible and never clipped by the iOS bottom toolbar. */
+  margin-top: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -265,11 +283,12 @@ export default function Header() {
         </NavContent>
       </HeaderContainer>
 
-      <MobileBackdrop
-        $isOpen={isMobileMenuOpen}
-        onClick={() => setIsMobileMenuOpen(false)}
-      />
-      <MobileOverlay $isOpen={isMobileMenuOpen}>
+      <MobileMenuPortal>
+        <MobileBackdrop
+          $isOpen={isMobileMenuOpen}
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+        <MobileOverlay $isOpen={isMobileMenuOpen}>
         <div
           style={{ position: "absolute", top: "18px", right: "16px", cursor: "pointer" }}
           onClick={() => setIsMobileMenuOpen(false)}
@@ -316,7 +335,8 @@ export default function Header() {
             </PrimaryButton>
           )}
         </MobileButtonsSection>
-      </MobileOverlay>
+        </MobileOverlay>
+      </MobileMenuPortal>
     </>
   );
 }
