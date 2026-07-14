@@ -6,7 +6,11 @@ export default function HeaderFooterLayout() {
   return (
     <div
       style={{
-        height: "100%",
+        // flex:1 (not height:100%) so it fills #root whose height is now
+        // min-height, not a definite height — keeps the footer pinned to the
+        // bottom while the sticky header still works on long pages.
+        flex: 1,
+        minHeight: 0,
         display: "flex",
         flexDirection: "column",
       }}
