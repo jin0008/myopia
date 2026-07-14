@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import theme from "../../theme";
-import { MOBILE_MEDIA } from "../../lib/constants";
+import { COMPACT_MEDIA } from "../../lib/constants";
 import { ReactiveFlex } from "../../components/reactive";
 
 export const HeaderTextDiv = styled.div`
@@ -13,7 +13,7 @@ export const HeaderTextDiv = styled.div`
   border-radius: 24px;
   font-size: 14px;
   font-weight: 500;
-  @media ${MOBILE_MEDIA} {
+  @media ${COMPACT_MEDIA} {
     width: 100%;
     max-width: 100%;
   }
@@ -25,7 +25,7 @@ export const HeaderDiv = styled.div`
   justify-content: space-between;
   margin: 32px 64px 0;
   gap: 8px;
-  @media ${MOBILE_MEDIA} {
+  @media ${COMPACT_MEDIA} {
     flex-direction: column;
     margin: 16px 16px 0;
     gap: 8px;
@@ -35,7 +35,7 @@ export const HeaderDiv = styled.div`
 export const ContentDiv = styled.div`
   margin: 0 96px;
   margin-bottom: 32px;
-  @media ${MOBILE_MEDIA} {
+  @media ${COMPACT_MEDIA} {
     margin: 0 16px;
     margin-bottom: 16px;
   }
@@ -52,7 +52,7 @@ export const ChartTitleDiv = styled.div`
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
-  @media ${MOBILE_MEDIA} {
+  @media ${COMPACT_MEDIA} {
     margin-top: 16px;
     padding-bottom: 12px;
   }
@@ -73,7 +73,7 @@ export const ReferenceRow = styled.div`
   gap: 16px;
   flex-wrap: wrap;
 
-  @media ${MOBILE_MEDIA} {
+  @media ${COMPACT_MEDIA} {
     gap: 8px;
   }
 `;
@@ -84,7 +84,7 @@ export const ChartAndListWrapper = styled.div`
   margin-top: 16px;
   gap: 16px;
   min-height: 0;
-  @media ${MOBILE_MEDIA} {
+  @media ${COMPACT_MEDIA} {
     flex-direction: column;
     margin-top: 12px;
   }
@@ -93,7 +93,7 @@ export const ChartAndListWrapper = styled.div`
 export const ChartWrapper = styled.div`
   flex: 1;
   width: 0;
-  @media ${MOBILE_MEDIA} {
+  @media ${COMPACT_MEDIA} {
     width: 100%;
   }
 `;
@@ -102,14 +102,14 @@ export const ChartContainer = styled.div`
   position: relative;
   min-height: 560px;
   width: 100%;
-  @media ${MOBILE_MEDIA} {
+  @media ${COMPACT_MEDIA} {
     min-height: 480px;
   }
 `;
 
 export const MeasurementListWrapper = styled.div`
   min-width: 0;
-  @media ${MOBILE_MEDIA} {
+  @media ${COMPACT_MEDIA} {
     margin: 0;
   }
 `;
@@ -124,7 +124,7 @@ export const KInputGrid = styled.div`
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   text-align: center;
-  @media ${MOBILE_MEDIA} {
+  @media ${COMPACT_MEDIA} {
     gap: 12px;
   }
 `;
@@ -145,7 +145,7 @@ export const TextButton = styled.button<{ $active: boolean }>`
     border-color: ${theme.primary};
   }
 
-  @media ${MOBILE_MEDIA} {
+  @media ${COMPACT_MEDIA} {
     padding: 8px 16px;
     font-size: 13px;
   }
@@ -160,7 +160,7 @@ export const GridDiv = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 108px) 1fr;
   gap: 16px;
-  @media ${MOBILE_MEDIA} {
+  @media ${COMPACT_MEDIA} {
     grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
     gap: 8px;
   }
@@ -173,7 +173,7 @@ export const GridItemDiv = styled.div`
   border-radius: 24px;
   padding: 8px 0;
   font-size: 14px;
-  @media ${MOBILE_MEDIA} {
+  @media ${COMPACT_MEDIA} {
     padding: 6px 4px;
     border-radius: 16px;
     font-size: 13px;
@@ -213,7 +213,7 @@ export const TreatmentCardDiv = styled.div`
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   }
 
-  @media ${MOBILE_MEDIA} {
+  @media ${COMPACT_MEDIA} {
     padding: 10px 12px;
     border-radius: 12px;
   }
@@ -224,7 +224,7 @@ export const PatientDataSection = styled.div`
   border: 1px solid #eee;
   border-radius: 16px;
   background: white;
-  @media ${MOBILE_MEDIA} {
+  @media ${COMPACT_MEDIA} {
     margin-top: 16px;
     padding: 16px;
   }
@@ -238,7 +238,7 @@ export const PatientDataHeader = styled.div`
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 16px;
-  @media ${MOBILE_MEDIA} {
+  @media ${COMPACT_MEDIA} {
     margin-bottom: 12px;
   }
 `;
@@ -247,7 +247,7 @@ export const RadioGroup = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 8px;
-  @media ${MOBILE_MEDIA} {
+  @media ${COMPACT_MEDIA} {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 6px;
   }
@@ -269,7 +269,7 @@ export const RadioField = styled.label`
     background-color: ${theme.primary10};
     font-weight: 500;
   }
-  @media ${MOBILE_MEDIA} {
+  @media ${COMPACT_MEDIA} {
     padding: 6px 10px;
     font-size: 0.8125rem;
   }
@@ -279,7 +279,7 @@ export const PatientDataGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px 32px;
-  @media ${MOBILE_MEDIA} {
+  @media ${COMPACT_MEDIA} {
     grid-template-columns: 1fr;
     gap: 16px;
   }
@@ -294,7 +294,7 @@ export const PatientDataFieldLabel = styled.div`
   font-weight: 500;
   margin-bottom: 8px;
   color: ${theme.textPrimary};
-  @media ${MOBILE_MEDIA} {
+  @media ${COMPACT_MEDIA} {
     margin-bottom: 6px;
     font-size: 0.8125rem;
   }
