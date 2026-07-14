@@ -116,10 +116,7 @@ const MobileOverlay = styled.div<{ $isOpen: boolean }>`
 
 const MobileBackdrop = styled.div<{ $isOpen: boolean }>`
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
+  inset: 0;
   background: rgba(0, 0, 0, 0.3);
   z-index: 1000;
   opacity: ${(props) => (props.$isOpen ? 1 : 0)};
