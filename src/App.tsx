@@ -27,6 +27,7 @@ const RegularProfile = lazy(
 );
 const Profile = lazy(() => import("./routes/profile"));
 const Admin = lazy(() => import("./routes/admin"));
+const AdminColumns = lazy(() => import("./routes/admin_columns"));
 const WhoWeAre = lazy(() => import("./routes/who_we_are"));
 const Treatments = lazy(() => import("./routes/Treatments"));
 const TreatmentDetail = lazy(() => import("./routes/TreatmentDetail"));
@@ -98,6 +99,7 @@ const App = () => {
                 />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/admin" element={<Admin />} />
+                <Route path="/admin/columns" element={<AdminColumns />} />
                 <Route path="/who_we_are" element={<WhoWeAre />} />
                 <Route path="/treatments" element={<Treatments />} />
                 <Route path="/treatments/:id" element={<TreatmentDetail />} />
