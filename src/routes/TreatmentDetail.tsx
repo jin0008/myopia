@@ -1,6 +1,7 @@
 import { useParams, Link } from "react-router";
 import styled from "styled-components";
-import { getTreatments } from "../data/treatments";
+import { useQuery } from "@tanstack/react-query";
+import { getTreatmentContent } from "../api/treatment_content";
 import { MOBILE_MEDIA } from "../lib/constants";
 import theme from "../theme";
 import { useLanguage } from "../lib/language_context";
@@ -195,8 +196,19 @@ export default function TreatmentDetail() {
   const { id } = useParams();
   const { language } = useLanguage();
   const ko = language === "ko";
-  const list = getTreatments(language);
+  const { data: list = [], isLoading } = useQuery({
+    queryKey: ["treatment-content", language],
+    queryFn: () => getTreatmentContent(language),
+  });
   const treatment = list.find((t) => t.id === id);
+
+  if (isLoading) {
+    return (
+      <Container>
+        <Title>{ko ? "불러오는 중…" : "Loading…"}</Title>
+      </Container>
+    );
+  }
 
   if (!treatment) {
     return (

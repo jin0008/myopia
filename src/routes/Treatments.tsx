@@ -1,6 +1,7 @@
 import styled from "styled-components";
+import { useQuery } from "@tanstack/react-query";
 import { MOBILE_MEDIA } from "../lib/constants";
-import { getTreatments } from "../data/treatments";
+import { getTreatmentContent } from "../api/treatment_content";
 import { Link } from "react-router";
 import theme from "../theme";
 import { ArrowForward } from "@mui/icons-material";
@@ -148,7 +149,10 @@ const DetailLink = styled(Link)`
 export default function Treatments() {
   const { language } = useLanguage();
   const ko = language === "ko";
-  const items = getTreatments(language);
+  const { data: items = [], isLoading } = useQuery({
+    queryKey: ["treatment-content", language],
+    queryFn: () => getTreatmentContent(language),
+  });
 
   return (
     <PageContainer>
@@ -160,6 +164,10 @@ export default function Treatments() {
             : "Advanced solutions for myopia control."}
         </Subtitle>
       </Header>
+
+      {isLoading && (
+        <Subtitle>{ko ? "불러오는 중…" : "Loading…"}</Subtitle>
+      )}
 
       <TreatmentList>
         {items.map((treatment, index) => (
