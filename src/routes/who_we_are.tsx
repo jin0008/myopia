@@ -193,7 +193,9 @@ export default function WhoWeAre() {
               Children], 로테르담 연구 III[The Rotterdam Study III] 포함) [1]과 중국
               상하이 아동들의 데이터셋 [2]을 참고하여 표준 성장 곡선과 비교해 볼 수
               있습니다. 이러한 그래프는 부모가 자녀가 직면할 수 있는 근시 위험을 더
-              잘 이해하는 데 도움이 됩니다.
+              잘 이해하는 데 도움이 됩니다. 또한 동아시아와 유럽·호주 소아를
+              통합한 최신 참조 곡선(CREAM-Kids)을 “EastAsian-CREAMkids”,
+              “EuropeAus-CREAMkids”로 선택해 비교할 수 있습니다 [3].
             </p>
             <p>
               백인(Caucasian) 대상의 참조 데이터는 원저작물을 적절히 인용하는 경우
@@ -216,7 +218,10 @@ export default function WhoWeAre() {
               Study, the Avon Longitudinal Study of Parents and Children, and
               The Rotterdam Study III [1], as well as datasets from children in
               Shanghai, China [2]. These graphs help parents better understand
-              the risk of myopia their children may face.
+              the risk of myopia their children may face. Newer pooled
+              reference curves for East Asian and European/Australian children
+              (CREAM-Kids) are also available as “EastAsian-CREAMkids” and
+              “EuropeAus-CREAMkids” [3].
             </p>
             <p>
               The reference data for Caucasian is used under the terms of the
@@ -243,6 +248,10 @@ export default function WhoWeAre() {
           percentile curves for axial length and axial length/corneal
           curvature in Chinese children and adolescents aged 4-18 years. Br J
           Ophthalmol. 2023;107(2):167-175.
+          <br />
+          3. Kneepkens SCM, Lingham G, van Hemert DJ, et al. Global Axial
+          Length Centile Charts. JAMA Ophthalmol. Published online July 16,
+          2026. doi:10.1001/jamaophthalmol.2026.2539
         </p>
       </TextSection>
     </PageContainer>
