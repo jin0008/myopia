@@ -19,6 +19,7 @@ import {
   RefractiveErrorRegisterDialog,
 } from "./MeasurementList";
 import { RecentALGrowth } from "./RecentALGrowth";
+import { PercentileSummary } from "./PercentileSummary";
 import { StudyButtons } from "./StudyButtons";
 import { TreatmentList } from "./TreatmentList";
 import { MYOPIA_STATUS_LABELS, PatientDataInput } from "./PatientDataInput";
@@ -588,6 +589,12 @@ export default function ChartRoute() {
             </MeasurementListWrapper>
           )}
         </ChartAndListWrapper>
+        <PercentileSummary
+          sortedAxialLengthMeasurement={sortedAxialLength}
+          patientBirthday={new Date(patientQuery.data.date_of_birth)}
+          patientSex={patientQuery.data.sex}
+          referenceEthnicity={referenceEthnicity}
+        />
         <TreatmentList edit={edit} />
         <PatientDataInput patientId={patientId!} edit={edit} />
       </ContentDiv>
