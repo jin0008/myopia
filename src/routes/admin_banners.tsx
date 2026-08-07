@@ -12,6 +12,18 @@ import {
   type BannerInput,
 } from "../api/banner";
 
+// <input type="datetime-local"> shows/edits a naive local wall-clock string
+// (no timezone), while the API stores UTC ISO strings. toISOString() on the
+// typed value already round-trips correctly (the browser parses the naive
+// string as local time), but the reverse — pre-filling the input from a
+// stored UTC ISO string — needs an explicit local-time format, otherwise the
+// input shows the raw UTC clock time as if it were local (e.g. off by 9h in KST).
+function toLocalInputValue(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 const EMPTY: BannerInput = {
   title: "",
   subtitle: "",
@@ -121,7 +133,7 @@ export default function AdminBanners() {
           <Field label="시작일시 (비우면 즉시)">
             <input
               type="datetime-local"
-              value={form.start_at ? form.start_at.slice(0, 16) : ""}
+              value={form.start_at ? toLocalInputValue(form.start_at) : ""}
               onChange={(e) =>
                 setForm((f) => ({
                   ...f,
@@ -134,7 +146,7 @@ export default function AdminBanners() {
           <Field label="종료일시 (비우면 무기한)">
             <input
               type="datetime-local"
-              value={form.end_at ? form.end_at.slice(0, 16) : ""}
+              value={form.end_at ? toLocalInputValue(form.end_at) : ""}
               onChange={(e) =>
                 setForm((f) => ({
                   ...f,
