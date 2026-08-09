@@ -8,6 +8,7 @@ import {
   deleteBanner,
   listBanners,
   updateBanner,
+  uploadBannerImage,
   type AdBanner,
   type BannerInput,
 } from "../api/banner";
@@ -57,6 +58,12 @@ export default function AdminBanners() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "banners"] }),
   });
 
+  const uploadMutation = useMutation({
+    mutationFn: (file: File) => uploadBannerImage(file),
+    onSuccess: ({ url }) => setForm((f) => ({ ...f, image_url: url })),
+    onError: (e: any) => alert(e?.message ?? "이미지 업로드 실패"),
+  });
+
   function reset() {
     setEditingId(null);
     setForm(EMPTY);
@@ -103,8 +110,41 @@ export default function AdminBanners() {
         <Field label="배지 텍스트 (예: 기간 할인)">
           <input value={form.badge_text} onChange={setText("badge_text")} style={inp} />
         </Field>
-        <Field label="이미지 URL">
-          <input value={form.image_url} onChange={setText("image_url")} style={inp} />
+        <Field label="이미지">
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <input
+              value={form.image_url}
+              onChange={setText("image_url")}
+              style={{ ...inp, flex: 1 }}
+              placeholder="파일 업로드 또는 이미지 URL 직접 입력"
+            />
+            <label
+              style={{
+                ...uploadBtn,
+                opacity: uploadMutation.isPending ? 0.6 : 1,
+                pointerEvents: uploadMutation.isPending ? "none" : "auto",
+              }}
+            >
+              {uploadMutation.isPending ? "업로드 중…" : "파일 선택"}
+              <input
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) uploadMutation.mutate(file);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+          </div>
+          {form.image_url ? (
+            <img
+              src={form.image_url}
+              alt=""
+              style={{ marginTop: 8, maxWidth: 240, maxHeight: 140, borderRadius: 8, display: "block" }}
+            />
+          ) : null}
         </Field>
         <Field label="연결 링크 URL">
           <input value={form.link_url} onChange={setText("link_url")} style={inp} />
@@ -237,6 +277,16 @@ const inp: CSSProperties = {
   border: "1px solid #ccc",
   borderRadius: 6,
   boxSizing: "border-box",
+};
+const uploadBtn: CSSProperties = {
+  flexShrink: 0,
+  padding: "8px 14px",
+  border: "1px solid #ccc",
+  borderRadius: 6,
+  background: "#f3f4f6",
+  cursor: "pointer",
+  fontSize: 13,
+  whiteSpace: "nowrap",
 };
 const th: CSSProperties = { textAlign: "left", borderBottom: "2px solid #eee", padding: 8 };
 const td: CSSProperties = { borderBottom: "1px solid #eee", padding: 8 };
