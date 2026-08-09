@@ -145,6 +145,8 @@ export default function Admin() {
     <TopDiv>
       <h1>Admin Page</h1>
       <a href="/admin/columns" style={{ display: "inline-block", marginBottom: 12, color: "#0d47a1" }}>칼럼 관리 →</a>
+      <br />
+      <a href="/admin/banners" style={{ display: "inline-block", marginBottom: 12, color: "#0d47a1" }}>배너 관리 →</a>
       <TopRow>
         <HospitalList onSelect={setSelectedHospitalId} />
         <Card style={{ flex: 1, minWidth: 0 }}>
