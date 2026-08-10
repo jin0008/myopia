@@ -27,6 +27,8 @@ const RegularProfile = lazy(
 );
 const Profile = lazy(() => import("./routes/profile"));
 const Admin = lazy(() => import("./routes/admin"));
+const AdminMyopia = lazy(() => import("./routes/admin_myopia"));
+const AdminMyodoc = lazy(() => import("./routes/admin_myodoc"));
 const AdminColumns = lazy(() => import("./routes/admin_columns"));
 const AdminBanners = lazy(() => import("./routes/admin_banners"));
 const WhoWeAre = lazy(() => import("./routes/who_we_are"));
@@ -100,6 +102,8 @@ const App = () => {
                 />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/admin" element={<Admin />} />
+                <Route path="/admin/myopia" element={<AdminMyopia />} />
+                <Route path="/admin/myodoc" element={<AdminMyodoc />} />
                 <Route path="/admin/columns" element={<AdminColumns />} />
                 <Route path="/admin/banners" element={<AdminBanners />} />
                 <Route path="/who_we_are" element={<WhoWeAre />} />
