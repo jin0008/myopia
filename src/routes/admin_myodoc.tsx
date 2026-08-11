@@ -22,6 +22,9 @@ export default function AdminMyodoc() {
         <a href="/admin/banners" style={linkRow}>
           홈 배너 관리 →
         </a>
+        <a href="/admin/hospital-profiles" style={linkRow}>
+          병원 프로필 관리 →
+        </a>
       </div>
     </div>
   );
