@@ -33,6 +33,9 @@ const AdminColumns = lazy(() => import("./routes/admin_columns"));
 const AdminBanners = lazy(() => import("./routes/admin_banners"));
 const AdminHospitalProfiles = lazy(() => import("./routes/admin_hospital_profiles"));
 const AdminPartnerAccounts = lazy(() => import("./routes/admin_partner_accounts"));
+const PartnerLogin = lazy(() => import("./routes/partner/PartnerLogin"));
+const PartnerSignup = lazy(() => import("./routes/partner/PartnerSignup"));
+const PartnerProfile = lazy(() => import("./routes/partner/PartnerProfile"));
 const WhoWeAre = lazy(() => import("./routes/who_we_are"));
 const Treatments = lazy(() => import("./routes/Treatments"));
 const TreatmentDetail = lazy(() => import("./routes/TreatmentDetail"));
@@ -117,6 +120,11 @@ const App = () => {
                 <Route path="/user-guide" element={<UserGuide />} />
                 <Route path="/tos" element={<TOS />} />
               </Route>
+              {/* Partner portal — its own login/layout, separate from the
+                  doctor/admin app (no shared header). */}
+              <Route path="/partner/login" element={<PartnerLogin />} />
+              <Route path="/partner/signup" element={<PartnerSignup />} />
+              <Route path="/partner/profile" element={<PartnerProfile />} />
             </Routes>
             </Suspense>
           </GoogleOAuthProvider>
