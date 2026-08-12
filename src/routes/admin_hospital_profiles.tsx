@@ -13,6 +13,24 @@ import {
   type HospitalProfileInput,
 } from "../api/hospitalProfile";
 
+const MYODOC_WEB = "https://myodoc.co.kr";
+
+// Live detail page on the myodoc web app. The profile (banner/설명/이미지) is
+// fetched there by kakao place id; the rest are basic-info params the results
+// list normally passes, so we fill what we have.
+function previewUrl(placeId: string, name: string, phone?: string, address?: string) {
+  const q = new URLSearchParams({
+    id: placeId,
+    name: name ?? "",
+    category: "clinic",
+    address: address ?? "",
+    roadAddress: "",
+    phone: phone ?? "",
+    placeUrl: "",
+  });
+  return `${MYODOC_WEB}/treatment-finder/hospital?${q.toString()}`;
+}
+
 const EMPTY: HospitalProfileInput = {
   kakao_place_id: "",
   name: "",
@@ -171,11 +189,22 @@ export default function AdminHospitalProfiles() {
           </Field>
         </div>
 
-        <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+        <div style={{ display: "flex", gap: 8, marginTop: 8, alignItems: "center" }}>
           <PrimaryButton onClick={() => canSave && saveMutation.mutate()}>
             {editingId ? "수정 저장" : "생성"}
           </PrimaryButton>
           {editingId && <PrimaryNagativeButton onClick={reset}>취소</PrimaryNagativeButton>}
+          {canSave && (
+            <a
+              href={previewUrl(form.kakao_place_id, form.name, form.phone, form.address)}
+              target="_blank"
+              rel="noreferrer"
+              style={previewBtn}
+              title="저장 후 눌러야 최신 내용이 보입니다"
+            >
+              실서비스 미리보기 ↗
+            </a>
+          )}
         </div>
       </div>
 
@@ -199,6 +228,14 @@ export default function AdminHospitalProfiles() {
                 <td style={td}>{h.kakao_place_id}</td>
                 <td style={td}>{h.status}</td>
                 <td style={{ ...td, whiteSpace: "nowrap" }}>
+                  <a
+                    href={previewUrl(h.kakao_place_id, h.name, h.phone ?? undefined, h.address ?? undefined)}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={previewBtn}
+                  >
+                    미리보기 ↗
+                  </a>{" "}
                   <PrimaryButton onClick={() => startEdit(h)}>수정</PrimaryButton>{" "}
                   <PrimaryNagativeButton
                     onClick={() => {
@@ -289,6 +326,18 @@ const removeBtn: CSSProperties = {
   color: "#fff",
   cursor: "pointer",
   lineHeight: "20px",
+};
+const previewBtn: CSSProperties = {
+  display: "inline-block",
+  padding: "8px 14px",
+  border: "1px solid #0d7d6f",
+  borderRadius: 6,
+  color: "#0d7d6f",
+  background: "#0d7d6f14",
+  textDecoration: "none",
+  fontSize: 13,
+  fontWeight: 600,
+  whiteSpace: "nowrap",
 };
 const th: CSSProperties = { textAlign: "left", borderBottom: "2px solid #eee", padding: 8 };
 const td: CSSProperties = { borderBottom: "1px solid #eee", padding: 8 };
