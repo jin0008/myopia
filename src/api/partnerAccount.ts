@@ -10,6 +10,8 @@ export interface PartnerAccount {
   hospitalName: string;
   status: PartnerAccountStatus;
   createdAt: string;
+  claimedPlaceId: string | null;
+  claimedName: string | null;
 }
 
 export function listPartnerAccounts(): Promise<PartnerAccount[]> {

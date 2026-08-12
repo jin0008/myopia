@@ -37,6 +37,8 @@ export default function AdminPartnerAccounts() {
       <h1>병원 파트너 계정 승인</h1>
       <p style={{ color: "#6b7280", marginTop: -6 }}>
         가입한 병원 계정을 승인하면 해당 병원 프로필이 앱에 노출됩니다.
+        ⚠️ 승인 전, "신청 병원명"과 "claim한 병원"이 실제로 일치하는지 꼭
+        확인하세요 (아무 병원이나 claim 가능하므로 사칭 방지의 핵심 단계).
       </p>
 
       {listQuery.isLoading ? (
@@ -45,7 +47,8 @@ export default function AdminPartnerAccounts() {
         <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 12 }}>
           <thead>
             <tr>
-              <th style={th}>병원명</th>
+              <th style={th}>신청 병원명</th>
+              <th style={th}>claim한 병원 (place id)</th>
               <th style={th}>담당자</th>
               <th style={th}>이메일</th>
               <th style={th}>가입일</th>
@@ -57,6 +60,17 @@ export default function AdminPartnerAccounts() {
             {listQuery.data?.map((a) => (
               <tr key={a.id}>
                 <td style={td}>{a.hospitalName}</td>
+                <td style={td}>
+                  {a.claimedName ? (
+                    <>
+                      {a.claimedName}
+                      <br />
+                      <span style={{ color: "#9ca3af", fontSize: 12 }}>{a.claimedPlaceId}</span>
+                    </>
+                  ) : (
+                    <span style={{ color: "#9ca3af" }}>미작성</span>
+                  )}
+                </td>
                 <td style={td}>{a.contactName}</td>
                 <td style={td}>{a.email}</td>
                 <td style={td}>{a.createdAt.slice(0, 10)}</td>
