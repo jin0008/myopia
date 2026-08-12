@@ -25,6 +25,9 @@ export default function AdminMyodoc() {
         <a href="/admin/hospital-profiles" style={linkRow}>
           병원 프로필 관리 →
         </a>
+        <a href="/admin/partner-accounts" style={linkRow}>
+          병원 파트너 계정 승인 →
+        </a>
       </div>
     </div>
   );
