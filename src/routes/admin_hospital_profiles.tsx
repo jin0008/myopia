@@ -12,6 +12,31 @@ import {
   type HospitalProfile,
   type HospitalProfileInput,
 } from "../api/hospitalProfile";
+import { getHospitalList } from "../api/hospital";
+import { KeywordsEditor, TreatmentItemsEditor } from "../components/hospitalCardEditors";
+
+interface HospitalListItem {
+  id: string;
+  name: string;
+}
+
+const MYODOC_WEB = "https://myodoc.co.kr";
+
+// Live detail page on the myodoc web app. The profile (banner/설명/이미지) is
+// fetched there by kakao place id; the rest are basic-info params the results
+// list normally passes, so we fill what we have.
+function previewUrl(placeId: string, name: string, phone?: string, address?: string) {
+  const q = new URLSearchParams({
+    id: placeId,
+    name: name ?? "",
+    category: "clinic",
+    address: address ?? "",
+    roadAddress: "",
+    phone: phone ?? "",
+    placeUrl: "",
+  });
+  return `${MYODOC_WEB}/treatment-finder/hospital?${q.toString()}`;
+}
 
 const EMPTY: HospitalProfileInput = {
   kakao_place_id: "",
@@ -22,6 +47,12 @@ const EMPTY: HospitalProfileInput = {
   phone: "",
   address: "",
   status: "published",
+  hospital_id: null,
+  thumbnail_url: "",
+  keywords: [],
+  treatment_items: [],
+  verified: false,
+  booking_url: "",
 };
 
 export default function AdminHospitalProfiles() {
@@ -33,6 +64,12 @@ export default function AdminHospitalProfiles() {
   const listQuery = useQuery({
     queryKey: ["admin", "hospitalProfiles"],
     queryFn: listHospitalProfiles,
+  });
+
+  // Internal participating hospitals — linking one enables patient reviews.
+  const hospitalsQuery = useQuery<HospitalListItem[]>({
+    queryKey: ["hospitalList"],
+    queryFn: getHospitalList,
   });
 
   const saveMutation = useMutation({
@@ -63,6 +100,12 @@ export default function AdminHospitalProfiles() {
     onError: (e: any) => alert(e?.message ?? "업로드 실패"),
   });
 
+  const thumbUpload = useMutation({
+    mutationFn: (file: File) => uploadHospitalImage(file),
+    onSuccess: ({ url }) => setForm((f) => ({ ...f, thumbnail_url: url })),
+    onError: (e: any) => alert(e?.message ?? "업로드 실패"),
+  });
+
   function reset() {
     setEditingId(null);
     setForm(EMPTY);
@@ -79,6 +122,12 @@ export default function AdminHospitalProfiles() {
       phone: h.phone ?? "",
       address: h.address ?? "",
       status: h.status,
+      hospital_id: h.hospital_id ?? null,
+      thumbnail_url: h.thumbnail_url ?? "",
+      keywords: h.keywords ?? [],
+      treatment_items: h.treatment_items ?? [],
+      verified: h.verified ?? false,
+      booking_url: h.booking_url ?? "",
     });
   }
 
@@ -155,6 +204,64 @@ export default function AdminHospitalProfiles() {
           </div>
         </Field>
 
+        <Field label="썸네일 이미지 (리스트 카드용)">
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <input
+              value={form.thumbnail_url ?? ""}
+              onChange={set("thumbnail_url")}
+              style={{ ...inp, flex: 1 }}
+              placeholder="파일 업로드 또는 URL"
+            />
+            <UploadButton pending={thumbUpload.isPending} onFile={(f) => thumbUpload.mutate(f)} />
+          </div>
+          {form.thumbnail_url ? <img src={form.thumbnail_url} alt="" style={thumb} /> : null}
+        </Field>
+
+        <Field label="키워드 태그 (리스트 카드에 노출)">
+          <KeywordsEditor
+            value={form.keywords ?? []}
+            onChange={(keywords) => setForm((f) => ({ ...f, keywords }))}
+          />
+        </Field>
+
+        <Field label="치료항목 (카테고리별 가격·안내)">
+          <TreatmentItemsEditor
+            value={form.treatment_items ?? []}
+            onChange={(treatment_items) => setForm((f) => ({ ...f, treatment_items }))}
+          />
+        </Field>
+
+        <Field label="예약 링크 (선택)">
+          <input value={form.booking_url ?? ""} onChange={set("booking_url")} style={inp} placeholder="https://" />
+        </Field>
+
+        <div style={{ display: "flex", gap: 12 }}>
+          <Field label="내부 병원 연결 (리뷰 자격 판정)">
+            <select
+              value={form.hospital_id ?? ""}
+              onChange={(e) => setForm((f) => ({ ...f, hospital_id: e.target.value || null }))}
+              style={inp}
+            >
+              <option value="">연결 안 함 (리뷰 비활성)</option>
+              {hospitalsQuery.data?.map((h) => (
+                <option key={h.id} value={h.id}>
+                  {h.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="인증 배지">
+            <label style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 0" }}>
+              <input
+                type="checkbox"
+                checked={!!form.verified}
+                onChange={(e) => setForm((f) => ({ ...f, verified: e.target.checked }))}
+              />
+              인증됨 표시
+            </label>
+          </Field>
+        </div>
+
         <div style={{ display: "flex", gap: 12 }}>
           <Field label="전화">
             <input value={form.phone} onChange={set("phone")} style={inp} />
@@ -171,11 +278,22 @@ export default function AdminHospitalProfiles() {
           </Field>
         </div>
 
-        <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+        <div style={{ display: "flex", gap: 8, marginTop: 8, alignItems: "center" }}>
           <PrimaryButton onClick={() => canSave && saveMutation.mutate()}>
             {editingId ? "수정 저장" : "생성"}
           </PrimaryButton>
           {editingId && <PrimaryNagativeButton onClick={reset}>취소</PrimaryNagativeButton>}
+          {canSave && (
+            <a
+              href={previewUrl(form.kakao_place_id, form.name, form.phone, form.address)}
+              target="_blank"
+              rel="noreferrer"
+              style={previewBtn}
+              title="저장 후 눌러야 최신 내용이 보입니다"
+            >
+              실서비스 미리보기 ↗
+            </a>
+          )}
         </div>
       </div>
 
@@ -199,6 +317,20 @@ export default function AdminHospitalProfiles() {
                 <td style={td}>{h.kakao_place_id}</td>
                 <td style={td}>{h.status}</td>
                 <td style={{ ...td, whiteSpace: "nowrap" }}>
+                  <a
+                    href={previewUrl(h.kakao_place_id, h.name, h.phone ?? undefined, h.address ?? undefined)}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={previewBtn}
+                  >
+                    미리보기 ↗
+                  </a>{" "}
+                  <a
+                    href={`/admin/hospital-profiles/${encodeURIComponent(h.kakao_place_id)}/reviews`}
+                    style={previewBtn}
+                  >
+                    리뷰 관리
+                  </a>{" "}
                   <PrimaryButton onClick={() => startEdit(h)}>수정</PrimaryButton>{" "}
                   <PrimaryNagativeButton
                     onClick={() => {
@@ -289,6 +421,18 @@ const removeBtn: CSSProperties = {
   color: "#fff",
   cursor: "pointer",
   lineHeight: "20px",
+};
+const previewBtn: CSSProperties = {
+  display: "inline-block",
+  padding: "8px 14px",
+  border: "1px solid #0d7d6f",
+  borderRadius: 6,
+  color: "#0d7d6f",
+  background: "#0d7d6f14",
+  textDecoration: "none",
+  fontSize: 13,
+  fontWeight: 600,
+  whiteSpace: "nowrap",
 };
 const th: CSSProperties = { textAlign: "left", borderBottom: "2px solid #eee", padding: 8 };
 const td: CSSProperties = { borderBottom: "1px solid #eee", padding: 8 };

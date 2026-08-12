@@ -11,6 +11,7 @@ import {
   type PartnerMe,
   type PartnerProfileInput,
 } from "../../api/partner";
+import { KeywordsEditor, TreatmentItemsEditor } from "../../components/hospitalCardEditors";
 
 const EMPTY: PartnerProfileInput = {
   kakao_place_id: "",
@@ -20,6 +21,10 @@ const EMPTY: PartnerProfileInput = {
   images: [],
   phone: "",
   address: "",
+  thumbnail_url: "",
+  keywords: [],
+  treatment_items: [],
+  booking_url: "",
 };
 
 export default function PartnerProfile() {
@@ -31,6 +36,7 @@ export default function PartnerProfile() {
   const [msg, setMsg] = useState<string | null>(null);
   const [bannerUploading, setBannerUploading] = useState(false);
   const [galleryUploading, setGalleryUploading] = useState(false);
+  const [thumbUploading, setThumbUploading] = useState(false);
 
   useEffect(() => {
     if (!getPartnerToken()) {
@@ -49,6 +55,10 @@ export default function PartnerProfile() {
             images: p.images ?? [],
             phone: p.phone ?? "",
             address: p.address ?? "",
+            thumbnail_url: p.thumbnail_url ?? "",
+            keywords: p.keywords ?? [],
+            treatment_items: p.treatment_items ?? [],
+            booking_url: p.booking_url ?? "",
           });
         } else {
           setForm((f) => ({ ...f, name: m.hospitalName }));
@@ -167,6 +177,45 @@ export default function PartnerProfile() {
               </div>
             ))}
           </div>
+        </Field>
+
+        <Field label="썸네일 이미지 (리스트 카드용)">
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <input value={form.thumbnail_url ?? ""} onChange={set("thumbnail_url")} style={{ ...inp, flex: 1 }} placeholder="파일 업로드 또는 URL" />
+            <UploadBtn
+              busy={thumbUploading}
+              onFile={async (f) => {
+                setThumbUploading(true);
+                try {
+                  const { url } = await uploadPartnerImage(f);
+                  setForm((s) => ({ ...s, thumbnail_url: url }));
+                } catch (e: any) {
+                  alert(e?.message ?? "업로드 실패");
+                } finally {
+                  setThumbUploading(false);
+                }
+              }}
+            />
+          </div>
+          {form.thumbnail_url ? <img src={form.thumbnail_url} alt="" style={thumb} /> : null}
+        </Field>
+
+        <Field label="키워드 태그 (리스트 카드에 노출)">
+          <KeywordsEditor
+            value={form.keywords ?? []}
+            onChange={(keywords) => setForm((s) => ({ ...s, keywords }))}
+          />
+        </Field>
+
+        <Field label="치료항목 (카테고리별 가격·안내)">
+          <TreatmentItemsEditor
+            value={form.treatment_items ?? []}
+            onChange={(treatment_items) => setForm((s) => ({ ...s, treatment_items }))}
+          />
+        </Field>
+
+        <Field label="예약 링크 (선택)">
+          <input value={form.booking_url ?? ""} onChange={set("booking_url")} style={inp} placeholder="https://" />
         </Field>
 
         <div style={{ display: "flex", gap: 12 }}>
