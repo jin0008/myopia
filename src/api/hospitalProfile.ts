@@ -1,5 +1,6 @@
 import { AuthorizationError, HttpError, jsonFetchWithSession } from "../lib/fetch";
 import { API_ROOT } from "./root";
+import type { TreatmentItem } from "../constants/treatmentCategories";
 
 export type HospitalProfileStatus = "draft" | "pending" | "published";
 
@@ -13,6 +14,12 @@ export interface HospitalProfile {
   phone: string | null;
   address: string | null;
   status: HospitalProfileStatus;
+  hospital_id: string | null;
+  thumbnail_url: string | null;
+  keywords: string[];
+  treatment_items: TreatmentItem[] | null;
+  verified: boolean;
+  booking_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -26,6 +33,42 @@ export interface HospitalProfileInput {
   phone?: string;
   address?: string;
   status?: HospitalProfileStatus;
+  hospital_id?: string | null;
+  thumbnail_url?: string | null;
+  keywords?: string[];
+  treatment_items?: TreatmentItem[];
+  verified?: boolean;
+  booking_url?: string | null;
+}
+
+export interface HospitalReview {
+  id: string;
+  kakao_place_id: string;
+  user_id: string;
+  hospital_id: string;
+  rating: number;
+  content: string;
+  images: string[];
+  status: "visible" | "hidden";
+  created_at: string;
+  updated_at: string;
+}
+
+export function listHospitalReviews(kakaoPlaceId: string): Promise<HospitalReview[]> {
+  return jsonFetchWithSession(
+    API_ROOT + "/hospital-profile/moderation/" + encodeURIComponent(kakaoPlaceId) + "/reviews",
+  );
+}
+
+export function setReviewStatus(
+  id: string,
+  status: "visible" | "hidden",
+): Promise<{ id: string; status: string }> {
+  return jsonFetchWithSession(
+    API_ROOT + "/hospital-profile/moderation/reviews/" + id,
+    { method: "PATCH" },
+    { status },
+  );
 }
 
 export function listHospitalProfiles(): Promise<HospitalProfile[]> {

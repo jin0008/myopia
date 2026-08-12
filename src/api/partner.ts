@@ -1,4 +1,5 @@
 import { API_ROOT } from "./root";
+import type { TreatmentItem } from "../constants/treatmentCategories";
 
 // Partner portal auth is separate from the doctor/site-admin session
 // (different token, its own localStorage key).
@@ -68,6 +69,10 @@ export interface PartnerProfile {
   images: string[];
   phone: string | null;
   address: string | null;
+  thumbnail_url: string | null;
+  keywords: string[];
+  treatment_items: TreatmentItem[] | null;
+  booking_url: string | null;
   status: string;
 }
 
@@ -79,6 +84,10 @@ export interface PartnerProfileInput {
   images?: string[];
   phone?: string;
   address?: string;
+  thumbnail_url?: string | null;
+  keywords?: string[];
+  treatment_items?: TreatmentItem[];
+  booking_url?: string | null;
 }
 
 export function partnerSignup(data: {
