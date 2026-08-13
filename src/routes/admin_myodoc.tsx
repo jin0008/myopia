@@ -28,6 +28,9 @@ export default function AdminMyodoc() {
         <a href="/admin/partner-accounts" style={linkRow}>
           병원 파트너 계정 승인 →
         </a>
+        <a href="/admin/reports" style={linkRow}>
+          신고 처리 →
+        </a>
       </div>
     </div>
   );
