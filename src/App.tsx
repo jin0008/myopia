@@ -33,6 +33,7 @@ const AdminColumns = lazy(() => import("./routes/admin_columns"));
 const AdminBanners = lazy(() => import("./routes/admin_banners"));
 const AdminHospitalProfiles = lazy(() => import("./routes/admin_hospital_profiles"));
 const AdminHospitalReviews = lazy(() => import("./routes/admin_hospital_reviews"));
+const AdminReports = lazy(() => import("./routes/admin_reports"));
 const AdminPartnerAccounts = lazy(() => import("./routes/admin_partner_accounts"));
 const PartnerLogin = lazy(() => import("./routes/partner/PartnerLogin"));
 const PartnerSignup = lazy(() => import("./routes/partner/PartnerSignup"));
@@ -115,6 +116,7 @@ const App = () => {
                 <Route path="/admin/hospital-profiles" element={<AdminHospitalProfiles />} />
                 <Route path="/admin/hospital-profiles/:placeId/reviews" element={<AdminHospitalReviews />} />
                 <Route path="/admin/partner-accounts" element={<AdminPartnerAccounts />} />
+                <Route path="/admin/reports" element={<AdminReports />} />
                 <Route path="/who_we_are" element={<WhoWeAre />} />
                 <Route path="/treatments" element={<Treatments />} />
                 <Route path="/treatments/:id" element={<TreatmentDetail />} />
