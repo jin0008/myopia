@@ -82,8 +82,8 @@ export default function AdminReports() {
           <thead>
             <tr>
               <th style={th}>대상</th>
+              <th style={th}>내용</th>
               <th style={th}>사유</th>
-              <th style={th}>상세</th>
               <th style={th}>접수일</th>
               <th style={th}>상태</th>
               <th style={th} />
@@ -94,11 +94,34 @@ export default function AdminReports() {
               <tr key={r.id}>
                 <td style={td}>
                   {TARGET_LABEL[r.targetType] ?? r.targetType}
-                  <br />
-                  <span style={{ color: "#9ca3af", fontSize: 11 }}>{r.targetId}</span>
+                  {r.contentGone && (
+                    <>
+                      <br />
+                      <span style={{ color: "#9ca3af", fontSize: 11 }}>이미 삭제/숨김</span>
+                    </>
+                  )}
+                </td>
+                <td style={{ ...td, maxWidth: 380 }}>
+                  <div style={{ color: r.contentGone ? "#9ca3af" : "#111", lineHeight: 1.45 }}>
+                    {r.preview ?? <span style={{ color: "#9ca3af" }}>내용 없음</span>}
+                  </div>
+                  {r.contentUrl && (
+                    <a
+                      href={r.contentUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ fontSize: 12, color: "#0d47a1" }}
+                    >
+                      원문 보기 ↗
+                    </a>
+                  )}
+                  {r.detail && (
+                    <div style={{ color: "#6b7280", fontSize: 12, marginTop: 4 }}>
+                      신고자 메모: {r.detail}
+                    </div>
+                  )}
                 </td>
                 <td style={td}>{REASON_LABEL[r.reason] ?? r.reason}</td>
-                <td style={{ ...td, maxWidth: 260 }}>{r.detail ?? "-"}</td>
                 <td style={td}>{r.createdAt.slice(0, 10)}</td>
                 <td style={td}>
                   <span style={badge(r.status)}>{STATUS_LABEL[r.status]}</span>
