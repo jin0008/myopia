@@ -12,6 +12,12 @@ export interface ContentReport {
   detail: string | null;
   status: ReportStatus;
   createdAt: string;
+  /** Snippet of the reported content, so the queue is judgeable in place. */
+  preview: string | null;
+  /** Opens the content on the public web build; null if it no longer exists. */
+  contentUrl: string | null;
+  /** Already hidden or deleted — usually nothing left to do. */
+  contentGone: boolean;
 }
 
 export const TARGET_LABEL: Record<ReportTargetType, string> = {
