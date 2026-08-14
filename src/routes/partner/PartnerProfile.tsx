@@ -8,6 +8,7 @@ import {
   partnerMe,
   savePartnerProfile,
   uploadPartnerImage,
+  uploadPartnerImages,
   type PartnerMe,
   type PartnerProfileInput,
 } from "../../api/partner";
@@ -16,6 +17,9 @@ import {
   OpeningHoursEditor,
   TreatmentItemsEditor,
 } from "../../components/hospitalCardEditors";
+import { BannerImagesEditor, DetailBlocksEditor } from "../../components/HospitalContentEditors";
+import { FormTabs } from "../../components/FormTabs";
+import { PartnerNoticesEditor } from "../../components/PartnerNoticesEditor";
 
 const EMPTY: PartnerProfileInput = {
   kakao_place_id: "",
@@ -29,6 +33,8 @@ const EMPTY: PartnerProfileInput = {
   keywords: [],
   treatment_items: [],
   opening_hours: null,
+  tagline: "",
+  detail_blocks: [],
   booking_url: "",
 };
 
@@ -39,8 +45,6 @@ export default function PartnerProfile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-  const [bannerUploading, setBannerUploading] = useState(false);
-  const [galleryUploading, setGalleryUploading] = useState(false);
   const [thumbUploading, setThumbUploading] = useState(false);
 
   useEffect(() => {
@@ -64,6 +68,8 @@ export default function PartnerProfile() {
             keywords: p.keywords ?? [],
             treatment_items: p.treatment_items ?? [],
             opening_hours: p.opening_hours ?? null,
+            tagline: p.tagline ?? "",
+            detail_blocks: p.detail_blocks ?? [],
             booking_url: p.booking_url ?? "",
           });
         } else {
@@ -123,122 +129,117 @@ export default function PartnerProfile() {
       )}
 
       <div style={card}>
-        <Field label="카카오 place id (앱 검색 결과의 내 병원 id)">
-          <input value={form.kakao_place_id} onChange={set("kakao_place_id")} style={inp} />
-        </Field>
-        <Field label="병원명">
-          <input value={form.name} onChange={set("name")} style={inp} />
-        </Field>
-        <Field label="상세설명">
-          <textarea value={form.description} onChange={set("description")} style={{ ...inp, height: 160 }} />
-        </Field>
-
-        <Field label="배너 이미지">
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <input value={form.banner_image_url ?? ""} onChange={set("banner_image_url")} style={{ ...inp, flex: 1 }} placeholder="파일 업로드 또는 URL" />
-            <UploadBtn
-              busy={bannerUploading}
-              onFile={async (f) => {
-                setBannerUploading(true);
-                try {
-                  const { url } = await uploadPartnerImage(f);
-                  setForm((s) => ({ ...s, banner_image_url: url }));
-                } catch (e: any) {
-                  alert(e?.message ?? "업로드 실패");
-                } finally {
-                  setBannerUploading(false);
-                }
-              }}
-            />
-          </div>
-          {form.banner_image_url ? <img src={form.banner_image_url} alt="" style={thumb} /> : null}
-        </Field>
-
-        <Field label="상세 이미지 (여러 장)">
-          <UploadBtn
-            busy={galleryUploading}
-            onFile={async (f) => {
-              setGalleryUploading(true);
-              try {
-                const { url } = await uploadPartnerImage(f);
-                setForm((s) => ({ ...s, images: [...(s.images ?? []), url] }));
-              } catch (e: any) {
-                alert(e?.message ?? "업로드 실패");
-              } finally {
-                setGalleryUploading(false);
-              }
-            }}
-          />
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
-            {(form.images ?? []).map((url, i) => (
-              <div key={i} style={{ position: "relative" }}>
-                <img src={url} alt="" style={{ ...thumb, marginTop: 0 }} />
-                <button
-                  type="button"
-                  style={removeBtn}
-                  onClick={() => setForm((s) => ({ ...s, images: (s.images ?? []).filter((_, idx) => idx !== i) }))}
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-        </Field>
-
-        <Field label="썸네일 이미지 (리스트 카드용)">
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <input value={form.thumbnail_url ?? ""} onChange={set("thumbnail_url")} style={{ ...inp, flex: 1 }} placeholder="파일 업로드 또는 URL" />
-            <UploadBtn
-              busy={thumbUploading}
-              onFile={async (f) => {
-                setThumbUploading(true);
-                try {
-                  const { url } = await uploadPartnerImage(f);
-                  setForm((s) => ({ ...s, thumbnail_url: url }));
-                } catch (e: any) {
-                  alert(e?.message ?? "업로드 실패");
-                } finally {
-                  setThumbUploading(false);
-                }
-              }}
-            />
-          </div>
-          {form.thumbnail_url ? <img src={form.thumbnail_url} alt="" style={thumb} /> : null}
-        </Field>
-
-        <Field label="키워드 태그 (리스트 카드에 노출)">
-          <KeywordsEditor
-            value={form.keywords ?? []}
-            onChange={(keywords) => setForm((s) => ({ ...s, keywords }))}
-          />
-        </Field>
-
-        <Field label="진료시간">
-          <OpeningHoursEditor
-            value={form.opening_hours ?? null}
-            onChange={(opening_hours) => setForm((s) => ({ ...s, opening_hours }))}
-          />
-        </Field>
-
-        <Field label="치료항목 (카테고리별 가격·안내)">
-          <TreatmentItemsEditor
-            value={form.treatment_items ?? []}
-            onChange={(treatment_items) => setForm((s) => ({ ...s, treatment_items }))}
-          />
-        </Field>
-
-        <Field label="예약 링크 (선택)">
-          <input value={form.booking_url ?? ""} onChange={set("booking_url")} style={inp} placeholder="https://" />
-        </Field>
-
-        <div style={{ display: "flex", gap: 12 }}>
-          <Field label="전화">
-            <input value={form.phone} onChange={set("phone")} style={inp} />
-          </Field>
-          <Field label="주소">
-            <input value={form.address} onChange={set("address")} style={inp} />
-          </Field>
-        </div>
+        <FormTabs
+          tabs={[
+            {
+              key: "basic",
+              label: "기본 정보",
+              content: (
+                <>
+                  <Field label="카카오 place id (앱 검색 결과의 내 병원 id)">
+                    <input value={form.kakao_place_id} onChange={set("kakao_place_id")} style={inp} />
+                  </Field>
+                  <Field label="병원명">
+                    <input value={form.name} onChange={set("name")} style={inp} />
+                  </Field>
+                  <Field label="한 줄 소개 (리스트 카드·상세 상단)">
+                    <input
+                      value={form.tagline ?? ""}
+                      onChange={set("tagline")}
+                      style={inp}
+                      placeholder="예: 드림렌즈·아트로핀 전문 소아근시 클리닉"
+                      maxLength={120}
+                    />
+                  </Field>
+                  <Field label="키워드 태그 (리스트 카드에 노출)">
+                    <KeywordsEditor
+                      value={form.keywords ?? []}
+                      onChange={(keywords) => setForm((s) => ({ ...s, keywords }))}
+                    />
+                  </Field>
+                  <Field label="썸네일 이미지 (리스트 카드용)">
+                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                      <input value={form.thumbnail_url ?? ""} onChange={set("thumbnail_url")} style={{ ...inp, flex: 1 }} placeholder="파일 업로드 또는 URL" />
+                      <UploadBtn
+                        busy={thumbUploading}
+                        onFile={async (f) => {
+                          setThumbUploading(true);
+                          try {
+                            const { url } = await uploadPartnerImage(f);
+                            setForm((s) => ({ ...s, thumbnail_url: url }));
+                          } catch (e: any) {
+                            alert(e?.message ?? "업로드 실패");
+                          } finally {
+                            setThumbUploading(false);
+                          }
+                        }}
+                      />
+                    </div>
+                    {form.thumbnail_url ? <img src={form.thumbnail_url} alt="" style={thumb} /> : null}
+                  </Field>
+                  <div style={{ display: "flex", gap: 12 }}>
+                    <Field label="전화">
+                      <input value={form.phone} onChange={set("phone")} style={inp} />
+                    </Field>
+                    <Field label="주소">
+                      <input value={form.address} onChange={set("address")} style={inp} />
+                    </Field>
+                  </div>
+                  <Field label="예약 링크 (선택)">
+                    <input value={form.booking_url ?? ""} onChange={set("booking_url")} style={inp} placeholder="https://" />
+                  </Field>
+                </>
+              ),
+            },
+            {
+              key: "banner",
+              label: "배너 사진",
+              content: (
+                <BannerImagesEditor
+                  value={form.images ?? []}
+                  onChange={(images) => setForm((s) => ({ ...s, images }))}
+                  upload={uploadPartnerImages}
+                />
+              ),
+            },
+            {
+              key: "detail",
+              label: "상세 설명",
+              content: (
+                <DetailBlocksEditor
+                  value={form.detail_blocks ?? []}
+                  onChange={(detail_blocks) => setForm((s) => ({ ...s, detail_blocks }))}
+                  upload={uploadPartnerImages}
+                />
+              ),
+            },
+            {
+              key: "hours",
+              label: "진료시간",
+              content: (
+                <OpeningHoursEditor
+                  value={form.opening_hours ?? null}
+                  onChange={(opening_hours) => setForm((s) => ({ ...s, opening_hours }))}
+                />
+              ),
+            },
+            {
+              key: "treatments",
+              label: "치료항목",
+              content: (
+                <TreatmentItemsEditor
+                  value={form.treatment_items ?? []}
+                  onChange={(treatment_items) => setForm((s) => ({ ...s, treatment_items }))}
+                />
+              ),
+            },
+            {
+              key: "notices",
+              label: "소식",
+              content: <PartnerNoticesEditor />,
+            },
+          ]}
+        />
 
         {msg && <p style={{ fontSize: 13, color: msg.includes("저장되") ? "#0d7d6f" : "#b3261e" }}>{msg}</p>}
         <button style={{ ...saveBtn, opacity: canSave && !saving ? 1 : 0.5 }} disabled={!canSave || saving} onClick={save}>
@@ -302,18 +303,6 @@ const uploadBtn: CSSProperties = {
   whiteSpace: "nowrap",
 };
 const thumb: CSSProperties = { marginTop: 8, maxWidth: 200, maxHeight: 120, borderRadius: 8, display: "block" };
-const removeBtn: CSSProperties = {
-  position: "absolute",
-  top: 2,
-  right: 2,
-  width: 22,
-  height: 22,
-  borderRadius: 11,
-  border: "none",
-  background: "rgba(0,0,0,0.6)",
-  color: "#fff",
-  cursor: "pointer",
-};
 const saveBtn: CSSProperties = {
   padding: "12px 20px",
   border: "none",

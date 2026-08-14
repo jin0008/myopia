@@ -4,6 +4,11 @@ import type { TreatmentItem } from "../constants/treatmentCategories";
 
 export type HospitalProfileStatus = "draft" | "pending" | "published";
 
+/** Blog-style body block: a paragraph or a picture, in order. */
+export type DetailBlock =
+  | { type: "text"; text: string }
+  | { type: "image"; url: string };
+
 export interface HospitalProfile {
   id: string;
   kakao_place_id: string;
@@ -23,6 +28,8 @@ export interface HospitalProfile {
   created_at: string;
   updated_at: string;
   opening_hours?: unknown | null;
+  tagline?: string | null;
+  detail_blocks?: DetailBlock[] | null;
 }
 
 export interface HospitalProfileInput {
@@ -41,6 +48,8 @@ export interface HospitalProfileInput {
   verified?: boolean;
   booking_url?: string | null;
   opening_hours?: unknown | null;
+  tagline?: string | null;
+  detail_blocks?: DetailBlock[] | null;
 }
 
 export interface HospitalReview {
@@ -112,6 +121,30 @@ export async function uploadHospitalImage(file: File): Promise<{ url: string }> 
   body.append("image", file);
 
   const result = await fetch(API_ROOT + "/hospital-profile/upload", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${session_key}` },
+    body,
+  });
+  if (result.status === 401 || result.status === 403) {
+    throw new AuthorizationError("Authorization error");
+  }
+  if (!result.ok) {
+    const respBody = await result.json().catch(() => ({}));
+    throw new HttpError(result.status, respBody?.message);
+  }
+  return result.json();
+}
+
+/** Several images in one request — picking banner photos one at a time is the
+ *  slowest part of setting a profile up. */
+export async function uploadHospitalImages(files: File[]): Promise<{ urls: string[] }> {
+  const session_key = localStorage.getItem("session_key");
+  if (!session_key) throw new AuthorizationError("Authorization error");
+
+  const body = new FormData();
+  for (const f of files) body.append("images", f);
+
+  const result = await fetch(API_ROOT + "/hospital-profile/upload-many", {
     method: "POST",
     headers: { Authorization: `Bearer ${session_key}` },
     body,
