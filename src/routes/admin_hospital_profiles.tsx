@@ -9,6 +9,7 @@ import {
   listHospitalProfiles,
   updateHospitalProfile,
   uploadHospitalImages,
+  uploadHospitalImage,
   searchAdminPlaces,
   normaliseProfileUrls,
   type HospitalProfile,
@@ -24,6 +25,7 @@ import { BannerImagesEditor, DetailBlocksEditor } from "../components/HospitalCo
 import { FormTabs } from "../components/FormTabs";
 import { PlacePicker } from "../components/PlacePicker";
 import { HospitalNoticesEditor } from "../components/HospitalNoticesEditor";
+import { DoctorsEditor, cleanDoctors } from "../components/DoctorsEditor";
 
 interface HospitalListItem {
   id: string;
@@ -62,11 +64,18 @@ const EMPTY: HospitalProfileInput = {
   keywords: [],
   treatment_items: [],
   opening_hours: null,
+  doctors: [],
   tagline: "",
   detail_blocks: [],
   verified: false,
   booking_url: "",
 };
+
+/** 이름이 빈 줄과 빈 문자열 photoUrl은 저장할 것이 없고, URL 검증에 걸려
+ *  폼 전체가 400이 된다. */
+function cleaned(form: HospitalProfileInput): HospitalProfileInput {
+  return { ...form, doctors: cleanDoctors(form.doctors ?? []) };
+}
 
 export default function AdminHospitalProfiles() {
   const { user } = useContext(UserContext);
@@ -88,8 +97,8 @@ export default function AdminHospitalProfiles() {
   const saveMutation = useMutation({
     mutationFn: () =>
       editingId
-        ? updateHospitalProfile(editingId, normaliseProfileUrls(form))
-        : createHospitalProfile(normaliseProfileUrls(form)),
+        ? updateHospitalProfile(editingId, normaliseProfileUrls(cleaned(form)))
+        : createHospitalProfile(normaliseProfileUrls(cleaned(form))),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin", "hospitalProfiles"] });
       reset();
@@ -128,6 +137,7 @@ export default function AdminHospitalProfiles() {
       opening_hours: h.opening_hours ?? null,
       tagline: h.tagline ?? "",
       detail_blocks: h.detail_blocks ?? [],
+      doctors: h.doctors ?? [],
       verified: h.verified ?? false,
       booking_url: h.booking_url ?? "",
     });
@@ -236,6 +246,17 @@ export default function AdminHospitalProfiles() {
                   value={form.detail_blocks ?? []}
                   onChange={(detail_blocks) => setForm((f) => ({ ...f, detail_blocks }))}
                   upload={uploadHospitalImages}
+                />
+              ),
+            },
+            {
+              key: "doctors",
+              label: "의사 정보",
+              content: (
+                <DoctorsEditor
+                  value={form.doctors ?? []}
+                  onChange={(doctors) => setForm((f) => ({ ...f, doctors }))}
+                  upload={uploadHospitalImage}
                 />
               ),
             },

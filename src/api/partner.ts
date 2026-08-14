@@ -77,6 +77,7 @@ export interface PartnerProfile {
   opening_hours?: unknown | null;
   tagline?: string | null;
   detail_blocks?: import("./hospitalProfile").DetailBlock[] | null;
+  doctors?: import("./hospitalProfile").Doctor[] | null;
 }
 
 export interface PartnerProfileInput {
@@ -94,6 +95,7 @@ export interface PartnerProfileInput {
   opening_hours?: unknown | null;
   tagline?: string | null;
   detail_blocks?: import("./hospitalProfile").DetailBlock[] | null;
+  doctors?: import("./hospitalProfile").Doctor[] | null;
 }
 
 export function partnerSignup(data: {

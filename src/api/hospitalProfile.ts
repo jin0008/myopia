@@ -4,6 +4,14 @@ import type { TreatmentItem } from "../constants/treatmentCategories";
 
 export type HospitalProfileStatus = "draft" | "pending" | "published";
 
+/** 병원 상세 '의사 정보'에 노출되는 의사 한 명. 이름만 필수. */
+export interface Doctor {
+  name: string;
+  title?: string | null;
+  photoUrl?: string | null;
+  bio?: string | null;
+}
+
 /** Blog-style body block: a paragraph or a picture, in order. */
 export type DetailBlock =
   | { type: "text"; text: string }
@@ -30,6 +38,7 @@ export interface HospitalProfile {
   opening_hours?: unknown | null;
   tagline?: string | null;
   detail_blocks?: DetailBlock[] | null;
+  doctors?: Doctor[] | null;
 }
 
 export interface HospitalProfileInput {
@@ -50,6 +59,7 @@ export interface HospitalProfileInput {
   opening_hours?: unknown | null;
   tagline?: string | null;
   detail_blocks?: DetailBlock[] | null;
+  doctors?: Doctor[] | null;
 }
 
 export interface HospitalReview {
