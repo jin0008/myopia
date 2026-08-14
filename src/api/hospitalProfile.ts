@@ -4,6 +4,11 @@ import type { TreatmentItem } from "../constants/treatmentCategories";
 
 export type HospitalProfileStatus = "draft" | "pending" | "published";
 
+/** Blog-style body block: a paragraph or a picture, in order. */
+export type DetailBlock =
+  | { type: "text"; text: string }
+  | { type: "image"; url: string };
+
 export interface HospitalProfile {
   id: string;
   kakao_place_id: string;
@@ -23,6 +28,8 @@ export interface HospitalProfile {
   created_at: string;
   updated_at: string;
   opening_hours?: unknown | null;
+  tagline?: string | null;
+  detail_blocks?: DetailBlock[] | null;
 }
 
 export interface HospitalProfileInput {
@@ -41,6 +48,8 @@ export interface HospitalProfileInput {
   verified?: boolean;
   booking_url?: string | null;
   opening_hours?: unknown | null;
+  tagline?: string | null;
+  detail_blocks?: DetailBlock[] | null;
 }
 
 export interface HospitalReview {
@@ -126,6 +135,30 @@ export async function uploadHospitalImage(file: File): Promise<{ url: string }> 
   return result.json();
 }
 
+/** Several images in one request — picking banner photos one at a time is the
+ *  slowest part of setting a profile up. */
+export async function uploadHospitalImages(files: File[]): Promise<{ urls: string[] }> {
+  const session_key = localStorage.getItem("session_key");
+  if (!session_key) throw new AuthorizationError("Authorization error");
+
+  const body = new FormData();
+  for (const f of files) body.append("images", f);
+
+  const result = await fetch(API_ROOT + "/hospital-profile/upload-many", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${session_key}` },
+    body,
+  });
+  if (result.status === 401 || result.status === 403) {
+    throw new AuthorizationError("Authorization error");
+  }
+  if (!result.ok) {
+    const respBody = await result.json().catch(() => ({}));
+    throw new HttpError(result.status, respBody?.message);
+  }
+  return result.json();
+}
+
 /* ---- 소식 (clinic notices) --------------------------------------------- */
 
 export interface HospitalNotice {
@@ -176,4 +209,19 @@ export function deleteHospitalNotice(noticeId: string): Promise<void> {
   return jsonFetchWithSession(`${API_ROOT}/hospital-profile/notices/${noticeId}`, {
     method: "DELETE",
   });
+}
+
+/**
+ * Blank URL inputs mean "not set", but the API validates them as URLs and
+ * rejects `""` outright. Forms keep empty strings because that's what an empty
+ * text input holds, so normalise on the way out rather than scattering
+ * `|| null` across every field.
+ */
+export function normaliseProfileUrls<T extends object>(form: T): T {
+  const URL_FIELDS = ["banner_image_url", "thumbnail_url", "booking_url"];
+  const out = { ...form } as Record<string, unknown>;
+  for (const k of URL_FIELDS) {
+    if (typeof out[k] === "string" && (out[k] as string).trim() === "") out[k] = null;
+  }
+  return out as T;
 }

@@ -75,6 +75,8 @@ export interface PartnerProfile {
   booking_url: string | null;
   status: string;
   opening_hours?: unknown | null;
+  tagline?: string | null;
+  detail_blocks?: import("./hospitalProfile").DetailBlock[] | null;
 }
 
 export interface PartnerProfileInput {
@@ -90,6 +92,8 @@ export interface PartnerProfileInput {
   treatment_items?: TreatmentItem[];
   booking_url?: string | null;
   opening_hours?: unknown | null;
+  tagline?: string | null;
+  detail_blocks?: import("./hospitalProfile").DetailBlock[] | null;
 }
 
 export function partnerSignup(data: {
@@ -124,6 +128,23 @@ export function savePartnerProfile(data: PartnerProfileInput): Promise<PartnerPr
   return partnerFetch("/partner/profile", { method: "PUT" }, data);
 }
 
+export async function uploadPartnerImages(files: File[]): Promise<{ urls: string[] }> {
+  const token = getPartnerToken();
+  if (!token) throw new PartnerError(401, "not logged in");
+  const fd = new FormData();
+  for (const f of files) fd.append("images", f);
+  const res = await fetch(API_ROOT + "/partner/profile/upload-many", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: fd,
+  });
+  if (!res.ok) {
+    const b = await res.json().catch(() => ({}));
+    throw new PartnerError(res.status, b?.message);
+  }
+  return res.json();
+}
+
 export async function uploadPartnerImage(file: File): Promise<{ url: string }> {
   const token = getPartnerToken();
   if (!token) throw new PartnerError(401, "not logged in");
@@ -139,4 +160,43 @@ export async function uploadPartnerImage(file: File): Promise<{ url: string }> {
     throw new PartnerError(res.status, b?.message);
   }
   return res.json();
+}
+
+/* ---- 소식 (clinic notices) --------------------------------------------- */
+
+export interface PartnerNotice {
+  id: string;
+  title: string;
+  body: string;
+  kind: "notice" | "event";
+  pinned: boolean;
+  published: boolean;
+  createdAt: string;
+}
+
+export interface PartnerNoticeInput {
+  title: string;
+  body: string;
+  kind?: "notice" | "event";
+  pinned?: boolean;
+  published?: boolean;
+}
+
+export function listPartnerNotices(): Promise<{ notices: PartnerNotice[] }> {
+  return partnerFetch("/partner/notices");
+}
+
+export function createPartnerNotice(data: PartnerNoticeInput): Promise<{ id: string }> {
+  return partnerFetch("/partner/notices", { method: "POST" }, data);
+}
+
+export function updatePartnerNotice(
+  id: string,
+  data: Partial<PartnerNoticeInput>,
+): Promise<{ ok: boolean }> {
+  return partnerFetch(`/partner/notices/${id}`, { method: "PATCH" }, data);
+}
+
+export function deletePartnerNotice(id: string): Promise<void> {
+  return partnerFetch(`/partner/notices/${id}`, { method: "DELETE" });
 }
