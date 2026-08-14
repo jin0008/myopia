@@ -137,6 +137,7 @@ export default function AdminHospitalProfiles() {
       opening_hours: h.opening_hours ?? null,
       tagline: h.tagline ?? "",
       detail_blocks: h.detail_blocks ?? [],
+      doctors: h.doctors ?? [],
       verified: h.verified ?? false,
       booking_url: h.booking_url ?? "",
     });

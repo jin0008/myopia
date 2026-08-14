@@ -74,6 +74,7 @@ export default function PartnerProfile() {
             opening_hours: p.opening_hours ?? null,
             tagline: p.tagline ?? "",
             detail_blocks: p.detail_blocks ?? [],
+            doctors: p.doctors ?? [],
             booking_url: p.booking_url ?? "",
           });
         } else {
