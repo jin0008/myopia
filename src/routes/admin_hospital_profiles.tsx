@@ -8,8 +8,8 @@ import {
   deleteHospitalProfile,
   listHospitalProfiles,
   updateHospitalProfile,
-  uploadHospitalImage,
   uploadHospitalImages,
+  searchAdminPlaces,
   normaliseProfileUrls,
   type HospitalProfile,
   type HospitalProfileInput,
@@ -22,6 +22,7 @@ import {
 } from "../components/hospitalCardEditors";
 import { BannerImagesEditor, DetailBlocksEditor } from "../components/HospitalContentEditors";
 import { FormTabs } from "../components/FormTabs";
+import { PlacePicker } from "../components/PlacePicker";
 import { HospitalNoticesEditor } from "../components/HospitalNoticesEditor";
 
 interface HospitalListItem {
@@ -103,11 +104,6 @@ export default function AdminHospitalProfiles() {
 
 
 
-  const thumbUpload = useMutation({
-    mutationFn: (file: File) => uploadHospitalImage(file),
-    onSuccess: ({ url }) => setForm((f) => ({ ...f, thumbnail_url: url })),
-    onError: (e: any) => alert(e?.message ?? "업로드 실패"),
-  });
 
   function reset() {
     setEditingId(null);
@@ -165,8 +161,29 @@ export default function AdminHospitalProfiles() {
               label: "기본 정보",
               content: (
                 <>
-                  <Field label="카카오 place id (필수, 앱 검색 결과의 병원 id)">
-                    <input value={form.kakao_place_id} onChange={set("kakao_place_id")} style={inp} />
+                  <Field label="병원 찾기 (카카오맵 검색)">
+                    <PlacePicker
+                      search={searchAdminPlaces}
+                      currentId={form.kakao_place_id}
+                      onPick={(pl) =>
+                        setForm((f) => ({
+                          ...f,
+                          kakao_place_id: pl.id,
+                          name: pl.name,
+                          phone: pl.phone ?? f.phone,
+                          address: pl.roadAddress ?? pl.address ?? f.address,
+                        }))
+                      }
+                    />
+                    {form.kakao_place_id ? (
+                      <p style={{ color: "#0d7d6f", fontSize: 13, margin: "8px 0 0" }}>
+                        선택됨: {form.name} (place id {form.kakao_place_id})
+                      </p>
+                    ) : (
+                      <p style={{ color: "#6b7280", fontSize: 12, margin: "8px 0 0" }}>
+                        검색해서 병원을 선택하면 병원명·전화·주소가 자동으로 채워집니다.
+                      </p>
+                    )}
                   </Field>
                   <Field label="병원명">
                     <input value={form.name} onChange={set("name")} style={inp} />
@@ -185,18 +202,6 @@ export default function AdminHospitalProfiles() {
                       value={form.keywords ?? []}
                       onChange={(keywords) => setForm((f) => ({ ...f, keywords }))}
                     />
-                  </Field>
-                  <Field label="썸네일 이미지 (리스트 카드용)">
-                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                      <input
-                        value={form.thumbnail_url ?? ""}
-                        onChange={set("thumbnail_url")}
-                        style={{ ...inp, flex: 1 }}
-                        placeholder="파일 업로드 또는 URL"
-                      />
-                      <UploadButton pending={thumbUpload.isPending} onFile={(f) => thumbUpload.mutate(f)} />
-                    </div>
-                    {form.thumbnail_url ? <img src={form.thumbnail_url} alt="" style={thumb} /> : null}
                   </Field>
                   <div style={{ display: "flex", gap: 12 }}>
                     <Field label="전화">
@@ -372,29 +377,6 @@ export default function AdminHospitalProfiles() {
   );
 }
 
-function UploadButton({ pending, onFile }: { pending: boolean; onFile: (f: File) => void }) {
-  return (
-    <label
-      style={{
-        ...uploadBtn,
-        opacity: pending ? 0.6 : 1,
-        pointerEvents: pending ? "none" : "auto",
-      }}
-    >
-      {pending ? "업로드 중…" : "파일 선택"}
-      <input
-        type="file"
-        accept="image/*"
-        style={{ display: "none" }}
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) onFile(file);
-          e.target.value = "";
-        }}
-      />
-    </label>
-  );
-}
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -414,23 +396,6 @@ const inp: CSSProperties = {
   border: "1px solid #ccc",
   borderRadius: 6,
   boxSizing: "border-box",
-};
-const uploadBtn: CSSProperties = {
-  flexShrink: 0,
-  padding: "8px 14px",
-  border: "1px solid #ccc",
-  borderRadius: 6,
-  background: "#f3f4f6",
-  cursor: "pointer",
-  fontSize: 13,
-  whiteSpace: "nowrap",
-};
-const thumb: CSSProperties = {
-  marginTop: 8,
-  maxWidth: 200,
-  maxHeight: 120,
-  borderRadius: 8,
-  display: "block",
 };
 const previewBtn: CSSProperties = {
   display: "inline-block",

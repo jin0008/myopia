@@ -200,3 +200,10 @@ export function updatePartnerNotice(
 export function deletePartnerNotice(id: string): Promise<void> {
   return partnerFetch(`/partner/notices/${id}`, { method: "DELETE" });
 }
+
+/** Kakao place search, so a clinic picks itself instead of typing an id. */
+export function searchPartnerPlaces(q: string): Promise<{
+  places: import("../components/PlacePicker").PlaceResult[];
+}> {
+  return partnerFetch(`/partner/place-search?q=${encodeURIComponent(q)}`);
+}
