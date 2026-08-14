@@ -8,7 +8,14 @@ import {
   type HospitalNotice,
 } from "../api/hospitalProfile";
 
-const EMPTY = { title: "", body: "", kind: "notice" as const, pinned: false };
+interface NoticeDraft {
+  title: string;
+  body: string;
+  kind: "notice" | "event";
+  pinned: boolean;
+}
+
+const EMPTY: NoticeDraft = { title: "", body: "", kind: "notice", pinned: false };
 
 /**
  * Clinic notices, managed from the admin profile page.
@@ -20,7 +27,7 @@ const EMPTY = { title: "", body: "", kind: "notice" as const, pinned: false };
  */
 export function HospitalNoticesEditor({ profileId }: { profileId: string | null }) {
   const [rows, setRows] = useState<HospitalNotice[]>([]);
-  const [draft, setDraft] = useState<typeof EMPTY>(EMPTY);
+  const [draft, setDraft] = useState<NoticeDraft>(EMPTY);
   const [busy, setBusy] = useState(false);
 
   const reload = () => {
