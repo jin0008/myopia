@@ -11,7 +11,11 @@ import {
   type PartnerMe,
   type PartnerProfileInput,
 } from "../../api/partner";
-import { KeywordsEditor, TreatmentItemsEditor } from "../../components/hospitalCardEditors";
+import {
+  KeywordsEditor,
+  OpeningHoursEditor,
+  TreatmentItemsEditor,
+} from "../../components/hospitalCardEditors";
 
 const EMPTY: PartnerProfileInput = {
   kakao_place_id: "",
@@ -24,6 +28,7 @@ const EMPTY: PartnerProfileInput = {
   thumbnail_url: "",
   keywords: [],
   treatment_items: [],
+  opening_hours: null,
   booking_url: "",
 };
 
@@ -58,6 +63,7 @@ export default function PartnerProfile() {
             thumbnail_url: p.thumbnail_url ?? "",
             keywords: p.keywords ?? [],
             treatment_items: p.treatment_items ?? [],
+            opening_hours: p.opening_hours ?? null,
             booking_url: p.booking_url ?? "",
           });
         } else {
@@ -204,6 +210,13 @@ export default function PartnerProfile() {
           <KeywordsEditor
             value={form.keywords ?? []}
             onChange={(keywords) => setForm((s) => ({ ...s, keywords }))}
+          />
+        </Field>
+
+        <Field label="진료시간">
+          <OpeningHoursEditor
+            value={form.opening_hours ?? null}
+            onChange={(opening_hours) => setForm((s) => ({ ...s, opening_hours }))}
           />
         </Field>
 

@@ -187,3 +187,119 @@ const itemCard: CSSProperties = {
   marginBottom: 10,
   background: "#fafafa",
 };
+
+/* ---- 진료시간 ------------------------------------------------------------ */
+
+const DAYS = [
+  { key: "mon", label: "월" },
+  { key: "tue", label: "화" },
+  { key: "wed", label: "수" },
+  { key: "thu", label: "목" },
+  { key: "fri", label: "금" },
+  { key: "sat", label: "토" },
+  { key: "sun", label: "일" },
+] as const;
+
+export interface DayHours {
+  open: string;
+  close: string;
+  lunchStart?: string | null;
+  lunchEnd?: string | null;
+}
+export type OpeningHours = Partial<Record<(typeof DAYS)[number]["key"], DayHours | null>> & {
+  note?: string;
+};
+
+/**
+ * Weekly hours grid. No map API supplies these, so the clinic enters them.
+ *
+ * Unchecking a day sets it to null (휴진) rather than deleting the key — the
+ * app needs to tell "closed on Sunday" apart from "hasn't filled this in yet",
+ * and only the second one should hide the section.
+ */
+export function OpeningHoursEditor({
+  value,
+  onChange,
+}: {
+  value: OpeningHours | null;
+  onChange: (v: OpeningHours | null) => void;
+}) {
+  const hours = value ?? {};
+  const setDay = (key: string, d: DayHours | null) => onChange({ ...hours, [key]: d });
+
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
+        <strong style={{ fontSize: 14 }}>진료시간</strong>
+        {value != null && (
+          <button type="button" onClick={() => onChange(null)} style={smallBtnDanger}>
+            전체 삭제
+          </button>
+        )}
+      </div>
+      <p style={{ color: "#6b7280", fontSize: 12, margin: "0 0 10px" }}>
+        체크를 해제하면 그 요일은 휴진으로 표시됩니다. 아무것도 입력하지 않으면 앱에서 진료시간
+        섹션 자체가 표시되지 않습니다.
+      </p>
+      <div style={{ display: "grid", gap: 6 }}>
+        {DAYS.map(({ key, label }) => {
+          const d = hours[key];
+          const open = d != null;
+          return (
+            <div key={key} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <label style={{ width: 64, display: "flex", gap: 6, alignItems: "center" }}>
+                <input
+                  type="checkbox"
+                  checked={open}
+                  onChange={(e) =>
+                    setDay(key, e.target.checked ? { open: "09:00", close: "18:00" } : null)
+                  }
+                />
+                {label}
+              </label>
+              {open ? (
+                <>
+                  <input
+                    type="time"
+                    value={d.open}
+                    onChange={(e) => setDay(key, { ...d, open: e.target.value })}
+                    style={{ ...inp, width: 110 }}
+                  />
+                  <span>~</span>
+                  <input
+                    type="time"
+                    value={d.close}
+                    onChange={(e) => setDay(key, { ...d, close: e.target.value })}
+                    style={{ ...inp, width: 110 }}
+                  />
+                  <span style={{ color: "#6b7280", fontSize: 12 }}>점심</span>
+                  <input
+                    type="time"
+                    value={d.lunchStart ?? ""}
+                    onChange={(e) => setDay(key, { ...d, lunchStart: e.target.value || null })}
+                    style={{ ...inp, width: 110 }}
+                  />
+                  <span>~</span>
+                  <input
+                    type="time"
+                    value={d.lunchEnd ?? ""}
+                    onChange={(e) => setDay(key, { ...d, lunchEnd: e.target.value || null })}
+                    style={{ ...inp, width: 110 }}
+                  />
+                </>
+              ) : (
+                <span style={{ color: "#9ca3af", fontSize: 13 }}>휴진</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <input
+        value={hours.note ?? ""}
+        onChange={(e) => onChange({ ...hours, note: e.target.value })}
+        placeholder="추가 안내 (예: 공휴일 휴진, 예약제 운영)"
+        style={{ ...inp, width: "100%", marginTop: 10 }}
+      />
+    </div>
+  );
+}
