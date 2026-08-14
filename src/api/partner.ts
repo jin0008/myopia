@@ -88,6 +88,7 @@ export interface PartnerProfileInput {
   keywords?: string[];
   treatment_items?: TreatmentItem[];
   booking_url?: string | null;
+  opening_hours?: unknown | null;
 }
 
 export function partnerSignup(data: {

@@ -13,7 +13,12 @@ import {
   type HospitalProfileInput,
 } from "../api/hospitalProfile";
 import { getHospitalList } from "../api/hospital";
-import { KeywordsEditor, TreatmentItemsEditor } from "../components/hospitalCardEditors";
+import {
+  KeywordsEditor,
+  OpeningHoursEditor,
+  TreatmentItemsEditor,
+} from "../components/hospitalCardEditors";
+import { HospitalNoticesEditor } from "../components/HospitalNoticesEditor";
 
 interface HospitalListItem {
   id: string;
@@ -51,6 +56,7 @@ const EMPTY: HospitalProfileInput = {
   thumbnail_url: "",
   keywords: [],
   treatment_items: [],
+  opening_hours: null,
   verified: false,
   booking_url: "",
 };
@@ -126,6 +132,7 @@ export default function AdminHospitalProfiles() {
       thumbnail_url: h.thumbnail_url ?? "",
       keywords: h.keywords ?? [],
       treatment_items: h.treatment_items ?? [],
+      opening_hours: h.opening_hours ?? null,
       verified: h.verified ?? false,
       booking_url: h.booking_url ?? "",
     });
@@ -221,6 +228,17 @@ export default function AdminHospitalProfiles() {
           <KeywordsEditor
             value={form.keywords ?? []}
             onChange={(keywords) => setForm((f) => ({ ...f, keywords }))}
+          />
+        </Field>
+
+        <Field label="병원 소식 (공지·이벤트)">
+          <HospitalNoticesEditor profileId={editingId} />
+        </Field>
+
+        <Field label="진료시간">
+          <OpeningHoursEditor
+            value={form.opening_hours ?? null}
+            onChange={(opening_hours) => setForm((f) => ({ ...f, opening_hours }))}
           />
         </Field>
 

@@ -22,6 +22,7 @@ export interface HospitalProfile {
   booking_url: string | null;
   created_at: string;
   updated_at: string;
+  opening_hours?: unknown | null;
 }
 
 export interface HospitalProfileInput {
@@ -39,6 +40,7 @@ export interface HospitalProfileInput {
   treatment_items?: TreatmentItem[];
   verified?: boolean;
   booking_url?: string | null;
+  opening_hours?: unknown | null;
 }
 
 export interface HospitalReview {
@@ -122,4 +124,56 @@ export async function uploadHospitalImage(file: File): Promise<{ url: string }> 
     throw new HttpError(result.status, respBody?.message);
   }
   return result.json();
+}
+
+/* ---- 소식 (clinic notices) --------------------------------------------- */
+
+export interface HospitalNotice {
+  id: string;
+  title: string;
+  body: string;
+  kind: "notice" | "event";
+  pinned: boolean;
+  published: boolean;
+  createdAt: string;
+}
+
+export interface HospitalNoticeInput {
+  title: string;
+  body: string;
+  kind?: "notice" | "event";
+  pinned?: boolean;
+  published?: boolean;
+}
+
+export function listHospitalNotices(profileId: string): Promise<HospitalNotice[]> {
+  return jsonFetchWithSession(`${API_ROOT}/hospital-profile/${profileId}/notices`);
+}
+
+export function createHospitalNotice(
+  profileId: string,
+  data: HospitalNoticeInput,
+): Promise<{ id: string }> {
+  return jsonFetchWithSession(
+    `${API_ROOT}/hospital-profile/${profileId}/notices`,
+    { method: "POST" },
+    data,
+  );
+}
+
+export function updateHospitalNotice(
+  noticeId: string,
+  data: Partial<HospitalNoticeInput>,
+): Promise<{ ok: boolean }> {
+  return jsonFetchWithSession(
+    `${API_ROOT}/hospital-profile/notices/${noticeId}`,
+    { method: "PATCH" },
+    data,
+  );
+}
+
+export function deleteHospitalNotice(noticeId: string): Promise<void> {
+  return jsonFetchWithSession(`${API_ROOT}/hospital-profile/notices/${noticeId}`, {
+    method: "DELETE",
+  });
 }
