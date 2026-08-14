@@ -7,8 +7,8 @@ import {
   getPartnerToken,
   partnerMe,
   savePartnerProfile,
-  uploadPartnerImage,
   uploadPartnerImages,
+  searchPartnerPlaces,
   type PartnerMe,
   type PartnerProfileInput,
 } from "../../api/partner";
@@ -20,6 +20,7 @@ import {
 } from "../../components/hospitalCardEditors";
 import { BannerImagesEditor, DetailBlocksEditor } from "../../components/HospitalContentEditors";
 import { FormTabs } from "../../components/FormTabs";
+import { PlacePicker } from "../../components/PlacePicker";
 import { PartnerNoticesEditor } from "../../components/PartnerNoticesEditor";
 
 const EMPTY: PartnerProfileInput = {
@@ -46,7 +47,6 @@ export default function PartnerProfile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-  const [thumbUploading, setThumbUploading] = useState(false);
 
   useEffect(() => {
     if (!getPartnerToken()) {
@@ -93,6 +93,10 @@ export default function PartnerProfile() {
     try {
       await savePartnerProfile(normaliseProfileUrls(form));
       setMsg("저장되었습니다.");
+      // Clear it shortly after: the banner sits outside the tabs, so leaving it
+      // up made "저장되었습니다" follow the user into 배너 사진 as if that tab
+      // had just been saved.
+      window.setTimeout(() => setMsg(null), 2500);
     } catch (e: any) {
       setMsg(e?.message ?? "저장 실패");
     } finally {
@@ -137,8 +141,31 @@ export default function PartnerProfile() {
               label: "기본 정보",
               content: (
                 <>
-                  <Field label="카카오 place id (앱 검색 결과의 내 병원 id)">
-                    <input value={form.kakao_place_id} onChange={set("kakao_place_id")} style={inp} />
+                  <Field label="병원 찾기 (카카오맵 검색)">
+                    <PlacePicker
+                      search={searchPartnerPlaces}
+                      currentId={form.kakao_place_id}
+                      onPick={(pl) =>
+                        setForm((s) => ({
+                          ...s,
+                          kakao_place_id: pl.id,
+                          name: pl.name,
+                          // Prefilled from Kakao so the clinic doesn't retype
+                          // what the app already shows on the list card.
+                          phone: pl.phone ?? s.phone,
+                          address: pl.roadAddress ?? pl.address ?? s.address,
+                        }))
+                      }
+                    />
+                    {form.kakao_place_id ? (
+                      <p style={{ color: "#0d7d6f", fontSize: 13, margin: "8px 0 0" }}>
+                        선택됨: {form.name} (place id {form.kakao_place_id})
+                      </p>
+                    ) : (
+                      <p style={{ color: "#6b7280", fontSize: 12, margin: "8px 0 0" }}>
+                        검색해서 내 병원을 선택하면 병원명·전화·주소가 자동으로 채워집니다.
+                      </p>
+                    )}
                   </Field>
                   <Field label="병원명">
                     <input value={form.name} onChange={set("name")} style={inp} />
@@ -157,26 +184,6 @@ export default function PartnerProfile() {
                       value={form.keywords ?? []}
                       onChange={(keywords) => setForm((s) => ({ ...s, keywords }))}
                     />
-                  </Field>
-                  <Field label="썸네일 이미지 (리스트 카드용)">
-                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                      <input value={form.thumbnail_url ?? ""} onChange={set("thumbnail_url")} style={{ ...inp, flex: 1 }} placeholder="파일 업로드 또는 URL" />
-                      <UploadBtn
-                        busy={thumbUploading}
-                        onFile={async (f) => {
-                          setThumbUploading(true);
-                          try {
-                            const { url } = await uploadPartnerImage(f);
-                            setForm((s) => ({ ...s, thumbnail_url: url }));
-                          } catch (e: any) {
-                            alert(e?.message ?? "업로드 실패");
-                          } finally {
-                            setThumbUploading(false);
-                          }
-                        }}
-                      />
-                    </div>
-                    {form.thumbnail_url ? <img src={form.thumbnail_url} alt="" style={thumb} /> : null}
                   </Field>
                   <div style={{ display: "flex", gap: 12 }}>
                     <Field label="전화">
@@ -251,23 +258,6 @@ export default function PartnerProfile() {
   );
 }
 
-function UploadBtn({ busy, onFile }: { busy: boolean; onFile: (f: File) => void }) {
-  return (
-    <label style={{ ...uploadBtn, opacity: busy ? 0.6 : 1, pointerEvents: busy ? "none" : "auto" }}>
-      {busy ? "업로드 중…" : "파일 선택"}
-      <input
-        type="file"
-        accept="image/*"
-        style={{ display: "none" }}
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) onFile(f);
-          e.target.value = "";
-        }}
-      />
-    </label>
-  );
-}
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -292,29 +282,18 @@ function statusBox(status: string): CSSProperties {
 }
 
 const card: CSSProperties = { border: "1px solid #ddd", borderRadius: 8, padding: 16, marginTop: 12 };
-const inp: CSSProperties = { width: "100%", padding: 8, border: "1px solid #ccc", borderRadius: 6, boxSizing: "border-box" };
-const uploadBtn: CSSProperties = {
-  flexShrink: 0,
-  padding: "8px 14px",
-  border: "1px solid #ccc",
-  borderRadius: 6,
-  background: "#f3f4f6",
-  cursor: "pointer",
-  fontSize: 13,
-  whiteSpace: "nowrap",
-};
-const thumb: CSSProperties = { marginTop: 8, maxWidth: 200, maxHeight: 120, borderRadius: 8, display: "block" };
 const saveBtn: CSSProperties = {
-  padding: "12px 20px",
-  border: "none",
+  padding: "12px 24px",
   borderRadius: 8,
+  border: "none",
   background: "#0d47a1",
   color: "#fff",
   fontSize: 15,
   fontWeight: 700,
   cursor: "pointer",
-  marginTop: 8,
 };
+
+const inp: CSSProperties = { width: "100%", padding: 8, border: "1px solid #ccc", borderRadius: 6, boxSizing: "border-box" };
 const logout: CSSProperties = {
   padding: "6px 12px",
   border: "1px solid #ddd",

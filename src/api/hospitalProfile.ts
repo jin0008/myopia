@@ -225,3 +225,12 @@ export function normaliseProfileUrls<T extends object>(form: T): T {
   }
   return out as T;
 }
+
+/** Kakao place search for the admin profile form. */
+export function searchAdminPlaces(q: string): Promise<{
+  places: import("../components/PlacePicker").PlaceResult[];
+}> {
+  return jsonFetchWithSession(
+    `${API_ROOT}/hospital-profile/place-search?q=${encodeURIComponent(q)}`,
+  );
+}
