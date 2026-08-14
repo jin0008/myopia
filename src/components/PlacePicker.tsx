@@ -84,7 +84,11 @@ export function PlacePicker({
               <button
                 key={p.id}
                 type="button"
-                onClick={() => onPick(p)}
+                onClick={() => {
+                  onPick(p);
+                  setRows(null);
+                  setQ("");
+                }}
                 style={{
                   ...row,
                   background: picked ? "#eef4ff" : "#fff",

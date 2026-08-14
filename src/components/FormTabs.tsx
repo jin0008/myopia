@@ -14,7 +14,15 @@ export interface FormTab {
  * everything you weren't doing. Every tab stays mounted so a single Save still
  * submits the whole form; hidden panels are only visually hidden.
  */
-export function FormTabs({ tabs }: { tabs: FormTab[] }) {
+export function FormTabs({
+  tabs,
+  onTabChange,
+}: {
+  tabs: FormTab[];
+  /** Fires when the user moves to another tab — used to drop a save banner
+   *  that would otherwise follow them into a tab they haven't saved. */
+  onTabChange?: () => void;
+}) {
   const [active, setActive] = useState(tabs[0]?.key);
 
   return (
@@ -26,7 +34,10 @@ export function FormTabs({ tabs }: { tabs: FormTab[] }) {
             <button
               key={t.key}
               type="button"
-              onClick={() => setActive(t.key)}
+              onClick={() => {
+                if (t.key !== active) onTabChange?.();
+                setActive(t.key);
+              }}
               style={{
                 ...tabBtn,
                 color: on ? "#0d47a1" : "#6b7280",
