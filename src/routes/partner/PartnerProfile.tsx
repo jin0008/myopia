@@ -12,6 +12,7 @@ import {
   type PartnerMe,
   type PartnerProfileInput,
 } from "../../api/partner";
+import { normaliseProfileUrls } from "../../api/hospitalProfile";
 import {
   KeywordsEditor,
   OpeningHoursEditor,
@@ -90,7 +91,7 @@ export default function PartnerProfile() {
     setMsg(null);
     setSaving(true);
     try {
-      await savePartnerProfile(form);
+      await savePartnerProfile(normaliseProfileUrls(form));
       setMsg("저장되었습니다.");
     } catch (e: any) {
       setMsg(e?.message ?? "저장 실패");

@@ -210,3 +210,18 @@ export function deleteHospitalNotice(noticeId: string): Promise<void> {
     method: "DELETE",
   });
 }
+
+/**
+ * Blank URL inputs mean "not set", but the API validates them as URLs and
+ * rejects `""` outright. Forms keep empty strings because that's what an empty
+ * text input holds, so normalise on the way out rather than scattering
+ * `|| null` across every field.
+ */
+export function normaliseProfileUrls<T extends object>(form: T): T {
+  const URL_FIELDS = ["banner_image_url", "thumbnail_url", "booking_url"];
+  const out = { ...form } as Record<string, unknown>;
+  for (const k of URL_FIELDS) {
+    if (typeof out[k] === "string" && (out[k] as string).trim() === "") out[k] = null;
+  }
+  return out as T;
+}

@@ -10,6 +10,7 @@ import {
   updateHospitalProfile,
   uploadHospitalImage,
   uploadHospitalImages,
+  normaliseProfileUrls,
   type HospitalProfile,
   type HospitalProfileInput,
 } from "../api/hospitalProfile";
@@ -85,7 +86,9 @@ export default function AdminHospitalProfiles() {
 
   const saveMutation = useMutation({
     mutationFn: () =>
-      editingId ? updateHospitalProfile(editingId, form) : createHospitalProfile(form),
+      editingId
+        ? updateHospitalProfile(editingId, normaliseProfileUrls(form))
+        : createHospitalProfile(normaliseProfileUrls(form)),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin", "hospitalProfiles"] });
       reset();
