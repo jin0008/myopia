@@ -2,15 +2,17 @@
 // (src/features/treatmentFinder/TreatmentCategoryScreen.tsx). A profile's
 // treatment_items are tagged with one of these keys so the app can surface the
 // right item when a user browses by category.
+// Childhood myopia only — the app's whole subject. This list used to carry
+// general adult ophthalmology (라식·백내장·노안수술) borrowed from a competitor
+// while prototyping, which put the hospital finder at odds with every other
+// part of the product. `dreamLens` keeps its old key so profiles already
+// tagged with it stay valid.
 export const TREATMENT_CATEGORIES = [
-  { key: "visionCorrection", label: "시력교정술" },
-  { key: "presbyopia", label: "노안수술" },
-  { key: "cataract", label: "백내장수술" },
   { key: "dreamLens", label: "드림렌즈" },
-  { key: "dryEyeIpl", label: "안구건조증 IPL" },
-  { key: "eyelid", label: "아이링수술" },
-  { key: "retina", label: "망막질환" },
-  { key: "etc", label: "기타" },
+  { key: "misight", label: "마이사이트" },
+  { key: "myopiaGlasses", label: "근시조절안경" },
+  { key: "atropine", label: "저농도 아트로핀" },
+  { key: "checkup", label: "근시 검진·상담" },
 ] as const;
 
 export type TreatmentCategoryKey = (typeof TREATMENT_CATEGORIES)[number]["key"];
