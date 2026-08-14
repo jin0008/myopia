@@ -102,7 +102,7 @@ export function TreatmentItemsEditor({
             <input
               value={it.name}
               onChange={(e) => update(i, { name: e.target.value })}
-              placeholder="항목명 (예: 노안수술 검진)"
+              placeholder="항목명 (예: 드림렌즈 피팅)"
               style={{ ...inp, flex: 1 }}
             />
             <button
