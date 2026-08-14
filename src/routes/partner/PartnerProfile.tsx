@@ -8,6 +8,7 @@ import {
   partnerMe,
   savePartnerProfile,
   uploadPartnerImages,
+  uploadPartnerImage,
   searchPartnerPlaces,
   type PartnerMe,
   type PartnerProfileInput,
@@ -22,6 +23,7 @@ import { BannerImagesEditor, DetailBlocksEditor } from "../../components/Hospita
 import { FormTabs } from "../../components/FormTabs";
 import { PlacePicker } from "../../components/PlacePicker";
 import { PartnerNoticesEditor } from "../../components/PartnerNoticesEditor";
+import { DoctorsEditor, cleanDoctors } from "../../components/DoctorsEditor";
 
 const EMPTY: PartnerProfileInput = {
   kakao_place_id: "",
@@ -35,6 +37,7 @@ const EMPTY: PartnerProfileInput = {
   keywords: [],
   treatment_items: [],
   opening_hours: null,
+  doctors: [],
   tagline: "",
   detail_blocks: [],
   booking_url: "",
@@ -91,7 +94,11 @@ export default function PartnerProfile() {
     setMsg(null);
     setSaving(true);
     try {
-      await savePartnerProfile(normaliseProfileUrls(form));
+      await savePartnerProfile(
+        // 이름이 빈 줄과 빈 문자열 photoUrl은 저장할 것이 없고, URL 검증에
+        // 걸려 폼 전체가 400이 된다.
+        normaliseProfileUrls({ ...form, doctors: cleanDoctors(form.doctors ?? []) }),
+      );
       setMsg("저장되었습니다.");
     } catch (e: any) {
       setMsg(e?.message ?? "저장 실패");
@@ -217,6 +224,17 @@ export default function PartnerProfile() {
                   value={form.detail_blocks ?? []}
                   onChange={(detail_blocks) => setForm((s) => ({ ...s, detail_blocks }))}
                   upload={uploadPartnerImages}
+                />
+              ),
+            },
+            {
+              key: "doctors",
+              label: "의사 정보",
+              content: (
+                <DoctorsEditor
+                  value={form.doctors ?? []}
+                  onChange={(doctors) => setForm((s) => ({ ...s, doctors }))}
+                  upload={uploadPartnerImage}
                 />
               ),
             },
