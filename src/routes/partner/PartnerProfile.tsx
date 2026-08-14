@@ -93,10 +93,6 @@ export default function PartnerProfile() {
     try {
       await savePartnerProfile(normaliseProfileUrls(form));
       setMsg("저장되었습니다.");
-      // Clear it shortly after: the banner sits outside the tabs, so leaving it
-      // up made "저장되었습니다" follow the user into 배너 사진 as if that tab
-      // had just been saved.
-      window.setTimeout(() => setMsg(null), 2500);
     } catch (e: any) {
       setMsg(e?.message ?? "저장 실패");
     } finally {
@@ -135,6 +131,9 @@ export default function PartnerProfile() {
 
       <div style={card}>
         <FormTabs
+          // The save banner sits outside the tabs, so leaving it up made
+          // "저장되었습니다" follow the user into a tab they hadn't saved.
+          onTabChange={() => setMsg(null)}
           tabs={[
             {
               key: "basic",
