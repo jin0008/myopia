@@ -33,6 +33,11 @@ export function KeywordsEditor({
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
+            // Enter while a Korean IME is still composing means "confirm this
+            // syllable", not "submit". Without this guard one Enter fires twice
+            // — once for the composition, once for the key — and "라식" is added
+            // followed by the leftover "식".
+            if (e.nativeEvent.isComposing) return;
             if (e.key === "Enter") {
               e.preventDefault();
               add();
