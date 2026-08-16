@@ -78,6 +78,8 @@ export interface PartnerProfile {
   tagline?: string | null;
   detail_blocks?: import("./hospitalProfile").DetailBlock[] | null;
   doctors?: import("./hospitalProfile").Doctor[] | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface PartnerProfileInput {
@@ -96,6 +98,8 @@ export interface PartnerProfileInput {
   tagline?: string | null;
   detail_blocks?: import("./hospitalProfile").DetailBlock[] | null;
   doctors?: import("./hospitalProfile").Doctor[] | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export function partnerSignup(data: {

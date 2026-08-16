@@ -65,6 +65,8 @@ const EMPTY: HospitalProfileInput = {
   treatment_items: [],
   opening_hours: null,
   doctors: [],
+  latitude: null,
+  longitude: null,
   tagline: "",
   detail_blocks: [],
   verified: false,
@@ -138,6 +140,8 @@ export default function AdminHospitalProfiles() {
       tagline: h.tagline ?? "",
       detail_blocks: h.detail_blocks ?? [],
       doctors: h.doctors ?? [],
+      latitude: h.latitude ?? null,
+      longitude: h.longitude ?? null,
       verified: h.verified ?? false,
       booking_url: h.booking_url ?? "",
     });
@@ -182,6 +186,10 @@ export default function AdminHospitalProfiles() {
                           name: pl.name,
                           phone: pl.phone ?? f.phone,
                           address: pl.roadAddress ?? pl.address ?? f.address,
+                          // 좌표는 사람이 볼 일이 없어 폼에 칸을 두지 않는다.
+                          // 앱이 거리 정렬·지도에 쓸 값이라 조용히 따라간다.
+                          latitude: pl.latitude,
+                          longitude: pl.longitude,
                         }))
                       }
                     />
