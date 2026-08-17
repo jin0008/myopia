@@ -249,6 +249,14 @@ export default function Header() {
           <DesktopOnly>
             <RightSection>
               {langToggle}
+              {user?.healthcare_professional?.is_admin && (
+                <OutlinedButton
+                  style={{ padding: "8px 18px", fontSize: "13px", borderRadius: "20px" }}
+                  onClick={() => navigate("/partner/profile")}
+                >
+                  myodoc 관리
+                </OutlinedButton>
+              )}
               {user && (
                 <OutlinedButton
                   style={{ padding: "8px 18px", fontSize: "13px", borderRadius: "20px" }}
@@ -311,6 +319,14 @@ export default function Header() {
           <div style={{ display: "flex", justifyContent: "center" }}>
             {langToggle}
           </div>
+          {user?.healthcare_professional?.is_admin && (
+            <PrimaryButton
+              style={{ width: "100%", justifyContent: "center" }}
+              onClick={() => navigate("/partner/profile")}
+            >
+              myodoc 관리
+            </PrimaryButton>
+          )}
           {user && (
             <PrimaryButton
               style={{ width: "100%", justifyContent: "center" }}
