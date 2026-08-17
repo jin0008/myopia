@@ -39,6 +39,8 @@ export interface HospitalProfile {
   tagline?: string | null;
   detail_blocks?: DetailBlock[] | null;
   doctors?: Doctor[] | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface HospitalProfileInput {
@@ -60,6 +62,8 @@ export interface HospitalProfileInput {
   tagline?: string | null;
   detail_blocks?: DetailBlock[] | null;
   doctors?: Doctor[] | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface HospitalReview {

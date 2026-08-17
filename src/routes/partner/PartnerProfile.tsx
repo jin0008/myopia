@@ -38,6 +38,8 @@ const EMPTY: PartnerProfileInput = {
   treatment_items: [],
   opening_hours: null,
   doctors: [],
+  latitude: null,
+  longitude: null,
   tagline: "",
   detail_blocks: [],
   booking_url: "",
@@ -75,6 +77,8 @@ export default function PartnerProfile() {
             tagline: p.tagline ?? "",
             detail_blocks: p.detail_blocks ?? [],
             doctors: p.doctors ?? [],
+            latitude: p.latitude ?? null,
+            longitude: p.longitude ?? null,
             booking_url: p.booking_url ?? "",
           });
         } else {
@@ -161,6 +165,10 @@ export default function PartnerProfile() {
                           // what the app already shows on the list card.
                           phone: pl.phone ?? s.phone,
                           address: pl.roadAddress ?? pl.address ?? s.address,
+                          // 좌표는 사람이 볼 일이 없어 폼에 칸을 두지 않는다.
+                          // 앱이 거리 정렬·지도에 쓸 값이라 조용히 따라간다.
+                          latitude: pl.latitude,
+                          longitude: pl.longitude,
                         }))
                       }
                     />

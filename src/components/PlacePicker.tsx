@@ -7,6 +7,10 @@ export interface PlaceResult {
   phone: string | null;
   address: string | null;
   roadAddress: string | null;
+  /** 앱의 치료탭이 거리 정렬·지도에 쓴다. 검색 응답에 이미 들어 있어
+   *  등록 시점에 같이 저장해 두면 나중에 채우러 다닐 일이 없다. */
+  latitude: number | null;
+  longitude: number | null;
 }
 
 /**
