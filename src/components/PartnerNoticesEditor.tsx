@@ -1,12 +1,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 
-import {
-  createPartnerNotice,
-  deletePartnerNotice,
-  listPartnerNotices,
-  updatePartnerNotice,
-  type PartnerNotice,
-} from "../api/partner";
+import type { ProfileEditorApi } from "../api/profileEditorApi";
+import type { PartnerNotice } from "../api/partner";
 
 interface Draft {
   title: string;
@@ -18,23 +13,26 @@ interface Draft {
 const EMPTY: Draft = { title: "", body: "", kind: "notice", pinned: false };
 
 /**
- * Clinic notices, written by the clinic itself.
+ * 병원이 직접 쓰는 소식.
  *
- * The API resolves the profile from the logged-in partner, so this component
- * never handles a profile id — a clinic can only ever touch its own notices.
+ * 서버가 로그인한 주체(파트너 계정 또는 myopia 병원 관리자)에서 프로필을
+ * 찾으므로 이 컴포넌트는 프로필 id를 다루지 않는다 - 자기 병원 소식 외에는
+ * 손댈 수 없다. 어느 쪽으로 로그인했는지는 `api`가 들고 있다.
  */
-export function PartnerNoticesEditor() {
+export function PartnerNoticesEditor({ api }: { api: ProfileEditorApi }) {
   const [rows, setRows] = useState<PartnerNotice[]>([]);
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   const reload = () => {
-    listPartnerNotices()
+    api.listNotices()
       .then((r) => setRows(r.notices))
       .catch(() => setRows([]));
   };
 
+  // api는 로그인 상태로 정해지고 렌더 중 바뀌지 않는다.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(reload, []);
 
   const add = async () => {
@@ -45,7 +43,7 @@ export function PartnerNoticesEditor() {
     setBusy(true);
     setErr(null);
     try {
-      await createPartnerNotice(draft);
+      await api.createNotice(draft);
       setDraft(EMPTY);
       reload();
     } catch (e: any) {
@@ -122,7 +120,7 @@ export function PartnerNoticesEditor() {
                     type="checkbox"
                     checked={n.pinned}
                     onChange={async (e) => {
-                      await updatePartnerNotice(n.id, { pinned: e.target.checked });
+                      await api.updateNotice(n.id, { pinned: e.target.checked });
                       reload();
                     }}
                   />
@@ -133,7 +131,7 @@ export function PartnerNoticesEditor() {
                     type="checkbox"
                     checked={n.published}
                     onChange={async (e) => {
-                      await updatePartnerNotice(n.id, { published: e.target.checked });
+                      await api.updateNotice(n.id, { published: e.target.checked });
                       reload();
                     }}
                   />
@@ -143,7 +141,7 @@ export function PartnerNoticesEditor() {
                   type="button"
                   onClick={async () => {
                     if (!confirm("이 소식을 삭제할까요?")) return;
-                    await deletePartnerNotice(n.id);
+                    await api.deleteNotice(n.id);
                     reload();
                   }}
                   style={delBtn}

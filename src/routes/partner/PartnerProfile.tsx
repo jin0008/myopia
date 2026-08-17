@@ -1,19 +1,16 @@
-import { useEffect, useState, type CSSProperties } from "react";
-import { useNavigate } from "react-router";
+import { useContext, useEffect, useState, type CSSProperties } from "react";
+import { useNavigate, useSearchParams } from "react-router";
 
 import {
   clearPartnerToken,
-  getPartnerProfile,
   getPartnerToken,
   partnerMe,
-  savePartnerProfile,
-  uploadPartnerImages,
-  uploadPartnerImage,
-  searchPartnerPlaces,
   type PartnerMe,
   type PartnerProfileInput,
 } from "../../api/partner";
 import { normaliseProfileUrls } from "../../api/hospitalProfile";
+import { hospitalApi, partnerApi } from "../../api/profileEditorApi";
+import { UserContext } from "../../App";
 import {
   KeywordsEditor,
   OpeningHoursEditor,
@@ -47,6 +44,18 @@ const EMPTY: PartnerProfileInput = {
 
 export default function PartnerProfile() {
   const nav = useNavigate();
+  const { user } = useContext(UserContext);
+  // 같은 화면을 두 부류가 쓴다. myopia를 쓰는 병원은 원래 계정으로 들어오고,
+  // 그렇지 않은 병원은 파트너 계정으로 들어온다. 화면을 둘로 나누면 앞으로
+  // 필드를 추가할 때마다 두 곳을 고쳐야 하고 한쪽만 고치는 실수가 난다.
+  const isHospitalAdmin = user?.healthcare_professional?.is_admin === true;
+  // 한 브라우저에 두 로그인이 다 있을 수 있다(테스트 중에는 흔하다). 그때
+  // 토큰 유무만 보면 myopia 관리자가 'myodoc 관리'를 눌렀는데 파트너 계정의
+  // 프로필이 열린다. 헤더 버튼이 ?as=hospital을 달아 의도를 밝힌다.
+  const [params] = useSearchParams();
+  const asHospital = params.get("as") === "hospital" && isHospitalAdmin;
+  const hasPartnerToken = !asHospital && getPartnerToken() != null;
+  const api = hasPartnerToken ? partnerApi : hospitalApi;
   const [me, setMe] = useState<PartnerMe | null>(null);
   const [form, setForm] = useState<PartnerProfileInput>(EMPTY);
   const [loading, setLoading] = useState(true);
@@ -54,11 +63,13 @@ export default function PartnerProfile() {
   const [msg, setMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!getPartnerToken()) {
+    if (!hasPartnerToken && !isHospitalAdmin) {
       nav("/partner/login");
       return;
     }
-    Promise.all([partnerMe(), getPartnerProfile()])
+    // myopia 관리자는 승인 상태라는 개념이 없다 - 이미 진료 데이터를 다루도록
+    // 승인된 계정이라 신원 확인이 그때 끝났다.
+    Promise.all([hasPartnerToken ? partnerMe() : Promise.resolve(null), api.getProfile()])
       .then(([m, p]) => {
         setMe(m);
         if (p) {
@@ -81,15 +92,23 @@ export default function PartnerProfile() {
             longitude: p.longitude ?? null,
             booking_url: p.booking_url ?? "",
           });
-        } else {
+        } else if (m) {
+          // 파트너는 가입할 때 병원명을 적었다. myopia 관리자는 그 값이 없고,
+          // 장소 검색에서 고르면 채워진다.
           setForm((f) => ({ ...f, name: m.hospitalName }));
         }
       })
       .catch(() => {
-        clearPartnerToken();
-        nav("/partner/login");
+        if (hasPartnerToken) {
+          clearPartnerToken();
+          nav("/partner/login");
+        } else {
+          setMsg("불러오지 못했습니다.");
+        }
       })
       .finally(() => setLoading(false));
+    // api/모드는 렌더 중 바뀌지 않는다(로그인 상태로 정해진다).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nav]);
 
   const set = (k: keyof PartnerProfileInput) => (e: any) =>
@@ -99,7 +118,7 @@ export default function PartnerProfile() {
     setMsg(null);
     setSaving(true);
     try {
-      await savePartnerProfile(
+      await api.saveProfile(
         // 이름이 빈 줄과 빈 문자열 photoUrl은 저장할 것이 없고, URL 검증에
         // 걸려 폼 전체가 400이 된다.
         normaliseProfileUrls({ ...form, doctors: cleanDoctors(form.doctors ?? []) }),
@@ -120,15 +139,23 @@ export default function PartnerProfile() {
     <div style={{ maxWidth: 720, margin: "0 auto", padding: 24 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <h1 style={{ margin: 0 }}>병원 프로필 관리</h1>
-        <button
-          style={logout}
-          onClick={() => {
-            clearPartnerToken();
-            nav("/partner/login");
-          }}
-        >
-          로그아웃
-        </button>
+        {/* 이 화면은 myopia 헤더 밖에 있다. 파트너는 여기가 전부라 로그아웃이
+            맞고, myopia 관리자는 원래 있던 곳으로 돌아갈 길이 있어야 한다. */}
+        {hasPartnerToken ? (
+          <button
+            style={logout}
+            onClick={() => {
+              clearPartnerToken();
+              nav("/partner/login");
+            }}
+          >
+            로그아웃
+          </button>
+        ) : (
+          <button style={logout} onClick={() => nav("/")}>
+            ← myopia로 돌아가기
+          </button>
+        )}
       </div>
 
       {me && (
@@ -154,7 +181,7 @@ export default function PartnerProfile() {
                 <>
                   <Field label="병원 찾기 (카카오맵 검색)">
                     <PlacePicker
-                      search={searchPartnerPlaces}
+                      search={api.searchPlaces}
                       currentId={form.kakao_place_id}
                       onPick={(pl) =>
                         setForm((s) => ({
@@ -221,7 +248,7 @@ export default function PartnerProfile() {
                 <BannerImagesEditor
                   value={form.images ?? []}
                   onChange={(images) => setForm((s) => ({ ...s, images }))}
-                  upload={uploadPartnerImages}
+                  upload={api.uploadImages}
                 />
               ),
             },
@@ -232,7 +259,7 @@ export default function PartnerProfile() {
                 <DetailBlocksEditor
                   value={form.detail_blocks ?? []}
                   onChange={(detail_blocks) => setForm((s) => ({ ...s, detail_blocks }))}
-                  upload={uploadPartnerImages}
+                  upload={api.uploadImages}
                 />
               ),
             },
@@ -243,7 +270,7 @@ export default function PartnerProfile() {
                 <DoctorsEditor
                   value={form.doctors ?? []}
                   onChange={(doctors) => setForm((s) => ({ ...s, doctors }))}
-                  upload={uploadPartnerImage}
+                  upload={api.uploadImage}
                 />
               ),
             },
@@ -270,7 +297,7 @@ export default function PartnerProfile() {
             {
               key: "notices",
               label: "소식",
-              content: <PartnerNoticesEditor />,
+              content: <PartnerNoticesEditor api={api} />,
             },
           ]}
         />
