@@ -4,7 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { UserContext } from "../App";
 import { PrimaryButton, PrimaryNagativeButton } from "../components/button";
 import {
+  claimProfileForAccount,
   listPartnerAccounts,
+  listUnclaimedProfiles,
   setPartnerAccountStatus,
   type PartnerAccountStatus,
 } from "../api/partnerAccount";
@@ -16,6 +18,24 @@ export default function AdminPartnerAccounts() {
   const listQuery = useQuery({
     queryKey: ["admin", "partnerAccounts"],
     queryFn: listPartnerAccounts,
+  });
+
+  // 온보딩은 어드민이 프로필을 먼저 채우는 것으로 시작한다. 그 병원이 나중에
+  // 가입하면 미리 만들어 둔 프로필을 넘겨줘야 자기 손으로 관리할 수 있다.
+  const unclaimedQuery = useQuery({
+    queryKey: ["admin", "unclaimedProfiles"],
+    queryFn: listUnclaimedProfiles,
+  });
+
+  const claimMutation = useMutation({
+    mutationFn: ({ accountId, profileId }: { accountId: string; profileId: string }) =>
+      claimProfileForAccount(accountId, profileId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin", "partnerAccounts"] });
+      qc.invalidateQueries({ queryKey: ["admin", "unclaimedProfiles"] });
+      alert("프로필을 이 계정으로 넘겼습니다. 이제 병원이 직접 수정할 수 있습니다.");
+    },
+    onError: (e: any) => alert(e?.message ?? "이관 실패"),
   });
 
   const statusMutation = useMutation({
@@ -68,7 +88,32 @@ export default function AdminPartnerAccounts() {
                       <span style={{ color: "#9ca3af", fontSize: 12 }}>{a.claimedPlaceId}</span>
                     </>
                   ) : (
-                    <span style={{ color: "#9ca3af" }}>미작성</span>
+                    <div style={{ display: "grid", gap: 4 }}>
+                      <span style={{ color: "#9ca3af" }}>미작성</span>
+                      {(unclaimedQuery.data?.profiles.length ?? 0) > 0 && (
+                        <select
+                          defaultValue=""
+                          disabled={claimMutation.isPending}
+                          onChange={(e) => {
+                            const profileId = e.target.value;
+                            e.target.value = "";
+                            if (!profileId) return;
+                            if (!confirm("이 프로필을 해당 병원 계정으로 넘길까요? 이후 병원이 직접 수정하게 됩니다."))
+                              return;
+                            claimMutation.mutate({ accountId: a.id, profileId });
+                          }}
+                          style={select}
+                        >
+                          <option value="">기존 프로필 넘기기…</option>
+                          {unclaimedQuery.data?.profiles.map((pf) => (
+                            <option key={pf.id} value={pf.id}>
+                              {pf.name}
+                              {pf.address ? ` · ${pf.address}` : ""}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
                   )}
                 </td>
                 <td style={td}>{a.contactName}</td>
@@ -101,6 +146,14 @@ export default function AdminPartnerAccounts() {
     </div>
   );
 }
+
+const select: CSSProperties = {
+  padding: "4px 6px",
+  border: "1px solid #ddd",
+  borderRadius: 6,
+  fontSize: 12,
+  maxWidth: 260,
+};
 
 const STATUS_LABEL: Record<PartnerAccountStatus, string> = {
   pending: "승인 대기",
