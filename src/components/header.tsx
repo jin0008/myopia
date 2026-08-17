@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { MYODOC_PORTAL_VISIBLE } from "../constants/features";
 import { PrimaryButton, GrayButton, OutlinedButton } from "./button";
 import { useNavigate, useLocation } from "react-router";
 import { useContext, useState, useEffect } from "react";
@@ -249,7 +250,7 @@ export default function Header() {
           <DesktopOnly>
             <RightSection>
               {langToggle}
-              {user?.healthcare_professional?.is_admin && (
+              {MYODOC_PORTAL_VISIBLE && user?.healthcare_professional?.is_admin && (
                 <OutlinedButton
                   style={{ padding: "8px 18px", fontSize: "13px", borderRadius: "20px" }}
                   onClick={() => navigate("/partner/profile?as=hospital")}
@@ -319,7 +320,7 @@ export default function Header() {
           <div style={{ display: "flex", justifyContent: "center" }}>
             {langToggle}
           </div>
-          {user?.healthcare_professional?.is_admin && (
+          {MYODOC_PORTAL_VISIBLE && user?.healthcare_professional?.is_admin && (
             <PrimaryButton
               style={{ width: "100%", justifyContent: "center" }}
               onClick={() => navigate("/partner/profile?as=hospital")}
