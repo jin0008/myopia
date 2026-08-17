@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState, type CSSProperties } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 
 import {
   clearPartnerToken,
@@ -48,8 +48,13 @@ export default function PartnerProfile() {
   // 같은 화면을 두 부류가 쓴다. myopia를 쓰는 병원은 원래 계정으로 들어오고,
   // 그렇지 않은 병원은 파트너 계정으로 들어온다. 화면을 둘로 나누면 앞으로
   // 필드를 추가할 때마다 두 곳을 고쳐야 하고 한쪽만 고치는 실수가 난다.
-  const hasPartnerToken = getPartnerToken() != null;
   const isHospitalAdmin = user?.healthcare_professional?.is_admin === true;
+  // 한 브라우저에 두 로그인이 다 있을 수 있다(테스트 중에는 흔하다). 그때
+  // 토큰 유무만 보면 myopia 관리자가 'myodoc 관리'를 눌렀는데 파트너 계정의
+  // 프로필이 열린다. 헤더 버튼이 ?as=hospital을 달아 의도를 밝힌다.
+  const [params] = useSearchParams();
+  const asHospital = params.get("as") === "hospital" && isHospitalAdmin;
+  const hasPartnerToken = !asHospital && getPartnerToken() != null;
   const api = hasPartnerToken ? partnerApi : hospitalApi;
   const [me, setMe] = useState<PartnerMe | null>(null);
   const [form, setForm] = useState<PartnerProfileInput>(EMPTY);

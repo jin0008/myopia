@@ -252,7 +252,7 @@ export default function Header() {
               {user?.healthcare_professional?.is_admin && (
                 <OutlinedButton
                   style={{ padding: "8px 18px", fontSize: "13px", borderRadius: "20px" }}
-                  onClick={() => navigate("/partner/profile")}
+                  onClick={() => navigate("/partner/profile?as=hospital")}
                 >
                   myodoc 관리
                 </OutlinedButton>
@@ -322,7 +322,7 @@ export default function Header() {
           {user?.healthcare_professional?.is_admin && (
             <PrimaryButton
               style={{ width: "100%", justifyContent: "center" }}
-              onClick={() => navigate("/partner/profile")}
+              onClick={() => navigate("/partner/profile?as=hospital")}
             >
               myodoc 관리
             </PrimaryButton>
