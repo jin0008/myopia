@@ -1,4 +1,5 @@
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { OwnHospitalMyodocProfile } from "../components/OwnHospitalMyodocProfile";
 // TopDiv removed - using custom PageWrapper
 import { UserContext } from "../App";
 import NotLoggedIn from "../components/not_logged_in";
@@ -114,6 +115,7 @@ export default function Profile() {
         {user.healthcare_professional && <ProfessionalProfile />}
       </SettingsGrid>
       {user.healthcare_professional?.is_admin && <HospitalAdminProfile />}
+      {user.healthcare_professional?.is_admin && <OwnHospitalMyodocProfile />}
     </PageWrapper>
   );
 }

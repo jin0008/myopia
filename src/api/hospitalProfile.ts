@@ -248,3 +248,105 @@ export function searchAdminPlaces(q: string): Promise<{
     `${API_ROOT}/hospital-profile/place-search?q=${encodeURIComponent(q)}`,
   );
 }
+
+/* ---- 병원 관리자 본인 프로필 -------------------------------------------- *
+ * myopia 로그인 상태 그대로 자기 병원의 myodoc 프로필을 관리한다. 파트너
+ * 계정을 따로 만들 필요가 없다 — 병원 입장에서 같은 회사 서비스에 계정이
+ * 둘인 것이 이상하고, 안내할 것도 하나 더 늘어난다.
+ * 어느 병원에 붙는지·인증 뱃지·노출 상태는 보내지 않는다(서버가 정한다).
+ * ----------------------------------------------------------------------- */
+
+export type OwnHospitalProfileInput = Omit<
+  HospitalProfileInput,
+  "status" | "hospital_id" | "verified"
+>;
+
+export function getOwnHospitalProfile(): Promise<HospitalProfile | null> {
+  return jsonFetchWithSession(API_ROOT + "/hospital-profile/mine");
+}
+
+export function saveOwnHospitalProfile(
+  data: OwnHospitalProfileInput,
+): Promise<HospitalProfile> {
+  return jsonFetchWithSession(API_ROOT + "/hospital-profile/mine", { method: "PUT" }, data);
+}
+
+export function searchOwnHospitalPlaces(q: string): Promise<{
+  places: import("../components/PlacePicker").PlaceResult[];
+}> {
+  return jsonFetchWithSession(
+    `${API_ROOT}/hospital-profile/mine/place-search?q=${encodeURIComponent(q)}`,
+  );
+}
+
+export function listOwnHospitalNotices(): Promise<{ notices: HospitalNotice[] }> {
+  return jsonFetchWithSession(API_ROOT + "/hospital-profile/mine/notices");
+}
+
+export function createOwnHospitalNotice(
+  data: HospitalNoticeInput,
+): Promise<{ id: string }> {
+  return jsonFetchWithSession(
+    API_ROOT + "/hospital-profile/mine/notices",
+    { method: "POST" },
+    data,
+  );
+}
+
+export function updateOwnHospitalNotice(
+  noticeId: string,
+  data: Partial<HospitalNoticeInput>,
+): Promise<{ ok: boolean }> {
+  return jsonFetchWithSession(
+    `${API_ROOT}/hospital-profile/mine/notices/${noticeId}`,
+    { method: "PATCH" },
+    data,
+  );
+}
+
+export function deleteOwnHospitalNotice(noticeId: string): Promise<void> {
+  return jsonFetchWithSession(
+    `${API_ROOT}/hospital-profile/mine/notices/${noticeId}`,
+    { method: "DELETE" },
+    undefined,
+    false,
+  );
+}
+
+/** 배너·의사 사진 업로드 (병원 관리자 권한). */
+export function uploadOwnHospitalImages(files: File[]): Promise<{ urls: string[] }> {
+  return uploadWithSession<{ urls: string[] }>(
+    "/hospital-profile/mine/upload-many",
+    "images",
+    files,
+  );
+}
+
+export function uploadOwnHospitalImage(file: File): Promise<{ url: string }> {
+  return uploadWithSession<{ url: string }>("/hospital-profile/mine/upload", "image", [file]);
+}
+
+/** multipart는 jsonFetchWithSession을 못 쓴다(JSON을 강제한다). */
+async function uploadWithSession<T>(
+  path: string,
+  field: string,
+  files: File[],
+): Promise<T> {
+  const session_key = localStorage.getItem("session_key");
+  if (!session_key) throw new AuthorizationError("Authorization error");
+  const body = new FormData();
+  for (const f of files) body.append(field, f);
+  const result = await fetch(API_ROOT + path, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${session_key}` },
+    body,
+  });
+  if (result.status === 401 || result.status === 403) {
+    throw new AuthorizationError("Authorization error");
+  }
+  if (!result.ok) {
+    const respBody = await result.json().catch(() => ({}));
+    throw new HttpError(result.status, respBody?.message);
+  }
+  return result.json();
+}
