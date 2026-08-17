@@ -1,9 +1,13 @@
 export class HttpError extends Error {
   code: number;
-  constructor(code: number, message?: string) {
+  /** 400일 때 서버가 실어 보내는 필드별 사유. 화면이 어느 탭·어느 칸이
+   *  문제인지 짚어주는 데 쓴다. */
+  fields?: { path: string; message: string }[];
+  constructor(code: number, message?: string, fields?: { path: string; message: string }[]) {
     super(message);
     this.name = "HttpError";
     this.code = code;
+    this.fields = fields;
   }
 }
 
@@ -38,7 +42,7 @@ export async function jsonFetch<T = any>(
     if (!result.ok) {
       if (result.body) {
         const body = await result.json().catch(() => ({}));
-        reject(new HttpError(result.status, body?.message));
+        reject(new HttpError(result.status, body?.message, body?.fields));
       } else {
         reject(new HttpError(result.status));
       }
@@ -100,7 +104,7 @@ export async function jsonFetchWithSession<T = any>(
     if (!result.ok) {
       if (result.body) {
         const body = await result.json().catch(() => ({}));
-        reject(new HttpError(result.status, body?.message));
+        reject(new HttpError(result.status, body?.message, body?.fields));
       } else {
         reject(new HttpError(result.status));
       }

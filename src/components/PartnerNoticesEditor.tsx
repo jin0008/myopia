@@ -62,8 +62,13 @@ export function PartnerNoticesEditor({ api }: { api: ProfileEditorApi }) {
   return (
     <div>
       <p style={hint}>
-        재개원 안내, 원장 변경, 이벤트처럼 앱 병원 상세에 노출할 소식입니다. 고정한 소식이 항상 위에
-        표시됩니다.
+        재개원 안내, 원장 변경, 이벤트처럼 앱 병원 상세에 노출할 소식입니다. 소식은 등록·수정하는
+        즉시 반영됩니다(아래 저장 버튼과 별개).
+      </p>
+      <p style={hint}>
+        📌 <b>고정</b>한 소식 하나만 앱 병원 상세의 첫 화면에 뜹니다. 고정한 것이 없으면 첫 화면에는
+        아무 소식도 안 보이고 소식 탭에서만 볼 수 있습니다. 새로 고정하면 이전 고정은 자동으로
+        해제됩니다.
       </p>
 
       <div style={{ display: "grid", gap: 6, marginBottom: 14 }}>
@@ -88,7 +93,7 @@ export function PartnerNoticesEditor({ api }: { api: ProfileEditorApi }) {
               checked={draft.pinned}
               onChange={(e) => setDraft((d) => ({ ...d, pinned: e.target.checked }))}
             />
-            고정
+            📌 고정
           </label>
         </div>
         <textarea

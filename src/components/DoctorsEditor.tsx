@@ -97,13 +97,13 @@ export function DoctorsEditor({
                     <input
                       value={d.name}
                       onChange={(e) => set(i, { ...d, name: e.target.value })}
-                      placeholder="이름 (예: 김웅수)"
+                      placeholder="이름"
                       style={{ ...inp, flex: 1 }}
                     />
                     <input
                       value={d.title ?? ""}
                       onChange={(e) => set(i, { ...d, title: e.target.value })}
-                      placeholder="직함 (예: 대표원장 · 소아안과 전문의)"
+                      placeholder="직함"
                       style={{ ...inp, flex: 1.4 }}
                     />
                   </div>

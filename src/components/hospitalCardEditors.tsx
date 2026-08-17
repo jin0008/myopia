@@ -215,6 +215,56 @@ export type OpeningHours = Partial<Record<(typeof DAYS)[number]["key"], DayHours
   note?: string;
 };
 
+/** 00:00~23:30을 30분 간격으로. 병원 시간은 30분 단위를 벗어나는 일이 드물다. */
+const TIME_SLOTS: { value: string; label: string }[] = (() => {
+  const out: { value: string; label: string }[] = [];
+  for (let m = 0; m < 24 * 60; m += 30) {
+    const h = Math.floor(m / 60);
+    const mm = m % 60;
+    const value = `${String(h).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+    const ampm = h < 12 ? "오전" : "오후";
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    out.push({ value, label: `${ampm} ${h12}:${String(mm).padStart(2, "0")}` });
+  }
+  return out;
+})();
+
+/**
+ * 시간 드롭다운.
+ *
+ * `<input type="time">`은 브라우저마다 생김새가 다르고 키보드로 시·분을 따로
+ * 쳐야 해서, 일곱 요일 × 네 칸을 채우는 데 손이 많이 간다. 고를 값이 48개뿐이라
+ * 목록에서 집는 편이 빠르다.
+ */
+function TimeSelect({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <select value={value} onChange={(e) => onChange(e.target.value)} style={timeSelect}>
+      {placeholder != null && <option value="">{placeholder}</option>}
+      {TIME_SLOTS.map((t) => (
+        <option key={t.value} value={t.value}>
+          {t.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+const timeSelect: CSSProperties = {
+  padding: "6px 8px",
+  border: "1px solid #ddd",
+  borderRadius: 6,
+  fontSize: 13,
+  minWidth: 104,
+};
+
 /**
  * Weekly hours grid. No map API supplies these, so the clinic enters them.
  *
@@ -246,6 +296,20 @@ export function OpeningHoursEditor({
         체크를 해제하면 그 요일은 휴진으로 표시됩니다. 아무것도 입력하지 않으면 앱에서 진료시간
         섹션 자체가 표시되지 않습니다.
       </p>
+      {hours.mon != null && (
+        <button
+          type="button"
+          onClick={() => {
+            // 월요일을 화~금에 복사. 대부분의 병원이 평일 시간이 같아서,
+            // 같은 값을 네 번 더 고르는 일이 제일 지겹다.
+            const mon = hours.mon!;
+            onChange({ ...hours, tue: { ...mon }, wed: { ...mon }, thu: { ...mon }, fri: { ...mon } });
+          }}
+          style={{ ...smallBtn, marginBottom: 8 }}
+        >
+          월요일과 같게 (화~금)
+        </button>
+      )}
       <div style={{ display: "grid", gap: 6 }}>
         {DAYS.map(({ key, label }) => {
           const d = hours[key];
@@ -264,32 +328,20 @@ export function OpeningHoursEditor({
               </label>
               {open ? (
                 <>
-                  <input
-                    type="time"
-                    value={d.open}
-                    onChange={(e) => setDay(key, { ...d, open: e.target.value })}
-                    style={{ ...inp, width: 110 }}
-                  />
+                  <TimeSelect value={d.open} onChange={(v) => setDay(key, { ...d, open: v })} />
                   <span>~</span>
-                  <input
-                    type="time"
-                    value={d.close}
-                    onChange={(e) => setDay(key, { ...d, close: e.target.value })}
-                    style={{ ...inp, width: 110 }}
-                  />
-                  <span style={{ color: "#6b7280", fontSize: 12 }}>점심</span>
-                  <input
-                    type="time"
+                  <TimeSelect value={d.close} onChange={(v) => setDay(key, { ...d, close: v })} />
+                  <span style={{ color: "#6b7280", fontSize: 12, marginLeft: 6 }}>점심</span>
+                  <TimeSelect
                     value={d.lunchStart ?? ""}
-                    onChange={(e) => setDay(key, { ...d, lunchStart: e.target.value || null })}
-                    style={{ ...inp, width: 110 }}
+                    placeholder="없음"
+                    onChange={(v) => setDay(key, { ...d, lunchStart: v || null })}
                   />
                   <span>~</span>
-                  <input
-                    type="time"
+                  <TimeSelect
                     value={d.lunchEnd ?? ""}
-                    onChange={(e) => setDay(key, { ...d, lunchEnd: e.target.value || null })}
-                    style={{ ...inp, width: 110 }}
+                    placeholder="없음"
+                    onChange={(v) => setDay(key, { ...d, lunchEnd: v || null })}
                   />
                 </>
               ) : (

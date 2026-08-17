@@ -17,9 +17,12 @@ export function clearPartnerToken() {
 
 export class PartnerError extends Error {
   code: number;
-  constructor(code: number, message?: string) {
+  /** 400일 때 서버가 실어 보내는 필드별 사유. */
+  fields?: { path: string; message: string }[];
+  constructor(code: number, message?: string, fields?: { path: string; message: string }[]) {
     super(message);
     this.code = code;
+    this.fields = fields;
   }
 }
 
@@ -45,7 +48,7 @@ async function partnerFetch<T>(
   });
   if (!res.ok) {
     const b = await res.json().catch(() => ({}));
-    throw new PartnerError(res.status, b?.message);
+    throw new PartnerError(res.status, b?.message, b?.fields);
   }
   return res.status === 204 ? (undefined as T) : res.json();
 }
