@@ -70,7 +70,7 @@ export function PlacePicker({
               void run();
             }
           }}
-          placeholder="병원 이름으로 검색 (예: 누네안과병원 서울)"
+          placeholder="병원 이름으로 검색"
           style={{ ...inp, flex: 1 }}
         />
         <button type="button" onClick={() => void run()} disabled={busy} style={btn}>

@@ -26,6 +26,7 @@ import { FormTabs } from "../components/FormTabs";
 import { PlacePicker } from "../components/PlacePicker";
 import { HospitalNoticesEditor } from "../components/HospitalNoticesEditor";
 import { DoctorsEditor, cleanDoctors } from "../components/DoctorsEditor";
+import { describeFieldErrors } from "../constants/profileFields";
 
 interface HospitalListItem {
   id: string;
@@ -105,7 +106,14 @@ export default function AdminHospitalProfiles() {
       qc.invalidateQueries({ queryKey: ["admin", "hospitalProfiles"] });
       reset();
     },
-    onError: (e: any) => alert(e?.message ?? "저장 실패"),
+    onError: (e: any) => {
+      const details = describeFieldErrors(e?.fields);
+      alert(
+        details.length > 0
+          ? `저장하지 못했습니다.\n\n${details.join("\n")}`
+          : (e?.message ?? "저장하지 못했습니다."),
+      );
+    },
   });
 
   const delMutation = useMutation({

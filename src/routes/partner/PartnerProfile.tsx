@@ -10,6 +10,7 @@ import {
 } from "../../api/partner";
 import { normaliseProfileUrls } from "../../api/hospitalProfile";
 import { hospitalApi, partnerApi } from "../../api/profileEditorApi";
+import { describeFieldErrors } from "../../constants/profileFields";
 import { UserContext } from "../../App";
 import {
   KeywordsEditor,
@@ -61,6 +62,8 @@ export default function PartnerProfile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  // 어느 탭 어느 칸이 문제인지. 문장 하나로는 탭이 일곱 개라 찾을 수가 없다.
+  const [fieldErrors, setFieldErrors] = useState<string[]>([]);
 
   useEffect(() => {
     if (!hasPartnerToken && !isHospitalAdmin) {
@@ -116,6 +119,7 @@ export default function PartnerProfile() {
 
   const save = async () => {
     setMsg(null);
+    setFieldErrors([]);
     setSaving(true);
     try {
       await api.saveProfile(
@@ -125,7 +129,13 @@ export default function PartnerProfile() {
       );
       setMsg("저장되었습니다.");
     } catch (e: any) {
-      setMsg(e?.message ?? "저장 실패");
+      const details = describeFieldErrors(e?.fields);
+      setFieldErrors(details);
+      setMsg(
+        details.length > 0
+          ? "저장하지 못했습니다. 아래 항목을 확인해 주세요."
+          : (e?.message ?? "저장하지 못했습니다."),
+      );
     } finally {
       setSaving(false);
     }
@@ -172,7 +182,10 @@ export default function PartnerProfile() {
         <FormTabs
           // The save banner sits outside the tabs, so leaving it up made
           // "저장되었습니다" follow the user into a tab they hadn't saved.
-          onTabChange={() => setMsg(null)}
+          onTabChange={() => {
+            setMsg(null);
+            setFieldErrors([]);
+          }}
           tabs={[
             {
               key: "basic",
@@ -302,7 +315,22 @@ export default function PartnerProfile() {
           ]}
         />
 
-        {msg && <p style={{ fontSize: 13, color: msg.includes("저장되") ? "#0d7d6f" : "#b3261e" }}>{msg}</p>}
+        {msg && (
+        <p style={{ fontSize: 13, color: msg.includes("저장되") ? "#0d7d6f" : "#b3261e" }}>{msg}</p>
+      )}
+      {fieldErrors.length > 0 && (
+        <ul style={{ margin: "4px 0 0", paddingLeft: 18, color: "#b3261e", fontSize: 13 }}>
+          {fieldErrors.map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
+      )}
+      {/* 탭이 일곱 개라 탭마다 저장 버튼이 있는 줄 알기 쉽다. 실제로는 모든
+          탭이 한 폼이고 저장은 한 번이다. */}
+      <p style={{ color: "#6b7280", fontSize: 12, margin: "10px 0 0" }}>
+        모든 탭의 내용이 저장 버튼 한 번으로 함께 저장됩니다. 소식은 등록·수정할 때 바로
+        반영됩니다.
+      </p>
         <button style={{ ...saveBtn, opacity: canSave && !saving ? 1 : 0.5 }} disabled={!canSave || saving} onClick={save}>
           {saving ? "저장 중…" : "저장"}
         </button>
