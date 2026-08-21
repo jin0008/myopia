@@ -216,44 +216,99 @@ export type OpeningHours = Partial<Record<(typeof DAYS)[number]["key"], DayHours
 };
 
 /** 00:00~23:30을 30분 간격으로. 병원 시간은 30분 단위를 벗어나는 일이 드물다. */
-const TIME_SLOTS: { value: string; label: string }[] = (() => {
-  const out: { value: string; label: string }[] = [];
-  for (let m = 0; m < 24 * 60; m += 30) {
-    const h = Math.floor(m / 60);
-    const mm = m % 60;
-    const value = `${String(h).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
-    const ampm = h < 12 ? "오전" : "오후";
-    const h12 = h % 12 === 0 ? 12 : h % 12;
-    out.push({ value, label: `${ampm} ${h12}:${String(mm).padStart(2, "0")}` });
-  }
-  return out;
-})();
+/** 분은 10분 단위. 병원 시간이 5분 단위까지 갈라지는 일은 없다. */
+const MINUTES = [0, 10, 20, 30, 40, 50];
+const HOURS_12 = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+
+/** "09:30" → { ampm, h12, m }. 값이 없거나 형식이 아니면 null. */
+function parseTime(v: string): { ampm: "AM" | "PM"; h12: number; m: number } | null {
+  const match = /^(\d{2}):(\d{2})$/.exec(v ?? "");
+  if (!match) return null;
+  const h = Number(match[1]);
+  const m = Number(match[2]);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+  return { ampm: h < 12 ? "AM" : "PM", h12: h % 12 === 0 ? 12 : h % 12, m };
+}
+
+function buildTime(ampm: "AM" | "PM", h12: number, m: number): string {
+  const h24 = ampm === "AM" ? (h12 === 12 ? 0 : h12) : h12 === 12 ? 12 : h12 + 12;
+  return `${String(h24).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
 
 /**
- * 시간 드롭다운.
+ * 오전·오후 / 시 / 분을 따로 고르는 시간 입력.
  *
- * `<input type="time">`은 브라우저마다 생김새가 다르고 키보드로 시·분을 따로
- * 쳐야 해서, 일곱 요일 × 네 칸을 채우는 데 손이 많이 간다. 고를 값이 48개뿐이라
- * 목록에서 집는 편이 빠르다.
+ * 한 드롭다운에 48개를 넣었더니 원하는 시각까지 한참 굴려야 했다. 세 칸으로
+ * 나누면 각 목록이 2·12·6개라 눈으로 바로 집힌다.
+ *
+ * `allowEmpty`는 점심시간처럼 없을 수 있는 칸을 위한 것이다 — 시 칸의 "없음"을
+ * 고르면 값이 비워진다.
  */
 function TimeSelect({
   value,
   onChange,
-  placeholder,
+  allowEmpty,
 }: {
   value: string;
   onChange: (v: string) => void;
-  placeholder?: string;
+  allowEmpty?: boolean;
 }) {
+  const parsed = parseTime(value);
+  const ampm = parsed?.ampm ?? "AM";
+  const h12 = parsed?.h12 ?? 9;
+  const m = parsed?.m ?? 0;
+  // 예전에 :15, :45로 저장된 값이 있으면 목록에 없어서 조용히 :00으로
+  // 바뀌어 버린다. 그 값만 목록에 끼워 넣어 사용자가 직접 바꾸게 둔다.
+  const minutes = MINUTES.includes(m) ? MINUTES : [...MINUTES, m].sort((a, b) => a - b);
+
+  const set = (next: Partial<{ ampm: "AM" | "PM"; h12: number; m: number }>) =>
+    onChange(buildTime(next.ampm ?? ampm, next.h12 ?? h12, next.m ?? m));
+
   return (
-    <select value={value} onChange={(e) => onChange(e.target.value)} style={timeSelect}>
-      {placeholder != null && <option value="">{placeholder}</option>}
-      {TIME_SLOTS.map((t) => (
-        <option key={t.value} value={t.value}>
-          {t.label}
-        </option>
-      ))}
-    </select>
+    <span style={{ display: "inline-flex", gap: 4 }}>
+      <select
+        value={parsed ? ampm : ""}
+        onChange={(e) => {
+          if (e.target.value === "") return onChange("");
+          set({ ampm: e.target.value as "AM" | "PM" });
+        }}
+        style={{ ...timeSelect, minWidth: 68 }}
+      >
+        {allowEmpty && <option value="">없음</option>}
+        <option value="AM">오전</option>
+        <option value="PM">오후</option>
+      </select>
+      <select
+        value={parsed ? String(h12) : ""}
+        onChange={(e) => {
+          if (e.target.value === "") return onChange("");
+          set({ h12: Number(e.target.value) });
+        }}
+        style={{ ...timeSelect, minWidth: 62 }}
+      >
+        {!parsed && <option value="">--</option>}
+        {HOURS_12.map((h) => (
+          <option key={h} value={h}>
+            {h}시
+          </option>
+        ))}
+      </select>
+      <select
+        value={parsed ? String(m) : ""}
+        onChange={(e) => {
+          if (e.target.value === "") return onChange("");
+          set({ m: Number(e.target.value) });
+        }}
+        style={{ ...timeSelect, minWidth: 66 }}
+      >
+        {!parsed && <option value="">--</option>}
+        {minutes.map((mm) => (
+          <option key={mm} value={mm}>
+            {String(mm).padStart(2, "0")}분
+          </option>
+        ))}
+      </select>
+    </span>
   );
 }
 
@@ -262,7 +317,6 @@ const timeSelect: CSSProperties = {
   border: "1px solid #ddd",
   borderRadius: 6,
   fontSize: 13,
-  minWidth: 104,
 };
 
 /**
@@ -315,8 +369,19 @@ export function OpeningHoursEditor({
           const d = hours[key];
           const open = d != null;
           return (
-            <div key={key} style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <label style={{ width: 64, display: "flex", gap: 6, alignItems: "center" }}>
+            <div
+              key={key}
+              style={{
+                display: "flex",
+                gap: 8,
+                alignItems: "flex-start",
+                paddingBottom: 6,
+                borderBottom: "1px solid #f3f4f6",
+              }}
+            >
+              <label
+                style={{ width: 56, display: "flex", gap: 6, alignItems: "center", paddingTop: 6 }}
+              >
                 <input
                   type="checkbox"
                   checked={open}
@@ -327,23 +392,29 @@ export function OpeningHoursEditor({
                 {label}
               </label>
               {open ? (
-                <>
-                  <TimeSelect value={d.open} onChange={(v) => setDay(key, { ...d, open: v })} />
-                  <span>~</span>
-                  <TimeSelect value={d.close} onChange={(v) => setDay(key, { ...d, close: v })} />
-                  <span style={{ color: "#6b7280", fontSize: 12, marginLeft: 6 }}>점심</span>
-                  <TimeSelect
-                    value={d.lunchStart ?? ""}
-                    placeholder="없음"
-                    onChange={(v) => setDay(key, { ...d, lunchStart: v || null })}
-                  />
-                  <span>~</span>
-                  <TimeSelect
-                    value={d.lunchEnd ?? ""}
-                    placeholder="없음"
-                    onChange={(v) => setDay(key, { ...d, lunchEnd: v || null })}
-                  />
-                </>
+                // 시간 하나가 칸 세 개라 진료·점심을 한 줄에 두면 12개가
+                // 늘어서서 넘친다. 두 줄로 나눈다.
+                <div style={{ display: "grid", gap: 6 }}>
+                  <span style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
+                    <TimeSelect value={d.open} onChange={(v) => setDay(key, { ...d, open: v })} />
+                    <span>~</span>
+                    <TimeSelect value={d.close} onChange={(v) => setDay(key, { ...d, close: v })} />
+                  </span>
+                  <span style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
+                    <span style={{ color: "#6b7280", fontSize: 12, width: 30 }}>점심</span>
+                    <TimeSelect
+                      value={d.lunchStart ?? ""}
+                      allowEmpty
+                      onChange={(v) => setDay(key, { ...d, lunchStart: v || null })}
+                    />
+                    <span>~</span>
+                    <TimeSelect
+                      value={d.lunchEnd ?? ""}
+                      allowEmpty
+                      onChange={(v) => setDay(key, { ...d, lunchEnd: v || null })}
+                    />
+                  </span>
+                </div>
               ) : (
                 <span style={{ color: "#9ca3af", fontSize: 13 }}>휴진</span>
               )}
