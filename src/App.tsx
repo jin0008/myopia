@@ -48,12 +48,9 @@ const PatientDeleteRequest = lazy(
 );
 
 const TOS = lazy(() => import("./routes/tos"));
+const MyodocPrivacy = lazy(() => import("./routes/myodoc/privacy"));
 
 export const UserContext = createContext<{
-  // ... lines 29-73 skipped in thought, but I need to be precise for replacement.
-  // Actually I can use two replacements or just one big block if I'm careful.
-  // Let's use multi_replace.
-
   user: any | null;
   role: UserRole;
   setRole: (value: UserRole) => void;
@@ -129,6 +126,9 @@ const App = () => {
               <Route path="/partner/login" element={<PartnerLogin />} />
               <Route path="/partner/signup" element={<PartnerSignup />} />
               <Route path="/partner/profile" element={<PartnerProfile />} />
+              {/* 마이오닥(앱) 법적 고지. 스토어 심사 제출용 공개 URL이자 앱에서
+                  띄우는 화면이라, 의료진 플랫폼 헤더 밖에 독립으로 둔다. */}
+              <Route path="/myodoc/privacy" element={<MyodocPrivacy />} />
             </Routes>
             </Suspense>
           </GoogleOAuthProvider>
