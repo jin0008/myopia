@@ -38,6 +38,9 @@ const AdminPartnerAccounts = lazy(() => import("./routes/admin_partner_accounts"
 const PartnerLogin = lazy(() => import("./routes/partner/PartnerLogin"));
 const PartnerSignup = lazy(() => import("./routes/partner/PartnerSignup"));
 const PartnerProfile = lazy(() => import("./routes/partner/PartnerProfile"));
+const PartnerForgotPassword = lazy(
+  () => import("./routes/partner/PartnerForgotPassword"),
+);
 const WhoWeAre = lazy(() => import("./routes/who_we_are"));
 const Treatments = lazy(() => import("./routes/Treatments"));
 const TreatmentDetail = lazy(() => import("./routes/TreatmentDetail"));
@@ -126,6 +129,10 @@ const App = () => {
               <Route path="/partner/login" element={<PartnerLogin />} />
               <Route path="/partner/signup" element={<PartnerSignup />} />
               <Route path="/partner/profile" element={<PartnerProfile />} />
+              <Route
+                path="/partner/forgot-password"
+                element={<PartnerForgotPassword />}
+              />
               {/* 마이오닥(앱) 법적 고지. 스토어 심사 제출용 공개 URL이자 앱에서
                   띄우는 화면이라, 의료진 플랫폼 헤더 밖에 독립으로 둔다. */}
               <Route path="/myodoc/privacy" element={<MyodocPrivacy />} />
