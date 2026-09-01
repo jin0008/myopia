@@ -8,7 +8,7 @@ import {
   type PartnerMe,
   type PartnerProfileInput,
 } from "../../api/partner";
-import { normaliseProfileUrls } from "../../api/hospitalProfile";
+import { normaliseProfileUrls, type HospitalNotice } from "../../api/hospitalProfile";
 import { hospitalApi, partnerApi } from "../../api/profileEditorApi";
 import { describeFieldErrors } from "../../constants/profileFields";
 import { UserContext } from "../../App";
@@ -63,6 +63,19 @@ export default function PartnerProfile() {
   const [me, setMe] = useState<PartnerMe | null>(null);
   const [form, setForm] = useState<PartnerProfileInput>(EMPTY);
   const [previewing, setPreviewing] = useState(false);
+  // 소식은 폼이 아니라 서버에 바로 저장되므로, 미리보기를 열 때 받아온다.
+  // 미리 받아두면 소식 탭에서 고치고 미리보기를 눌렀을 때 옛 내용이 나온다.
+  const [previewNotices, setPreviewNotices] = useState<HospitalNotice[]>([]);
+
+  const openPreview = () => {
+    setPreviewNotices([]);
+    setPreviewing(true);
+    api
+      .listNotices()
+      .then((r) => setPreviewNotices(r.notices))
+      // 소식을 못 받아도 미리보기 자체는 열려야 한다. 나머지는 폼 상태라 보인다.
+      .catch(() => setPreviewNotices([]));
+  };
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -352,7 +365,7 @@ export default function PartnerProfile() {
         반영됩니다.
       </p>
         <div style={{ display: "flex", gap: 8 }}>
-          <button type="button" style={previewBtn} onClick={() => setPreviewing(true)}>
+          <button type="button" style={previewBtn} onClick={openPreview}>
             미리보기
           </button>
           <button style={{ ...saveBtn, opacity: canSave && !saving ? 1 : 0.5 }} disabled={!canSave || saving} onClick={save}>
@@ -362,7 +375,11 @@ export default function PartnerProfile() {
       </div>
 
       {previewing && (
-        <ProfilePreview data={form} onClose={() => setPreviewing(false)} />
+        <ProfilePreview
+          data={form}
+          notices={previewNotices}
+          onClose={() => setPreviewing(false)}
+        />
       )}
     </div>
   );

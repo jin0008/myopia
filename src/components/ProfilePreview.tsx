@@ -1,6 +1,13 @@
 import { useEffect, type CSSProperties, type ReactNode } from "react";
 
+import type { DetailBlock, HospitalNotice } from "../api/hospitalProfile";
+import type { DayHours, OpeningHours } from "./hospitalCardEditors";
 import { categoryLabel, type TreatmentItem } from "../constants/treatmentCategories";
+
+const DAY_LABEL: [keyof OpeningHours, string][] = [
+  ["mon", "월"], ["tue", "화"], ["wed", "수"], ["thu", "목"],
+  ["fri", "금"], ["sat", "토"], ["sun", "일"],
+];
 
 /**
  * 지금 화면에 입력한 내용이 앱에서 어떻게 보이는지.
@@ -17,21 +24,28 @@ import { categoryLabel, type TreatmentItem } from "../constants/treatmentCategor
 export interface PreviewData {
   name: string;
   tagline?: string | null;
+  description?: string | null;
   address?: string;
   phone?: string;
+  booking_url?: string | null;
   thumbnail_url?: string | null;
   images?: string[];
   keywords?: string[];
   treatment_categories?: string[];
   treatment_items?: TreatmentItem[];
+  detail_blocks?: DetailBlock[] | null;
+  opening_hours?: unknown | null;
   doctors?: { name: string; title?: string | null }[] | null;
 }
 
 export function ProfilePreview({
   data,
+  notices,
   onClose,
 }: {
   data: PreviewData;
+  /** 소식 탭은 저장 즉시 반영되므로 폼 상태가 아니라 서버에서 받아 넘긴다. */
+  notices?: HospitalNotice[];
   onClose: () => void;
 }) {
   useEffect(() => {
@@ -51,6 +65,11 @@ export function ProfilePreview({
   const cats = data.treatment_categories ?? [];
   const items = (data.treatment_items ?? []).filter((it) => it.name?.trim());
   const banner = data.images?.[0] ?? data.thumbnail_url ?? null;
+  const blocks = (data.detail_blocks ?? []).filter(
+    (b) => (b.type === "text" && b.text?.trim()) || (b.type === "image" && b.url),
+  );
+  const hours = (data.opening_hours ?? null) as OpeningHours | null;
+  const pinned = (notices ?? []).find((n) => n.pinned && n.published) ?? null;
 
   return (
     <div style={backdrop} onClick={onClose} role="presentation">
@@ -119,6 +138,8 @@ export function ProfilePreview({
           )}
 
           {/* ── 병원 상세 ─────────────────────────────────── */}
+          {/* 실제 앱 상세 화면과 같은 순서로 놓는다. 순서가 다르면 병원이
+              여기서 확인한 인상과 앱에서 보이는 인상이 어긋난다. */}
           <Label>병원 상세에서</Label>
           <div style={phone}>
             {banner ? (
@@ -131,6 +152,15 @@ export function ProfilePreview({
               {data.tagline ? (
                 <div style={{ ...cardSub, marginTop: 4 }}>{data.tagline}</div>
               ) : null}
+
+              {(data.keywords ?? []).length > 0 && (
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+                  {(data.keywords ?? []).map((k) => (
+                    <span key={k} style={keywordChip}>{k}</span>
+                  ))}
+                </div>
+              )}
+
               {data.phone || data.address ? (
                 <div style={{ ...cardSub, marginTop: 8 }}>
                   {[data.address, data.phone].filter(Boolean).join(" · ")}
@@ -142,11 +172,78 @@ export function ProfilePreview({
                   <SectionTitle>진료하는 치료</SectionTitle>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     {cats.map((k) => (
-                      <Badge key={k} tone="blue">
-                        {categoryLabel(k)}
-                      </Badge>
+                      <Badge key={k} tone="blue">{categoryLabel(k)}</Badge>
                     ))}
                   </div>
+                </>
+              )}
+
+              {/* 앱은 고정한 공지 하나만 상세 첫 화면에 올린다. */}
+              {pinned ? (
+                <>
+                  <SectionTitle>공지</SectionTitle>
+                  <div style={itemBox}>
+                    <div style={{ fontWeight: 700, fontSize: 13.5 }}>{pinned.title}</div>
+                    {pinned.body ? (
+                      <div style={{ ...cardSub, marginTop: 4, whiteSpace: "pre-wrap" }}>
+                        {pinned.body}
+                      </div>
+                    ) : null}
+                  </div>
+                </>
+              ) : null}
+
+              {hours ? (
+                <>
+                  <SectionTitle>진료시간</SectionTitle>
+                  <div style={itemBox}>
+                    {DAY_LABEL.map(([key, label]) => {
+                      const d = hours[key] as DayHours | null | undefined;
+                      return (
+                        <div key={String(key)} style={hourRow}>
+                          <span style={{ width: 22, color: "#6b7280" }}>{label}</span>
+                          <span>
+                            {d ? `${d.open} ~ ${d.close}` : "휴진"}
+                            {d?.lunchStart && d?.lunchEnd
+                              ? `  (점심 ${d.lunchStart}~${d.lunchEnd})`
+                              : ""}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    {hours.note ? (
+                      <div style={{ ...cardSub, marginTop: 6 }}>{hours.note}</div>
+                    ) : null}
+                  </div>
+                </>
+              ) : null}
+
+              {blocks.length > 0 || data.description ? (
+                <>
+                  <SectionTitle>병원 소개</SectionTitle>
+                  {blocks.length > 0 ? (
+                    blocks.map((b, i) =>
+                      b.type === "image" ? (
+                        <img key={i} src={b.url} alt="" style={blockImg} />
+                      ) : (
+                        <p key={i} style={blockText}>{b.text}</p>
+                      ),
+                    )
+                  ) : (
+                    <p style={blockText}>{data.description}</p>
+                  )}
+                </>
+              ) : null}
+
+              {(data.doctors ?? []).length > 0 && (
+                <>
+                  <SectionTitle>의료진</SectionTitle>
+                  {(data.doctors ?? []).map((d, i) => (
+                    <div key={i} style={{ fontSize: 13, marginBottom: 4 }}>
+                      <b>{d.name}</b>
+                      {d.title ? <span style={{ color: "#6b7280" }}> · {d.title}</span> : null}
+                    </div>
+                  ))}
                 </>
               )}
 
@@ -170,19 +267,33 @@ export function ProfilePreview({
                 </>
               )}
 
-              {(data.doctors ?? []).length > 0 && (
-                <>
-                  <SectionTitle>의료진</SectionTitle>
-                  {(data.doctors ?? []).map((d, i) => (
-                    <div key={i} style={{ fontSize: 13, marginBottom: 4 }}>
-                      <b>{d.name}</b>
-                      {d.title ? <span style={{ color: "#6b7280" }}> · {d.title}</span> : null}
-                    </div>
-                  ))}
-                </>
-              )}
+              {data.booking_url ? (
+                <div style={bookBtn}>예약하기</div>
+              ) : null}
             </div>
           </div>
+
+          {/* ── 소식 목록 ─────────────────────────────────── */}
+          {(notices ?? []).filter((n) => n.published).length > 0 && (
+            <>
+              <Label>소식 탭에서</Label>
+              <div style={{ ...phone, padding: 10 }}>
+                {(notices ?? [])
+                  .filter((n) => n.published)
+                  .map((n) => (
+                    <div key={n.id} style={{ ...card, margin: "0 0 8px" }}>
+                      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                        {n.pinned ? <Badge tone="blue">고정</Badge> : null}
+                        <span style={{ fontWeight: 700, fontSize: 13.5 }}>{n.title}</span>
+                      </div>
+                      {n.body ? (
+                        <div style={{ ...cardSub, whiteSpace: "pre-wrap" }}>{n.body}</div>
+                      ) : null}
+                    </div>
+                  ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -322,6 +433,35 @@ const bannerEmpty: CSSProperties = {
   background: "#e9edf2",
   color: "#9ca3af",
   fontSize: 13,
+};
+const hourRow: CSSProperties = {
+  display: "flex",
+  gap: 10,
+  fontSize: 13,
+  lineHeight: 1.7,
+};
+const blockText: CSSProperties = {
+  fontSize: 13.5,
+  lineHeight: 1.7,
+  color: "#374151",
+  margin: "0 0 8px",
+  whiteSpace: "pre-wrap",
+};
+const blockImg: CSSProperties = {
+  width: "100%",
+  borderRadius: 8,
+  display: "block",
+  margin: "0 0 8px",
+};
+const bookBtn: CSSProperties = {
+  marginTop: 16,
+  background: "#1a5fc4",
+  color: "#fff",
+  textAlign: "center",
+  padding: "11px 0",
+  borderRadius: 8,
+  fontWeight: 700,
+  fontSize: 14,
 };
 const warnLine: CSSProperties = {
   fontSize: 12.5,
