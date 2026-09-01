@@ -52,6 +52,13 @@ export default function PartnerLogin() {
             병원 가입
           </a>
         </p>
+        {/* 비밀번호를 잊으면 되찾을 길이 이 링크뿐이다. 로그인이 안 될 때
+            눈이 머무는 자리라 가입 링크 바로 아래에 둔다. */}
+        <p style={{ fontSize: 13, textAlign: "center", margin: 0 }}>
+          <a href="/partner/forgot-password" style={{ color: "#6b7280" }}>
+            비밀번호를 잊으셨나요?
+          </a>
+        </p>
       </div>
     </div>
   );

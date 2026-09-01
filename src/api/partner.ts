@@ -127,6 +127,39 @@ export async function partnerLogin(email: string, password: string): Promise<Par
   return r.status;
 }
 
+/* ---- 비밀번호 재설정 ---------------------------------------------- *
+ * 로그인 전에 쓰는 것이라 토큰을 붙이지 않는다(auth=false).
+ * -------------------------------------------------------------------- */
+
+export function partnerSendResetCode(email: string): Promise<{ ok: true }> {
+  return partnerFetch("/partner/password/send-code", { method: "POST" }, { email }, false);
+}
+
+export function partnerVerifyResetCode(
+  email: string,
+  code: string,
+): Promise<{ verificationTicket: string }> {
+  return partnerFetch(
+    "/partner/password/verify-code",
+    { method: "POST" },
+    { email, code },
+    false,
+  );
+}
+
+export function partnerResetPassword(
+  email: string,
+  verificationTicket: string,
+  password: string,
+): Promise<{ ok: true }> {
+  return partnerFetch(
+    "/partner/password/reset",
+    { method: "POST" },
+    { email, verificationTicket, password },
+    false,
+  );
+}
+
 export function partnerMe(): Promise<PartnerMe> {
   return partnerFetch("/partner/me");
 }
