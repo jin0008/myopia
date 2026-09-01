@@ -30,6 +30,7 @@ export interface HospitalProfile {
   hospital_id: string | null;
   thumbnail_url: string | null;
   keywords: string[];
+  treatment_categories: string[];
   treatment_items: TreatmentItem[] | null;
   verified: boolean;
   booking_url: string | null;
@@ -55,6 +56,7 @@ export interface HospitalProfileInput {
   hospital_id?: string | null;
   thumbnail_url?: string | null;
   keywords?: string[];
+  treatment_categories?: string[];
   treatment_items?: TreatmentItem[];
   verified?: boolean;
   booking_url?: string | null;

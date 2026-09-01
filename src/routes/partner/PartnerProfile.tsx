@@ -15,8 +15,10 @@ import { UserContext } from "../../App";
 import {
   KeywordsEditor,
   OpeningHoursEditor,
+  TreatmentCategoryPicker,
   TreatmentItemsEditor,
 } from "../../components/hospitalCardEditors";
+import { ProfilePreview } from "../../components/ProfilePreview";
 import { BannerImagesEditor, DetailBlocksEditor } from "../../components/HospitalContentEditors";
 import { FormTabs } from "../../components/FormTabs";
 import { PlacePicker } from "../../components/PlacePicker";
@@ -33,6 +35,7 @@ const EMPTY: PartnerProfileInput = {
   address: "",
   thumbnail_url: "",
   keywords: [],
+  treatment_categories: [],
   treatment_items: [],
   opening_hours: null,
   doctors: [],
@@ -59,6 +62,7 @@ export default function PartnerProfile() {
   const api = hasPartnerToken ? partnerApi : hospitalApi;
   const [me, setMe] = useState<PartnerMe | null>(null);
   const [form, setForm] = useState<PartnerProfileInput>(EMPTY);
+  const [previewing, setPreviewing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -86,6 +90,7 @@ export default function PartnerProfile() {
             address: p.address ?? "",
             thumbnail_url: p.thumbnail_url ?? "",
             keywords: p.keywords ?? [],
+            treatment_categories: p.treatment_categories ?? [],
             treatment_items: p.treatment_items ?? [],
             opening_hours: p.opening_hours ?? null,
             tagline: p.tagline ?? "",
@@ -248,6 +253,14 @@ export default function PartnerProfile() {
                       <input value={form.address} onChange={set("address")} style={inp} />
                     </Field>
                   </div>
+                  <Field label="진료하는 치료 (치료탭 검색 기준)">
+                    <TreatmentCategoryPicker
+                      value={form.treatment_categories ?? []}
+                      onChange={(treatment_categories) =>
+                        setForm((s) => ({ ...s, treatment_categories }))
+                      }
+                    />
+                  </Field>
                   <Field label="예약 링크 (선택)">
                     <input value={form.booking_url ?? ""} onChange={set("booking_url")} style={inp} placeholder="https://" />
                   </Field>
@@ -299,12 +312,19 @@ export default function PartnerProfile() {
             },
             {
               key: "treatments",
-              label: "치료항목",
+              label: "이벤트",
               content: (
-                <TreatmentItemsEditor
-                  value={form.treatment_items ?? []}
-                  onChange={(treatment_items) => setForm((s) => ({ ...s, treatment_items }))}
-                />
+                <>
+                  <p style={{ margin: "0 0 12px", fontSize: 13, color: "#6b7280" }}>
+                    가격·프로모션을 올리는 곳입니다. 검색에 걸리는 조건은
+                    <b> 기본 정보 탭의 "진료하는 치료"</b>이고, 여기 내용은 상세 화면에만
+                    나옵니다.
+                  </p>
+                  <TreatmentItemsEditor
+                    value={form.treatment_items ?? []}
+                    onChange={(treatment_items) => setForm((s) => ({ ...s, treatment_items }))}
+                  />
+                </>
               ),
             },
             {
@@ -331,10 +351,19 @@ export default function PartnerProfile() {
         모든 탭의 내용이 저장 버튼 한 번으로 함께 저장됩니다. 소식은 등록·수정할 때 바로
         반영됩니다.
       </p>
-        <button style={{ ...saveBtn, opacity: canSave && !saving ? 1 : 0.5 }} disabled={!canSave || saving} onClick={save}>
-          {saving ? "저장 중…" : "저장"}
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button type="button" style={previewBtn} onClick={() => setPreviewing(true)}>
+            미리보기
+          </button>
+          <button style={{ ...saveBtn, opacity: canSave && !saving ? 1 : 0.5 }} disabled={!canSave || saving} onClick={save}>
+            {saving ? "저장 중…" : "저장"}
+          </button>
+        </div>
       </div>
+
+      {previewing && (
+        <ProfilePreview data={form} onClose={() => setPreviewing(false)} />
+      )}
     </div>
   );
 }
@@ -372,6 +401,13 @@ const saveBtn: CSSProperties = {
   fontSize: 15,
   fontWeight: 700,
   cursor: "pointer",
+};
+
+const previewBtn: CSSProperties = {
+  ...saveBtn,
+  background: "#fff",
+  color: "#0d47a1",
+  border: "1px solid #0d47a1",
 };
 
 const inp: CSSProperties = { width: "100%", padding: 8, border: "1px solid #ccc", borderRadius: 6, boxSizing: "border-box" };

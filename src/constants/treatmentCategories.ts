@@ -21,8 +21,11 @@ export function categoryLabel(key: string): string {
   return TREATMENT_CATEGORIES.find((c) => c.key === key)?.label ?? key;
 }
 
+/** 이벤트·프로모션 한 줄.
+ *  category 는 상세에서 묶어 보여줄 때만 쓴다. 병원이 어떤 치료를 하는지는
+ *  프로필의 treatment_categories 가 답하므로 여기서는 비워도 된다. */
 export interface TreatmentItem {
-  category: string;
+  category?: string;
   name: string;
   normalPrice?: number | null;
   eventPrice?: number | null;
