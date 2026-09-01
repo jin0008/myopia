@@ -74,6 +74,7 @@ export interface PartnerProfile {
   address: string | null;
   thumbnail_url: string | null;
   keywords: string[];
+  treatment_categories: string[];
   treatment_items: TreatmentItem[] | null;
   booking_url: string | null;
   status: string;
@@ -95,6 +96,7 @@ export interface PartnerProfileInput {
   address?: string;
   thumbnail_url?: string | null;
   keywords?: string[];
+  treatment_categories?: string[];
   treatment_items?: TreatmentItem[];
   booking_url?: string | null;
   opening_hours?: unknown | null;

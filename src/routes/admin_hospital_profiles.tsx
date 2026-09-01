@@ -18,6 +18,7 @@ import {
 import { getHospitalList } from "../api/hospital";
 import {
   KeywordsEditor,
+  TreatmentCategoryPicker,
   OpeningHoursEditor,
   TreatmentItemsEditor,
 } from "../components/hospitalCardEditors";
@@ -63,6 +64,7 @@ const EMPTY: HospitalProfileInput = {
   hospital_id: null,
   thumbnail_url: "",
   keywords: [],
+  treatment_categories: [],
   treatment_items: [],
   opening_hours: null,
   doctors: [],
@@ -143,6 +145,7 @@ export default function AdminHospitalProfiles() {
       hospital_id: h.hospital_id ?? null,
       thumbnail_url: h.thumbnail_url ?? "",
       keywords: h.keywords ?? [],
+      treatment_categories: h.treatment_categories ?? [],
       treatment_items: h.treatment_items ?? [],
       opening_hours: h.opening_hours ?? null,
       tagline: h.tagline ?? "",
@@ -237,6 +240,14 @@ export default function AdminHospitalProfiles() {
                       <input value={form.address} onChange={set("address")} style={inp} />
                     </Field>
                   </div>
+                  <Field label="진료하는 치료 (치료탭 검색 기준)">
+                    <TreatmentCategoryPicker
+                      value={form.treatment_categories ?? []}
+                      onChange={(treatment_categories) =>
+                        setForm((f) => ({ ...f, treatment_categories }))
+                      }
+                    />
+                  </Field>
                   <Field label="예약 링크 (선택)">
                     <input value={form.booking_url ?? ""} onChange={set("booking_url")} style={inp} placeholder="https://" />
                   </Field>
@@ -288,7 +299,7 @@ export default function AdminHospitalProfiles() {
             },
             {
               key: "treatments",
-              label: "치료항목",
+              label: "이벤트",
               content: (
                 <TreatmentItemsEditor
                   value={form.treatment_items ?? []}

@@ -1,7 +1,8 @@
-import { useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 
 import {
   TREATMENT_CATEGORIES,
+  categoryLabel,
   type TreatmentItem,
 } from "../constants/treatmentCategories";
 
@@ -81,7 +82,9 @@ export function TreatmentItemsEditor({
     onChange(value.map((it, idx) => (idx === i ? { ...it, ...patch } : it)));
   }
   function addItem() {
-    onChange([...value, { category: "dreamLens", name: "" }]);
+    // 카테고리는 비워서 시작한다. 이벤트는 특정 치료에 묶이지 않는 것도 있고
+    // (예: 첫 방문 검진 할인), 기본값을 넣어두면 잘못 묶인 채로 저장된다.
+    onChange([...value, { category: "", name: "" }]);
   }
   function num(v: string): number | null {
     const n = Number(v.replace(/[^0-9]/g, ""));
@@ -94,10 +97,12 @@ export function TreatmentItemsEditor({
         <div key={i} style={itemCard}>
           <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
             <select
-              value={it.category}
+              value={it.category ?? ""}
               onChange={(e) => update(i, { category: e.target.value })}
               style={{ ...inp, flex: "0 0 160px" }}
+              title="어떤 치료의 이벤트인지 (선택)"
             >
+              <option value="">치료 무관</option>
               {TREATMENT_CATEGORIES.map((c) => (
                 <option key={c.key} value={c.key}>
                   {c.label}
@@ -107,7 +112,7 @@ export function TreatmentItemsEditor({
             <input
               value={it.name}
               onChange={(e) => update(i, { name: e.target.value })}
-              placeholder="항목명 (예: 드림렌즈 피팅)"
+              placeholder="이벤트명 (예: 드림렌즈 피팅 첫 방문 할인)"
               style={{ ...inp, flex: 1 }}
             />
             <button
@@ -143,7 +148,7 @@ export function TreatmentItemsEditor({
         </div>
       ))}
       <button type="button" onClick={addItem} style={smallBtn}>
-        + 치료항목 추가
+        + 이벤트 추가
       </button>
     </div>
   );
@@ -428,6 +433,116 @@ export function OpeningHoursEditor({
         placeholder="추가 안내 (예: 공휴일 휴진, 예약제 운영)"
         style={{ ...inp, width: "100%", marginTop: 10 }}
       />
+    </div>
+  );
+}
+
+/**
+ * 이 병원이 하는 치료를 고르는 드롭다운.
+ *
+ * 치료탭 검색이 이 값을 본다. 예전에는 이벤트 항목에 붙은 category 로
+ * 판단했는데, 그러면 가격표를 올리지 않은 병원은 그 치료를 해도 검색되지
+ * 않았다. 고르기만 하면 검색에 잡히도록 분리한다.
+ *
+ * `select multiple`을 쓰지 않은 이유: 여러 개를 고르려면 ctrl+클릭을 알아야
+ * 하고, 하나를 잘못 누르면 나머지 선택이 통째로 날아간다. 열어서 체크하는
+ * 방식은 그런 실수가 없다.
+ */
+export function TreatmentCategoryPicker({
+  value,
+  onChange,
+}: {
+  value: string[];
+  onChange: (next: string[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const boxRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDocDown(e: MouseEvent) {
+      if (!boxRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDocDown);
+    return () => document.removeEventListener("mousedown", onDocDown);
+  }, [open]);
+
+  function toggle(key: string) {
+    onChange(value.includes(key) ? value.filter((k) => k !== key) : [...value, key]);
+  }
+
+  const summary =
+    value.length === 0
+      ? "선택 안 함"
+      : value.map((k) => categoryLabel(k)).join(", ");
+
+  return (
+    <div ref={boxRef} style={{ position: "relative" }}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        style={{
+          ...inp,
+          textAlign: "left",
+          cursor: "pointer",
+          background: "#fff",
+          color: value.length === 0 ? "#9ca3af" : "inherit",
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 8,
+        }}
+      >
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {summary}
+        </span>
+        <span aria-hidden style={{ color: "#6b7280" }}>{open ? "▲" : "▼"}</span>
+      </button>
+
+      {open && (
+        <div
+          style={{
+            position: "absolute",
+            zIndex: 20,
+            top: "calc(100% + 4px)",
+            left: 0,
+            right: 0,
+            background: "#fff",
+            border: "1px solid #ccc",
+            borderRadius: 6,
+            boxShadow: "0 6px 18px rgba(0,0,0,.12)",
+            padding: 4,
+          }}
+        >
+          {TREATMENT_CATEGORIES.map((c) => (
+            <label
+              key={c.key}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "8px 10px",
+                cursor: "pointer",
+                borderRadius: 4,
+                fontSize: 14,
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={value.includes(c.key)}
+                onChange={() => toggle(c.key)}
+              />
+              {c.label}
+            </label>
+          ))}
+        </div>
+      )}
+
+      {value.length === 0 && (
+        <p style={{ margin: "6px 0 0", fontSize: 12, color: "#b3261e" }}>
+          하나도 고르지 않으면 부모가 치료를 선택해 검색할 때 이 병원이 나오지 않습니다.
+        </p>
+      )}
     </div>
   );
 }
