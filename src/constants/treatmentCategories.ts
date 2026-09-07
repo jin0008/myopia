@@ -9,16 +9,25 @@
 // tagged with it stay valid.
 export const TREATMENT_CATEGORIES = [
   { key: "dreamLens", label: "드림렌즈" },
-  { key: "misight", label: "마이사이트" },
   { key: "myopiaGlasses", label: "근시조절안경" },
   { key: "atropine", label: "저농도 아트로핀" },
-  { key: "checkup", label: "근시 검진·상담" },
+  { key: "misight", label: "마이사이트" },
+  { key: "other", label: "기타치료" },
 ] as const;
 
 export type TreatmentCategoryKey = (typeof TREATMENT_CATEGORIES)[number]["key"];
 
+/** `checkup`(근시 검진·상담) 은 `other`(기타치료) 로 대체됐다. 그 키로 이미
+ *  태그된 프로필이 목록에서 조용히 사라지지 않도록 읽을 때만 넘겨준다. */
+const LEGACY_KEYS: Record<string, TreatmentCategoryKey> = { checkup: "other" };
+
+export function normalizeCategoryKey(key: string): string {
+  return LEGACY_KEYS[key] ?? key;
+}
+
 export function categoryLabel(key: string): string {
-  return TREATMENT_CATEGORIES.find((c) => c.key === key)?.label ?? key;
+  const k = normalizeCategoryKey(key);
+  return TREATMENT_CATEGORIES.find((c) => c.key === k)?.label ?? key;
 }
 
 /** 이벤트·프로모션 한 줄.
