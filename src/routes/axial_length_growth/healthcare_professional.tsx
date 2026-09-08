@@ -30,6 +30,7 @@ import type { UpdatePatientInput } from "../../types/patient";
 import { useNavigate } from "react-router";
 import ConfirmDialog from "../../components/dialog";
 import { PatientCard } from "../../components/patient_card";
+import { LinkInviteDialog } from "../../components/link_invite_dialog";
 import NotLoggedIn from "../../components/not_logged_in";
 import { professionalRoleList, MOBILE_MEDIA } from "../../lib/constants";
 import HospitalSelector from "../../components/hospital_selector";
@@ -743,6 +744,10 @@ function PatientList({
   });
 
   const [deleteTargetPatient, setDeleteTargetPatient] = useState<any>();
+  const [invitePatient, setInvitePatient] = useState<{
+    id: string;
+    registration: string;
+  } | null>(null);
 
   const [editPatientData, setEditPatientData] =
     useState<UpdatePatientInput | null>(null);
@@ -773,9 +778,21 @@ function PatientList({
               onDelete={() => {
                 setDeleteTargetPatient(patient);
               }}
+              onInvite={() =>
+                setInvitePatient({
+                  id: patient.id,
+                  registration: patient.registration_number,
+                })
+              }
             />
           ))}
       </GridDiv>
+      <LinkInviteDialog
+        open={invitePatient != null}
+        patientId={invitePatient?.id ?? null}
+        registration={invitePatient?.registration}
+        onClose={() => setInvitePatient(null)}
+      />
       <ConfirmDialog
         title="Confirm deletion"
         content={
