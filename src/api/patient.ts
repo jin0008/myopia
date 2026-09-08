@@ -113,3 +113,22 @@ export function rejectPatientDeletionRequest(patientId: string) {
     false,
   );
 }
+
+export interface LinkInviteResult {
+  url: string;
+  expiresAt: string;
+  emailSent: boolean;
+}
+
+/** 보호자에게 건넬 일회용 연동 링크를 만든다.
+ *  email 을 주면 그 주소로 안내 메일이 나간다. */
+export function createLinkInvite(
+  patientId: string,
+  email?: string,
+): Promise<LinkInviteResult> {
+  return jsonFetchWithSession(
+    API_ROOT + "/patient/" + patientId + "/link-invite",
+    { method: "POST" },
+    email ? { email } : {},
+  );
+}

@@ -1,6 +1,11 @@
 import styled from "styled-components";
 import theme from "../theme";
-import { Description, Edit, DeleteOutline } from "@mui/icons-material";
+import {
+  Description,
+  Edit,
+  DeleteOutline,
+  PhonelinkRing,
+} from "@mui/icons-material";
 
 const CardDiv = styled.div`
   background-color: white;
@@ -97,6 +102,7 @@ export function PatientCard({
   onClick,
   onEdit,
   onDelete,
+  onInvite,
 }: {
   registration: string;
   dateOfBirth: string;
@@ -104,6 +110,8 @@ export function PatientCard({
   onClick: () => void;
   onEdit?: () => void;
   onDelete: () => void;
+  /** 보호자 앱 연동 링크 만들기. */
+  onInvite?: () => void;
 }) {
   return (
     <CardDiv onClick={onClick}>
@@ -113,6 +121,17 @@ export function PatientCard({
           <RegistrationName>{registration}</RegistrationName>
         </NameSection>
         <IconGroup>
+          {onInvite && (
+            <IconButton
+              title="보호자 앱 연동 링크"
+              onClick={(e) => {
+                e.stopPropagation();
+                onInvite();
+              }}
+            >
+              <PhonelinkRing style={{ fontSize: "18px" }} />
+            </IconButton>
+          )}
           {onEdit && (
             <IconButton
               onClick={(e) => {
