@@ -22,6 +22,26 @@ export function getPatientDetail(id: string) {
   return jsonFetchWithSession(API_ROOT + `/patient/${id}`);
 }
 
+/** 활동 기록 전체. 보호자가 앱에서 넣은 것도 여기로 들어온다. */
+export interface ActivityRow {
+  id: string;
+  hours: number | null;
+  timestamp: string;
+  /** "parent"(보호자가 앱에서) | "clinic"(진료에서). 옛 행은 비어 있다. */
+  source?: string | null;
+}
+
+export interface PatientActivityHistory {
+  nearwork_activity: ActivityRow[];
+  outdoor_activity: ActivityRow[];
+}
+
+export function getPatientDataHistory(id: string) {
+  return jsonFetchWithSession<PatientActivityHistory>(
+    API_ROOT + `/patient/${id}/data`,
+  );
+}
+
 export function getLatestPatientData(id: string) {
   return jsonFetchWithSession<Nullable<PatientData>>(
     API_ROOT + `/patient/${id}/data/latest`,
