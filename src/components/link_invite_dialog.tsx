@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
-import QRCode from "qrcode";
 
 import { createLinkInvite, type LinkInviteResult } from "../api/patient";
 import {
@@ -38,7 +37,6 @@ export function LinkInviteDialog({
   const [result, setResult] = useState<LinkInviteResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // 창을 닫았다 다시 열면 앞 환자의 링크가 남아 있으면 안 된다.
   useEffect(() => {
@@ -49,12 +47,6 @@ export function LinkInviteDialog({
       setCopied(false);
     }
   }, [open]);
-
-  useEffect(() => {
-    if (result && canvasRef.current) {
-      QRCode.toCanvas(canvasRef.current, result.url, { width: 200, margin: 1 });
-    }
-  }, [result]);
 
   const issue = async () => {
     if (patientId == null) return;
@@ -96,13 +88,12 @@ export function LinkInviteDialog({
               placeholder="parent@example.com"
             />
             <Hint>
-              주소를 적으면 안내 메일이 나갑니다. 비워 두면 링크와 QR 만
-              만들어 그 자리에서 보여 줄 수 있습니다.
+              주소를 적으면 보호자에게 안내 메일이 나갑니다. 비워 두면
+              링크만 만들어 직접 전달할 수 있습니다.
             </Hint>
           </>
         ) : (
           <>
-            <Canvas ref={canvasRef} />
             <Url>{result.url}</Url>
             <Hint>
               {result.expiresAt.slice(0, 10)}까지 유효하며 한 번만 사용할 수
@@ -159,10 +150,6 @@ const Hint = styled.p`
   line-height: 1.6;
   color: #666;
   margin: 10px 0 14px;
-`;
-const Canvas = styled.canvas`
-  display: block;
-  margin: 0 auto 12px;
 `;
 const Url = styled.p`
   font-size: 12px;
