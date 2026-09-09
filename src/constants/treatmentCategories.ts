@@ -12,6 +12,7 @@ export const TREATMENT_CATEGORIES = [
   { key: "myopiaGlasses", label: "근시조절안경" },
   { key: "atropine", label: "저농도 아트로핀" },
   { key: "misight", label: "마이사이트" },
+  { key: "lasik", label: "라식·라섹" },
   { key: "other", label: "기타치료" },
 ] as const;
 
