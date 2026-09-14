@@ -775,6 +775,7 @@ function PatientList({
               registration={patient.registration_number}
               dateOfBirth={patient.date_of_birth.split("T")[0]}
               sex={patient.sex === "male" ? "M" : "F"}
+              linked={(patient.appLinkCount ?? 0) > 0}
               onClick={() => navigate(`/chart/${patient.id}?edit=true`)}
               onEdit={() => {
                 setEditPatientData({
@@ -800,6 +801,9 @@ function PatientList({
         patientId={invitePatient?.id ?? null}
         registration={invitePatient?.registration}
         canUnlink={user.healthcare_professional?.is_admin === true}
+        // 해제하면 목록의 연결고리도 함께 꺼져야 한다. 창만 닫고 아이콘이
+        // 초록으로 남으면 해제가 안 된 줄 안다.
+        onUnlinked={() => queryClient.invalidateQueries({ queryKey: ["patient"] })}
         onClose={() => setInvitePatient(null)}
       />
       <ConfirmDialog

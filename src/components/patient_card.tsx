@@ -4,7 +4,8 @@ import {
   Description,
   Edit,
   DeleteOutline,
-  PhonelinkRing,
+  Link as LinkIcon,
+  LinkOff,
 } from "@mui/icons-material";
 
 const CardDiv = styled.div`
@@ -67,6 +68,18 @@ const IconButton = styled.button`
   }
 `;
 
+/** 연동된 환자는 초록으로 켠다. 회색은 아직 아무도 연결되지 않은 것이다.
+ *  삭제를 막는 것이 이 연동이라, 목록에서 바로 보여야 왜 안 지워지는지
+ *  카드를 열어 보기 전에 안다. */
+const LinkButton = styled(IconButton)<{ $linked: boolean }>`
+  color: ${(props) => (props.$linked ? "#0f9d58" : "#bbb")};
+
+  &:hover {
+    color: ${(props) => (props.$linked ? "#0b7c45" : "#666")};
+    background-color: ${(props) => (props.$linked ? "#e9f7ef" : "#f5f5f5")};
+  }
+`;
+
 const BadgeRow = styled.div`
   display: flex;
   gap: 8px;
@@ -103,6 +116,7 @@ export function PatientCard({
   onEdit,
   onDelete,
   onInvite,
+  linked = false,
 }: {
   registration: string;
   dateOfBirth: string;
@@ -110,8 +124,10 @@ export function PatientCard({
   onClick: () => void;
   onEdit?: () => void;
   onDelete: () => void;
-  /** 보호자 앱 연동 링크 만들기. */
+  /** 보호자 앱 연동 창 열기 — 연동 현황·해제와 링크 만들기가 함께 있다. */
   onInvite?: () => void;
+  /** 보호자 앱과 이어져 있는지. */
+  linked?: boolean;
 }) {
   return (
     <CardDiv onClick={onClick}>
@@ -122,15 +138,24 @@ export function PatientCard({
         </NameSection>
         <IconGroup>
           {onInvite && (
-            <IconButton
-              title="보호자 앱 연동 링크"
+            <LinkButton
+              $linked={linked}
+              title={
+                linked
+                  ? "보호자 앱과 연동됨 — 눌러서 현황 보기·해제"
+                  : "보호자 앱 연동 링크 만들기"
+              }
               onClick={(e) => {
                 e.stopPropagation();
                 onInvite();
               }}
             >
-              <PhonelinkRing style={{ fontSize: "18px" }} />
-            </IconButton>
+              {linked ? (
+                <LinkIcon style={{ fontSize: "18px" }} />
+              ) : (
+                <LinkOff style={{ fontSize: "18px" }} />
+              )}
+            </LinkButton>
           )}
           {onEdit && (
             <IconButton
