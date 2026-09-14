@@ -93,11 +93,15 @@ function suggestEmail(raw: string): string | null {
 export function LinkInviteDialog({
   patientId,
   registration,
+  canUnlink,
   open,
   onClose,
 }: {
   patientId: string | null;
   registration?: string;
+  /** 연동 해제는 병원 관리자만 할 수 있다(서버도 같은 조건). 권한이 없는
+   *  사람에게 버튼을 보여 주면 눌러서 거절당한 뒤에야 알게 된다. */
+  canUnlink: boolean;
   open: boolean;
   onClose: () => void;
 }) {
@@ -204,19 +208,22 @@ export function LinkInviteDialog({
                     {l.linkedAt.slice(0, 10)}
                   </LinkMeta>
                 </div>
-                <UnlinkButton
-                  type="button"
-                  onClick={() => void unlink(l.linkId)}
-                  disabled={unlinking != null}
-                >
-                  {unlinking === l.linkId ? "해제 중…" : "연동 해제"}
-                </UnlinkButton>
+                {canUnlink && (
+                  <UnlinkButton
+                    type="button"
+                    onClick={() => void unlink(l.linkId)}
+                    disabled={unlinking != null}
+                  >
+                    {unlinking === l.linkId ? "해제 중…" : "연동 해제"}
+                  </UnlinkButton>
+                )}
               </LinkRow>
             ))}
             <Hint>
-              연동된 보호자가 있으면 환자를 삭제할 수 없습니다. 해제하면
-              보호자 앱에서 이 병원의 측정 데이터가 보이지 않게 되며,
-              보호자에게 알림이 갑니다.
+              연동된 보호자가 있으면 환자를 삭제할 수 없습니다.
+              {canUnlink
+                ? " 해제하면 보호자 앱에서 이 병원의 측정 데이터가 보이지 않게 되며, 보호자에게 알림이 갑니다."
+                : " 연동 해제는 병원 관리자만 할 수 있습니다."}
             </Hint>
           </LinkBox>
         )}

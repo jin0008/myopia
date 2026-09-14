@@ -799,6 +799,7 @@ function PatientList({
         open={invitePatient != null}
         patientId={invitePatient?.id ?? null}
         registration={invitePatient?.registration}
+        canUnlink={user.healthcare_professional?.is_admin === true}
         onClose={() => setInvitePatient(null)}
       />
       <ConfirmDialog
