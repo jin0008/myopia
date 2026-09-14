@@ -94,6 +94,7 @@ export function LinkInviteDialog({
   patientId,
   registration,
   canUnlink,
+  onUnlinked,
   open,
   onClose,
 }: {
@@ -102,6 +103,8 @@ export function LinkInviteDialog({
   /** 연동 해제는 병원 관리자만 할 수 있다(서버도 같은 조건). 권한이 없는
    *  사람에게 버튼을 보여 주면 눌러서 거절당한 뒤에야 알게 된다. */
   canUnlink: boolean;
+  /** 해제가 끝났을 때. 목록의 연동 표시를 다시 읽게 한다. */
+  onUnlinked?: () => void;
   open: boolean;
   onClose: () => void;
 }) {
@@ -146,6 +149,7 @@ export function LinkInviteDialog({
     try {
       await deleteAppLink(patientId, linkId);
       await loadLinks();
+      onUnlinked?.();
     } catch {
       setError("연동을 해제하지 못했습니다. 잠시 후 다시 시도해 주세요.");
     } finally {
