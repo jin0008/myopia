@@ -1,7 +1,13 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import styled from "styled-components";
 
-import { createLinkInvite, type LinkInviteResult } from "../api/patient";
+import {
+  createLinkInvite,
+  deleteAppLink,
+  getAppLinks,
+  type AppLink,
+  type LinkInviteResult,
+} from "../api/patient";
 import {
   Dialog,
   DialogActions,
@@ -103,6 +109,45 @@ export function LinkInviteDialog({
   // 보낸 주소를 결과 화면에도 그대로 보여 주려면 붙잡아 둬야 한다.
   const [sentTo, setSentTo] = useState("");
   const typo = suggestEmail(email);
+  // 이미 붙어 있는 연동. null 은 아직 안 왔다는 뜻이다.
+  const [links, setLinks] = useState<AppLink[] | null>(null);
+  const [unlinking, setUnlinking] = useState<string | null>(null);
+
+  const loadLinks = useCallback(async () => {
+    if (patientId == null) return;
+    try {
+      setLinks(await getAppLinks(patientId));
+    } catch {
+      setLinks([]);
+    }
+  }, [patientId]);
+
+  useEffect(() => {
+    if (open) void loadLinks();
+  }, [open, loadLinks]);
+
+  const unlink = async (linkId: string) => {
+    if (patientId == null) return;
+    // 끊으면 보호자 앱 차트에서 이 병원 측정값이 사라진다. 되돌릴 수
+    // 없으므로 한 번 묻는다.
+    if (
+      !window.confirm(
+        "연동을 해제하면 보호자 앱에서 이 병원의 측정 데이터가 보이지 않게 됩니다.\n해제하시겠습니까?",
+      )
+    ) {
+      return;
+    }
+    setUnlinking(linkId);
+    setError(null);
+    try {
+      await deleteAppLink(patientId, linkId);
+      await loadLinks();
+    } catch {
+      setError("연동을 해제하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setUnlinking(null);
+    }
+  };
 
   // 창을 닫았다 다시 열면 앞 환자의 링크가 남아 있으면 안 된다.
   useEffect(() => {
@@ -112,6 +157,7 @@ export function LinkInviteDialog({
       setError(null);
       setCopied(false);
       setSentTo("");
+      setLinks(null);
     }
   }, [open]);
 
@@ -145,6 +191,35 @@ export function LinkInviteDialog({
       <DialogTitle>보호자 앱 연동 링크</DialogTitle>
       <DialogContent>
         {registration && <Meta>등록번호 {registration}</Meta>}
+
+        {links != null && links.length > 0 && (
+          <LinkBox>
+            <BoxTitle>현재 연동된 보호자</BoxTitle>
+            {links.map((l) => (
+              <LinkRow key={l.linkId}>
+                <div>
+                  <strong>{l.childNickname ?? "(애칭 없음)"}</strong>
+                  <LinkMeta>
+                    {l.guardianEmail ?? "(주소 없음)"} · 연동{" "}
+                    {l.linkedAt.slice(0, 10)}
+                  </LinkMeta>
+                </div>
+                <UnlinkButton
+                  type="button"
+                  onClick={() => void unlink(l.linkId)}
+                  disabled={unlinking != null}
+                >
+                  {unlinking === l.linkId ? "해제 중…" : "연동 해제"}
+                </UnlinkButton>
+              </LinkRow>
+            ))}
+            <Hint>
+              연동된 보호자가 있으면 환자를 삭제할 수 없습니다. 해제하면
+              보호자 앱에서 이 병원의 측정 데이터가 보이지 않게 되며,
+              보호자에게 알림이 갑니다.
+            </Hint>
+          </LinkBox>
+        )}
 
         {result == null ? (
           <>
@@ -237,6 +312,54 @@ const Url = styled.p`
   padding: 10px;
   margin: 0 0 4px;
 `;
+const LinkBox = styled.div`
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid #e4e9f2;
+  border-radius: 10px;
+  background: #f7f9fc;
+`;
+
+const BoxTitle = styled.p`
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #5b6472;
+`;
+
+const LinkRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  font-size: 14px;
+`;
+
+const LinkMeta = styled.span`
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  color: #5b6472;
+`;
+
+const UnlinkButton = styled.button`
+  flex-shrink: 0;
+  border: 1px solid #e0b4b4;
+  background: #fff;
+  color: #c62828;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+`;
+
 const Warn = styled.p`
   margin: 8px 0 0;
   font-size: 13px;
