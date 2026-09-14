@@ -1,3 +1,4 @@
+import { HttpError } from "../lib/fetch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { TopDiv } from "../components/div";
 import {
@@ -39,6 +40,14 @@ export default function PatientDeleteRequest() {
         queryKey: ["patient", "deleteRequest"],
       });
     },
+    // 연동이 걸려 있으면 삭제가 막힌다(409). 아무 말도 없으면 승인 버튼이
+    // 먹통인 것처럼 보인다.
+    onError: (e) =>
+      alert(
+        e instanceof HttpError && e.code === 409
+          ? "이 환자는 보호자 앱과 연동되어 있어 삭제할 수 없습니다.\n환자의 '연동하기'에서 연동을 해제한 뒤 다시 시도해 주세요."
+          : "삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      ),
   });
 
   const rejectMutation = useMutation({

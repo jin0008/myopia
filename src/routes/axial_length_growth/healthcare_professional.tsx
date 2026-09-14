@@ -28,6 +28,7 @@ import {
 } from "../../api/patient";
 import type { UpdatePatientInput } from "../../types/patient";
 import { useNavigate } from "react-router";
+import { HttpError } from "../../lib/fetch";
 import ConfirmDialog from "../../components/dialog";
 import { PatientCard } from "../../components/patient_card";
 import { LinkInviteDialog } from "../../components/link_invite_dialog";
@@ -731,7 +732,14 @@ function PatientList({
       queryClient.invalidateQueries({ queryKey: ["patient"] });
       setDeleteTargetPatient(null);
     },
-    onError: () => alert("An error occured"),
+    // 보호자 앱 연동이 걸려 있으면 삭제가 막힌다(409). 예전에는 이것도
+    // "An error occured" 로 흘러가, 병원은 왜 안 되는지 알 수 없었다.
+    onError: (e) =>
+      alert(
+        e instanceof HttpError && e.code === 409
+          ? "이 환자는 보호자 앱과 연동되어 있어 삭제할 수 없습니다.\n환자의 '연동하기'에서 연동을 해제한 뒤 다시 시도해 주세요."
+          : "An error occured",
+      ),
   });
 
   const createPatientDeletionRequestMutation = useMutation({
@@ -791,6 +799,7 @@ function PatientList({
         open={invitePatient != null}
         patientId={invitePatient?.id ?? null}
         registration={invitePatient?.registration}
+        canUnlink={user.healthcare_professional?.is_admin === true}
         onClose={() => setInvitePatient(null)}
       />
       <ConfirmDialog

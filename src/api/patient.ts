@@ -134,6 +134,29 @@ export function rejectPatientDeletionRequest(patientId: string) {
   );
 }
 
+export interface AppLink {
+  linkId: string;
+  childNickname: string | null;
+  guardianEmail: string | null;
+  linkedAt: string;
+  status: string;
+}
+
+/** 이 환자에 붙어 있는 보호자 앱 연동. */
+export function getAppLinks(patientId: string): Promise<AppLink[]> {
+  return jsonFetchWithSession(API_ROOT + "/patient/" + patientId + "/app-links");
+}
+
+/** 병원이 연동을 끊는다. 보호자 앱에는 알림이 간다. */
+export function deleteAppLink(patientId: string, linkId: string) {
+  return jsonFetchWithSession(
+    API_ROOT + "/patient/" + patientId + "/app-links/" + linkId,
+    { method: "DELETE" },
+    undefined,
+    false,
+  );
+}
+
 export interface LinkInviteResult {
   url: string;
   expiresAt: string;
