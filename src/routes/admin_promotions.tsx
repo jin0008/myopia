@@ -8,6 +8,8 @@ import {
   listPromotions,
   listPartnerAccounts,
   savePromotion,
+  searchFacilities,
+  type FacilityHit,
 } from "../api/partnerAccount";
 
 /**
@@ -33,18 +35,37 @@ export default function AdminPromotions() {
     queryFn: listPartnerAccounts,
   });
 
-  const [kind, setKind] = useState<"eye" | "optical">("optical");
-  const [key, setKey] = useState("");
+  // 고른 업체. 번호를 손으로 적지 않는다 - 25자짜리 인허가번호에서 앞
+  // 네 글자가 빠진 채 저장돼 광고가 안 나간 일이 있었다. 등록은 성공한
+  // 것처럼 보이고 노출만 안 되니 원인을 찾기도 어렵다.
+  const [picked, setPicked] = useState<FacilityHit | null>(null);
+  const [term, setTerm] = useState("");
+  const [hits, setHits] = useState<FacilityHit[] | null>(null);
+  const [searching, setSearching] = useState(false);
   const [startsOn, setStartsOn] = useState(today());
   const [endsOn, setEndsOn] = useState(monthsLater(1));
   const [accountId, setAccountId] = useState("");
   const [note, setNote] = useState("");
 
+  const runSearch = async () => {
+    if (term.trim().length < 2) return;
+    setSearching(true);
+    try {
+      setHits(await searchFacilities(term.trim()));
+    } catch {
+      setHits([]);
+    } finally {
+      setSearching(false);
+    }
+  };
+
   const saveMutation = useMutation({
     mutationFn: savePromotion,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin", "promotions"] });
-      setKey("");
+      setPicked(null);
+      setTerm("");
+      setHits(null);
       setNote("");
     },
     onError: () => alert("저장하지 못했습니다. 입력값을 확인해 주세요."),
@@ -60,7 +81,7 @@ export default function AdminPromotions() {
   }
 
   const rows = listQuery.data ?? [];
-  const canSave = key.trim() !== "" && startsOn !== "" && endsOn !== "";
+  const canSave = picked != null && startsOn !== "" && endsOn !== "";
 
   return (
     <div style={{ padding: 24, maxWidth: 1000 }}>
@@ -73,27 +94,65 @@ export default function AdminPromotions() {
       <div style={card}>
         <h3 style={{ margin: "0 0 12px", fontSize: 15 }}>등록 · 기간 연장</h3>
         <div style={formRow}>
-          <label style={label}>
-            구분
-            <select
-              value={kind}
-              onChange={(e) => setKind(e.target.value as "eye" | "optical")}
-              style={input}
-            >
-              <option value="optical">안경점</option>
-              <option value="eye">안과</option>
-            </select>
-          </label>
-          <label style={{ ...label, flex: 2 }}>
-            {kind === "eye" ? "요양기호" : "인허가번호"}
+          <label style={{ ...label, flex: 3 }}>
+            업체 찾기
             <input
-              value={key}
-              onChange={(e) => setKey(e.target.value)}
-              placeholder={kind === "eye" ? "11100000" : "3000000-101-2020-00123"}
+              value={term}
+              onChange={(e) => setTerm(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  void runSearch();
+                }
+              }}
+              placeholder="상호 또는 주소 (예: 뉴파피루스, 압구정 안경)"
               style={input}
             />
           </label>
+          <div style={{ display: "flex", alignItems: "flex-end" }}>
+            <PrimaryButton disabled={term.trim().length < 2} onClick={() => void runSearch()}>
+              {searching ? "찾는 중…" : "찾기"}
+            </PrimaryButton>
+          </div>
         </div>
+
+        {picked ? (
+          <div style={pickedBox}>
+            <div>
+              <span style={kindTag}>{picked.kind === "eye" ? "안과" : "안경점"}</span>{" "}
+              <b>{picked.name}</b>
+              <div style={{ color: "#666", fontSize: 12 }}>{picked.address}</div>
+              <div style={{ fontFamily: "monospace", fontSize: 11.5, color: "#8a93a1" }}>
+                {picked.key}
+              </div>
+            </div>
+            <button type="button" style={linkBtn} onClick={() => setPicked(null)}>
+              다시 고르기
+            </button>
+          </div>
+        ) : hits != null ? (
+          hits.length === 0 ? (
+            <p style={hint}>찾지 못했습니다. 상호 일부만 넣어 보세요.</p>
+          ) : (
+            <div style={hitBox}>
+              {hits.map((h) => (
+                <button
+                  key={h.kind + h.key}
+                  type="button"
+                  style={hitRow}
+                  onClick={() => {
+                    setPicked(h);
+                    setHits(null);
+                  }}
+                >
+                  <span style={kindTag}>{h.kind === "eye" ? "안과" : "안경점"}</span>{" "}
+                  <b>{h.name}</b>
+                  <div style={{ color: "#666", fontSize: 12 }}>{h.address}</div>
+                </button>
+              ))}
+            </div>
+          )
+        ) : null}
         <div style={formRow}>
           <label style={label}>
             시작
@@ -147,9 +206,10 @@ export default function AdminPromotions() {
         <PrimaryButton
           disabled={!canSave || saveMutation.isPending}
           onClick={() =>
+            picked &&
             saveMutation.mutate({
-              kind,
-              key: key.trim(),
+              kind: picked.kind,
+              key: picked.key,
               tier: "premium",
               startsOn,
               endsOn,
@@ -251,6 +311,59 @@ function badge(active: boolean): CSSProperties {
     whiteSpace: "nowrap",
   };
 }
+
+const pickedBox: CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "flex-start",
+  gap: 12,
+  border: "1px solid #cfe3d6",
+  background: "#f2f9f5",
+  borderRadius: 8,
+  padding: "10px 12px",
+  marginBottom: 10,
+  fontSize: 14,
+};
+
+const hitBox: CSSProperties = {
+  border: "1px solid #ddd",
+  borderRadius: 8,
+  maxHeight: 220,
+  overflowY: "auto",
+  marginBottom: 10,
+  background: "#fff",
+};
+
+const hitRow: CSSProperties = {
+  display: "block",
+  width: "100%",
+  textAlign: "left",
+  border: 0,
+  borderBottom: "1px solid #f0f0f0",
+  background: "none",
+  padding: "9px 12px",
+  cursor: "pointer",
+  fontSize: 14,
+};
+
+const kindTag: CSSProperties = {
+  fontSize: 11.5,
+  fontWeight: 700,
+  color: "#5b6472",
+  background: "#eef1f6",
+  borderRadius: 4,
+  padding: "1px 6px",
+};
+
+const linkBtn: CSSProperties = {
+  border: 0,
+  background: "none",
+  color: "#1a73e8",
+  fontSize: 12.5,
+  fontWeight: 700,
+  cursor: "pointer",
+  whiteSpace: "nowrap",
+};
 
 const card: CSSProperties = {
   border: "1px solid #eee",

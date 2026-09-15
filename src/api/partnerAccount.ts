@@ -85,6 +85,21 @@ export interface FacilityPromotion {
   note: string | null;
 }
 
+export interface FacilityHit {
+  kind: "eye" | "optical";
+  key: string;
+  name: string;
+  address: string;
+}
+
+/** 광고 걸 업체를 이름으로 찾는다. 번호를 손으로 옮겨 적지 않게 하려는
+ *  것이다 - 25자짜리 인허가번호는 한 글자만 빠져도 아무 데도 안 붙는다. */
+export function searchFacilities(q: string): Promise<FacilityHit[]> {
+  return jsonFetchWithSession(
+    API_ROOT + "/partner/facilities?q=" + encodeURIComponent(q),
+  );
+}
+
 export function listPromotions(): Promise<FacilityPromotion[]> {
   return jsonFetchWithSession(API_ROOT + "/partner/promotions");
 }
