@@ -58,3 +58,54 @@ export function claimProfileForAccount(
     { profile_id: profileId },
   );
 }
+
+/* ---- 유료 노출 ------------------------------------------------------- *
+ *                                                                        *
+ * 등급은 사이트 관리자만 켠다. 파트너가 스스로 올릴 수 있으면 돈을 내지     *
+ * 않고도 프리미엄이 된다.                                                 *
+ * ---------------------------------------------------------------------- */
+
+export interface FacilityPromotion {
+  id: string;
+  /** "eye" 면 심평원 요양기호, "optical" 이면 지자체 인허가번호로 잇는다. */
+  kind: "eye" | "optical";
+  key: string;
+  tier: "premium";
+  startsOn: string;
+  endsOn: string;
+  /** 오늘이 기간 안인지. 화면이 다시 재지 않아도 되게 서버가 답한다. */
+  active: boolean;
+  accountId: string | null;
+  accountName: string | null;
+  accountEmail: string | null;
+  note: string | null;
+}
+
+export function listPromotions(): Promise<FacilityPromotion[]> {
+  return jsonFetchWithSession(API_ROOT + "/partner/promotions");
+}
+
+export function savePromotion(body: {
+  kind: "eye" | "optical";
+  key: string;
+  tier: "premium";
+  startsOn: string;
+  endsOn: string;
+  accountId?: string;
+  note?: string;
+}): Promise<{ id: string }> {
+  return jsonFetchWithSession(
+    API_ROOT + "/partner/promotions",
+    { method: "PUT" },
+    body,
+  );
+}
+
+export function deletePromotion(id: string) {
+  return jsonFetchWithSession(
+    API_ROOT + "/partner/promotions/" + id,
+    { method: "DELETE" },
+    undefined,
+    false,
+  );
+}

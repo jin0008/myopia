@@ -1,0 +1,272 @@
+import { useContext, useState, type CSSProperties } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+import { UserContext } from "../App";
+import { PrimaryButton, PrimaryNagativeButton } from "../components/button";
+import {
+  deletePromotion,
+  listPromotions,
+  listPartnerAccounts,
+  savePromotion,
+} from "../api/partnerAccount";
+
+/**
+ * 안과·안경점 찾기의 유료 노출 관리.
+ *
+ * 등급은 여기서만 켠다. 파트너가 스스로 올릴 수 있으면 돈을 내지 않고도
+ * 프리미엄이 된다 - 인증 배지를 관리자 전용으로 둔 것과 같은 이유다.
+ *
+ * 연결 열쇠는 상호가 아니라 번호다. 안과는 심평원 요양기호, 안경점은
+ * 지자체 인허가번호. 같은 상호가 전국에 여럿이고 주소 표기도 도로명과
+ * 지번이 섞여 있어, 이름으로 맞추면 엉뚱한 업체에 광고가 붙는다.
+ */
+export default function AdminPromotions() {
+  const { user } = useContext(UserContext);
+  const qc = useQueryClient();
+
+  const listQuery = useQuery({
+    queryKey: ["admin", "promotions"],
+    queryFn: listPromotions,
+  });
+  const accountsQuery = useQuery({
+    queryKey: ["admin", "partnerAccounts"],
+    queryFn: listPartnerAccounts,
+  });
+
+  const [kind, setKind] = useState<"eye" | "optical">("optical");
+  const [key, setKey] = useState("");
+  const [startsOn, setStartsOn] = useState(today());
+  const [endsOn, setEndsOn] = useState(monthsLater(1));
+  const [accountId, setAccountId] = useState("");
+  const [note, setNote] = useState("");
+
+  const saveMutation = useMutation({
+    mutationFn: savePromotion,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin", "promotions"] });
+      setKey("");
+      setNote("");
+    },
+    onError: () => alert("저장하지 못했습니다. 입력값을 확인해 주세요."),
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: deletePromotion,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "promotions"] }),
+  });
+
+  if (!user?.is_site_admin) {
+    return <div style={{ padding: 24 }}>권한이 없습니다.</div>;
+  }
+
+  const rows = listQuery.data ?? [];
+  const canSave = key.trim() !== "" && startsOn !== "" && endsOn !== "";
+
+  return (
+    <div style={{ padding: 24, maxWidth: 1000 }}>
+      <h2 style={{ marginBottom: 4 }}>유료 노출 관리</h2>
+      <p style={hint}>
+        찾기 탭에서 상단 광고 자리에 올릴 업체를 지정합니다. 자리는 최대 3개이며,
+        사용자 위치에서 5km 안에 있을 때만 노출됩니다.
+      </p>
+
+      <div style={card}>
+        <h3 style={{ margin: "0 0 12px", fontSize: 15 }}>등록 · 기간 연장</h3>
+        <div style={formRow}>
+          <label style={label}>
+            구분
+            <select
+              value={kind}
+              onChange={(e) => setKind(e.target.value as "eye" | "optical")}
+              style={input}
+            >
+              <option value="optical">안경점</option>
+              <option value="eye">안과</option>
+            </select>
+          </label>
+          <label style={{ ...label, flex: 2 }}>
+            {kind === "eye" ? "요양기호" : "인허가번호"}
+            <input
+              value={key}
+              onChange={(e) => setKey(e.target.value)}
+              placeholder={kind === "eye" ? "11100000" : "3000000-101-2020-00123"}
+              style={input}
+            />
+          </label>
+        </div>
+        <div style={formRow}>
+          <label style={label}>
+            시작
+            <input
+              type="date"
+              value={startsOn}
+              onChange={(e) => setStartsOn(e.target.value)}
+              style={input}
+            />
+          </label>
+          <label style={label}>
+            종료
+            <input
+              type="date"
+              value={endsOn}
+              onChange={(e) => setEndsOn(e.target.value)}
+              style={input}
+            />
+          </label>
+          <label style={{ ...label, flex: 2 }}>
+            파트너 계정 (선택)
+            <select
+              value={accountId}
+              onChange={(e) => setAccountId(e.target.value)}
+              style={input}
+            >
+              <option value="">연결 안 함</option>
+              {(accountsQuery.data ?? []).map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.hospitalName} · {a.email}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <div style={formRow}>
+          <label style={{ ...label, flex: 1 }}>
+            메모 (선택)
+            <input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="입금일, 계약 건번호 등"
+              style={input}
+            />
+          </label>
+        </div>
+        <p style={hint}>
+          같은 업체를 다시 등록하면 기간이 갱신됩니다. 종료일은 그날 자정까지
+          유효합니다.
+        </p>
+        <PrimaryButton
+          disabled={!canSave || saveMutation.isPending}
+          onClick={() =>
+            saveMutation.mutate({
+              kind,
+              key: key.trim(),
+              tier: "premium",
+              startsOn,
+              endsOn,
+              accountId: accountId || undefined,
+              note: note.trim() || undefined,
+            })
+          }
+        >
+          {saveMutation.isPending ? "저장 중…" : "저장"}
+        </PrimaryButton>
+      </div>
+
+      <h3 style={{ fontSize: 15, marginTop: 28 }}>등록된 광고 ({rows.length})</h3>
+      <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8 }}>
+        <thead>
+          <tr>
+            <th style={th}>상태</th>
+            <th style={th}>구분</th>
+            <th style={th}>번호</th>
+            <th style={th}>기간</th>
+            <th style={th}>파트너</th>
+            <th style={th}>메모</th>
+            <th style={th} />
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.id}>
+              <td style={td}>
+                <span style={badge(r.active)}>{r.active ? "노출 중" : "기간 아님"}</span>
+              </td>
+              <td style={td}>{r.kind === "eye" ? "안과" : "안경점"}</td>
+              <td style={{ ...td, fontFamily: "monospace", fontSize: 12 }}>{r.key}</td>
+              <td style={td}>
+                {r.startsOn} ~ {r.endsOn}
+              </td>
+              <td style={td}>{r.accountName ?? "-"}</td>
+              <td style={{ ...td, color: "#666", fontSize: 12 }}>{r.note ?? "-"}</td>
+              <td style={td}>
+                <PrimaryNagativeButton
+                  onClick={() => {
+                    if (!window.confirm("이 광고를 삭제할까요?")) return;
+                    removeMutation.mutate(r.id);
+                  }}
+                >
+                  삭제
+                </PrimaryNagativeButton>
+              </td>
+            </tr>
+          ))}
+          {rows.length === 0 && (
+            <tr>
+              <td style={{ ...td, color: "#888" }} colSpan={7}>
+                등록된 광고가 없습니다.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function today(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/** 기본 계약 기간. 자주 쓰는 값을 미리 채워 두면 매번 달력을 열지 않는다. */
+function monthsLater(n: number): string {
+  const d = new Date();
+  d.setMonth(d.getMonth() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+function badge(active: boolean): CSSProperties {
+  const color = active ? "#0d7d6f" : "#888";
+  return {
+    color,
+    background: color + "18",
+    borderRadius: 999,
+    padding: "2px 10px",
+    fontSize: 12,
+    fontWeight: 700,
+    whiteSpace: "nowrap",
+  };
+}
+
+const card: CSSProperties = {
+  border: "1px solid #eee",
+  borderRadius: 12,
+  padding: 16,
+  marginTop: 16,
+  background: "#fafbfc",
+};
+
+const formRow: CSSProperties = { display: "flex", gap: 12, marginBottom: 10 };
+
+const label: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 4,
+  fontSize: 12,
+  fontWeight: 700,
+  color: "#5b6472",
+  flex: 1,
+};
+
+const input: CSSProperties = {
+  border: "1px solid #ddd",
+  borderRadius: 6,
+  padding: "8px 10px",
+  fontSize: 14,
+  fontWeight: 400,
+  color: "#141922",
+};
+
+const hint: CSSProperties = { color: "#666", fontSize: 12.5, margin: "8px 0 12px" };
+
+const th: CSSProperties = { textAlign: "left", borderBottom: "2px solid #eee", padding: 8 };
+const td: CSSProperties = { borderBottom: "1px solid #eee", padding: 8 };
