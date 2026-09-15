@@ -70,6 +70,10 @@ export interface FacilityPromotion {
   /** "eye" 면 심평원 요양기호, "optical" 이면 지자체 인허가번호로 잇는다. */
   kind: "eye" | "optical";
   key: string;
+  /** 명부에서 찾은 상호. null 이면 그 번호로 붙는 업체가 없다는 뜻이다 -
+   *  번호를 잘못 넣은 광고는 여기가 비어 나온다. */
+  facilityName: string | null;
+  facilityAddress: string | null;
   tier: "premium";
   startsOn: string;
   endsOn: string;
@@ -85,6 +89,7 @@ export function listPromotions(): Promise<FacilityPromotion[]> {
   return jsonFetchWithSession(API_ROOT + "/partner/promotions");
 }
 
+/** 상호·주소는 명부에서 읽어 오는 값이라 보내지 않는다. */
 export function savePromotion(body: {
   kind: "eye" | "optical";
   key: string;

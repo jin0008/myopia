@@ -168,7 +168,7 @@ export default function AdminPromotions() {
           <tr>
             <th style={th}>상태</th>
             <th style={th}>구분</th>
-            <th style={th}>번호</th>
+            <th style={th}>업체</th>
             <th style={th}>기간</th>
             <th style={th}>파트너</th>
             <th style={th}>메모</th>
@@ -182,7 +182,22 @@ export default function AdminPromotions() {
                 <span style={badge(r.active)}>{r.active ? "노출 중" : "기간 아님"}</span>
               </td>
               <td style={td}>{r.kind === "eye" ? "안과" : "안경점"}</td>
-              <td style={{ ...td, fontFamily: "monospace", fontSize: 12 }}>{r.key}</td>
+              <td style={td}>
+                {r.facilityName ? (
+                  <>
+                    <div style={{ fontWeight: 700 }}>{r.facilityName}</div>
+                    <div style={{ color: "#666", fontSize: 12 }}>{r.facilityAddress}</div>
+                  </>
+                ) : (
+                  // 번호로 붙는 업체가 없다. 오타이거나 명부에 없는 곳이다.
+                  <div style={{ color: "#b3261e", fontWeight: 700 }}>
+                    번호에 맞는 업체 없음
+                  </div>
+                )}
+                <div style={{ fontFamily: "monospace", fontSize: 11.5, color: "#8a93a1" }}>
+                  {r.key}
+                </div>
+              </td>
               <td style={td}>
                 {r.startsOn} ~ {r.endsOn}
               </td>
