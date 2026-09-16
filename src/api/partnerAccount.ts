@@ -83,6 +83,9 @@ export interface FacilityPromotion {
   accountName: string | null;
   accountEmail: string | null;
   note: string | null;
+  /** 지난 30일 성적. 파트너가 보는 숫자와 같은 곳에서 만든다. */
+  impressions30d: number;
+  clicks30d: number;
 }
 
 export interface FacilityHit {
@@ -127,5 +130,51 @@ export function deletePromotion(id: string) {
     { method: "DELETE" },
     undefined,
     false,
+  );
+}
+
+/* ---- 프리미엄 신청 (운영자) --------------------------------------------- */
+
+export interface AdminPromotionRequest {
+  id: string;
+  kind: "eye" | "optical";
+  key: string;
+  facilityName: string;
+  startsOn: string;
+  months: number;
+  status: "pending" | "approved" | "rejected" | "cancelled";
+  note: string | null;
+  reviewNote: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  accountId: string;
+  accountName: string;
+  accountEmail: string;
+  contactName: string;
+}
+
+export function listPromotionRequests(
+  status?: string,
+): Promise<AdminPromotionRequest[]> {
+  return jsonFetchWithSession(
+    API_ROOT + "/partner/promotion-requests" + (status ? `?status=${status}` : ""),
+  );
+}
+
+/** 허락한다. 여기서 광고가 걸린다. 결제가 붙으면 이 자리가 입금 확인이 된다. */
+export function approvePromotionRequest(id: string, note?: string) {
+  return jsonFetchWithSession(
+    API_ROOT + `/partner/promotion-requests/${id}/approve`,
+    { method: "POST" },
+    { note },
+  );
+}
+
+/** 거절한다. 사유는 신청한 업체 화면에 그대로 보인다. */
+export function rejectPromotionRequest(id: string, note: string) {
+  return jsonFetchWithSession(
+    API_ROOT + `/partner/promotion-requests/${id}/reject`,
+    { method: "POST" },
+    { note },
   );
 }

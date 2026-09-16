@@ -28,6 +28,9 @@ export default function AdminMyodoc() {
         <a href="/admin/partner-accounts" style={linkRow}>
           병원 파트너 계정 승인 →
         </a>
+        <a href="/admin/promotion-requests" style={linkRow}>
+          프리미엄 신청 처리 →
+        </a>
         <a href="/admin/promotions" style={linkRow}>
           찾기 탭 유료 노출 관리 →
         </a>

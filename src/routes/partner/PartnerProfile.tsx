@@ -170,15 +170,22 @@ export default function PartnerProfile() {
         {/* 이 화면은 myopia 헤더 밖에 있다. 파트너는 여기가 전부라 로그아웃이
             맞고, myopia 관리자는 원래 있던 곳으로 돌아갈 길이 있어야 한다. */}
         {hasPartnerToken ? (
-          <button
-            style={logout}
-            onClick={() => {
-              clearPartnerToken();
-              nav("/partner/login");
-            }}
-          >
-            로그아웃
-          </button>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            {/* 프리미엄은 프로필과 다른 일이지만 파트너에게는 여기가 전부다.
+                이 줄에 없으면 신청 화면이 있는 줄도 모른다. */}
+            <button style={logout} onClick={() => nav("/partner/promotions")}>
+              프리미엄 노출
+            </button>
+            <button
+              style={logout}
+              onClick={() => {
+                clearPartnerToken();
+                nav("/partner/login");
+              }}
+            >
+              로그아웃
+            </button>
+          </div>
         ) : (
           <button style={logout} onClick={() => nav("/")}>
             ← myopia로 돌아가기
