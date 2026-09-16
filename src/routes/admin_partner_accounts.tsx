@@ -83,11 +83,18 @@ export default function AdminPartnerAccounts() {
       <a href="/admin/myodoc" style={{ display: "inline-block", marginBottom: 12, color: "#6b7280" }}>
         ← myodoc 관리
       </a>
-      <h1>병원 파트너 계정 승인</h1>
+      <h1>파트너 계정</h1>
       <p style={{ color: "#6b7280", marginTop: -6 }}>
-        가입한 병원 계정을 승인하면 해당 병원 프로필이 앱에 노출됩니다.
-        ⚠️ 승인 전, "신청 병원명"과 "claim한 병원"이 실제로 일치하는지 꼭
-        확인하세요 (아무 병원이나 claim 가능하므로 사칭 방지의 핵심 단계).
+        이 화면에서 하는 일은 <b>두 가지</b>이고 서로 무관합니다.
+        <br />
+        <b>치료탭 · 병원 프로필</b> — 노출을 켜면 그 병원 프로필이 앱 치료탭에
+        보입니다. 켜기 전에 "상호"와 "연결된 프로필"이 실제로 같은 곳인지 꼭
+        확인하세요. 아무 병원이나 claim 할 수 있어 사칭을 막는 핵심 단계입니다.
+        <br />
+        <b>찾기탭 · 광고</b> — "실제 업체"를 연결해야 그 계정이 프리미엄 노출을
+        신청할 수 있고 자기 노출·클릭 성적을 봅니다. 가입 폼의 상호는 자유
+        입력이라, 사업자등록증이나 통화로 확인한 뒤 연결해 주세요. 안경점은
+        프로필이 없으므로 노출 상태와 상관없이 연결만 되면 신청할 수 있습니다.
       </p>
 
       {listQuery.isLoading ? (
@@ -99,15 +106,31 @@ export default function AdminPartnerAccounts() {
               흐르면 다른 화면까지 어긋난다. */}
           <table style={{ width: "100%", minWidth: 1180, borderCollapse: "collapse" }}>
           <thead>
+            {/* 한 표에 두 시스템이 섞여 있다. 치료탭 프로필과 찾기탭 광고는
+                식별자도(카카오 장소 vs 심평원 번호) 승인 절차도 따로다.
+                칸 이름만 나열하면 어느 승인이 무슨 승인인지 구분되지 않아,
+                머리글을 두 줄로 묶어 어느 세계의 칸인지 먼저 말한다. */}
             <tr>
-              <th style={th}>신청 병원명</th>
-              <th style={th}>claim한 병원 (place id)</th>
-              <th style={th}>실제 업체</th>
+              <th style={groupTh} colSpan={4}>
+                계정
+              </th>
+              <th style={{ ...groupTh, ...groupDivide }} colSpan={2}>
+                치료탭 · 병원 프로필
+                <div style={groupHint}>광고와 무관합니다</div>
+              </th>
+              <th style={{ ...groupTh, ...groupDivide }}>
+                찾기탭 · 광고
+                <div style={groupHint}>프리미엄 신청의 전제</div>
+              </th>
+            </tr>
+            <tr>
+              <th style={th}>상호</th>
               <th style={th}>담당자</th>
               <th style={th}>이메일</th>
               <th style={th}>가입일</th>
-              <th style={th}>상태</th>
-              <th style={th} />
+              <th style={{ ...th, ...groupDivide }}>연결된 프로필</th>
+              <th style={th}>앱 노출</th>
+              <th style={{ ...th, ...groupDivide }}>실제 업체</th>
             </tr>
           </thead>
           <tbody>
@@ -122,7 +145,10 @@ export default function AdminPartnerAccounts() {
                   </span>{" "}
                   {a.hospitalName}
                 </td>
-                <td style={td}>
+                <td style={td}>{a.contactName}</td>
+                <td style={td}>{a.email}</td>
+                <td style={td}>{a.createdAt.slice(0, 10)}</td>
+                <td style={{ ...td, ...groupDivide }}>
                   {a.claimedName ? (
                     <>
                       {a.claimedName}
@@ -158,7 +184,26 @@ export default function AdminPartnerAccounts() {
                     </div>
                   )}
                 </td>
-                <td style={td}>
+                <td style={{ ...td, whiteSpace: "nowrap" }}>
+                  <span style={badge(a.status)}>{STATUS_LABEL[a.status]}</span>
+                  <div style={{ marginTop: 6 }}>
+                    {a.status !== "approved" && (
+                      <PrimaryButton
+                        onClick={() => statusMutation.mutate({ id: a.id, status: "approved" })}
+                      >
+                        노출
+                      </PrimaryButton>
+                    )}{" "}
+                    {a.status !== "rejected" && (
+                      <PrimaryNagativeButton
+                        onClick={() => statusMutation.mutate({ id: a.id, status: "rejected" })}
+                      >
+                        숨김
+                      </PrimaryNagativeButton>
+                    )}
+                  </div>
+                </td>
+                <td style={{ ...td, ...groupDivide }}>
                   <FacilityCell
                     account={a}
                     busy={facilityMutation.isPending}
@@ -166,28 +211,6 @@ export default function AdminPartnerAccounts() {
                       facilityMutation.mutate({ accountId: a.id, facility })
                     }
                   />
-                </td>
-                <td style={td}>{a.contactName}</td>
-                <td style={td}>{a.email}</td>
-                <td style={td}>{a.createdAt.slice(0, 10)}</td>
-                <td style={td}>
-                  <span style={badge(a.status)}>{STATUS_LABEL[a.status]}</span>
-                </td>
-                <td style={{ ...td, whiteSpace: "nowrap" }}>
-                  {a.status !== "approved" && (
-                    <PrimaryButton
-                      onClick={() => statusMutation.mutate({ id: a.id, status: "approved" })}
-                    >
-                      승인
-                    </PrimaryButton>
-                  )}{" "}
-                  {a.status !== "rejected" && (
-                    <PrimaryNagativeButton
-                      onClick={() => statusMutation.mutate({ id: a.id, status: "rejected" })}
-                    >
-                      거절
-                    </PrimaryNagativeButton>
-                  )}
                 </td>
               </tr>
             ))}
@@ -207,10 +230,12 @@ const select: CSSProperties = {
   maxWidth: 260,
 };
 
+/** 이 상태가 정하는 것은 치료탭에 프로필이 보이느냐 하나다. 광고와는
+ *  무관한데 '승인됨'이라고만 쓰여 있으면 무엇이 승인된 것인지 알 수 없다. */
 const STATUS_LABEL: Record<PartnerAccountStatus, string> = {
-  pending: "승인 대기",
-  approved: "승인됨",
-  rejected: "거절됨",
+  pending: "대기",
+  approved: "노출 중",
+  rejected: "숨김",
 };
 
 /**
@@ -387,4 +412,14 @@ function badge(status: PartnerAccountStatus): CSSProperties {
 }
 
 const th: CSSProperties = { textAlign: "left", borderBottom: "2px solid #eee", padding: 8 };
+const groupTh: CSSProperties = {
+  textAlign: "left",
+  padding: "8px 8px 4px",
+  fontSize: 12.5,
+  color: "#5b6472",
+  borderBottom: "1px solid #f0f0f0",
+};
+const groupHint: CSSProperties = { fontWeight: 400, fontSize: 11, color: "#9ca3af" };
+/** 두 세계 사이의 경계. 선이 없으면 머리글의 묶음이 본문까지 이어지지 않는다. */
+const groupDivide: CSSProperties = { borderLeft: "1px solid #e5e7eb" };
 const td: CSSProperties = { borderBottom: "1px solid #eee", padding: 8 };
