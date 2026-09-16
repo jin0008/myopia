@@ -48,7 +48,9 @@ export default function AdminPartnerAccounts() {
       alert(
         e?.code === 409
           ? "다른 계정이 이미 이 가게를 쓰고 있습니다."
-          : (e?.message ?? "묶지 못했습니다."),
+          : e?.code === 404
+            ? "명부에서 찾을 수 없는 가게입니다. 다시 골라 주세요."
+            : (e?.message ?? "묶지 못했습니다."),
       ),
   });
 
