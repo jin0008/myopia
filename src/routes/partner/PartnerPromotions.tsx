@@ -89,7 +89,9 @@ export default function PartnerPromotions() {
       setNote("");
       await reload();
     } catch (e) {
-      const code = (e as { status?: number })?.status;
+      // PartnerError 가 담는 이름은 status 가 아니라 code 다. 틀리면 항상
+      // 일반 문구로 떨어져, 왜 안 되는지 알려 줄 유일한 자리가 사라진다.
+      const code = (e as { code?: number })?.code;
       alert(
         code === 409
           ? "이미 처리를 기다리는 신청이 있습니다. 먼저 취소해 주세요."
