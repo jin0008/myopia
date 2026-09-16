@@ -2,13 +2,15 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { useNavigate } from "react-router";
 
 import {
+  clearPartnerToken,
   cancelPromotionRequest,
   createPromotionRequest,
   getPartnerToken,
   listMyPromotionRequests,
   listMyPromotions,
-  searchMyFacilities,
-  type FacilityHit,
+  partnerMe,
+  type LinkedFacility,
+  type PartnerBusinessKind,
   type MyPromotion,
   type PromotionRequest,
 } from "../../api/partner";
@@ -28,11 +30,11 @@ export default function PartnerPromotions() {
   const [requests, setRequests] = useState<PromotionRequest[] | null>(null);
   const [error, setError] = useState(false);
 
-  // 신청서
-  const [term, setTerm] = useState("");
-  const [hits, setHits] = useState<FacilityHit[] | null>(null);
-  const [searching, setSearching] = useState(false);
-  const [picked, setPicked] = useState<FacilityHit | null>(null);
+  // 신청서. 가게는 고르지 않는다 - 운영자가 계정에 묶어 둔 것이 곧 내
+  // 가게다. 고르게 두면 남의 가게로도 신청할 수 있고, 처리 대기 신청이
+  // 가게당 하나뿐이라 남의 신청을 막아 버릴 수도 있다.
+  const [facility, setFacility] = useState<LinkedFacility | null>(null);
+  const [businessKind, setBusinessKind] = useState<PartnerBusinessKind>("hospital");
   const [startsOn, setStartsOn] = useState(today());
   const [months, setMonths] = useState(1);
   const [note, setNote] = useState("");
@@ -48,44 +50,29 @@ export default function PartnerPromotions() {
 
   async function reload() {
     try {
-      const [p, r] = await Promise.all([
+      const [p, r, me] = await Promise.all([
         listMyPromotions(30),
         listMyPromotionRequests(),
+        partnerMe(),
       ]);
       setPromotions(p);
       setRequests(r);
+      setFacility(me.facility);
+      setBusinessKind(me.businessKind);
     } catch {
       setError(true);
     }
   }
 
-  async function runSearch() {
-    if (term.trim().length < 2) return;
-    setSearching(true);
-    try {
-      setHits(await searchMyFacilities(term.trim()));
-    } catch {
-      setHits([]);
-    } finally {
-      setSearching(false);
-    }
-  }
-
   async function submit() {
-    if (picked == null) return;
+    if (facility == null) return;
     setSaving(true);
     try {
       await createPromotionRequest({
-        kind: picked.kind,
-        key: picked.key,
-        facilityName: picked.name,
         startsOn,
         months,
         note: note.trim() || undefined,
       });
-      setPicked(null);
-      setTerm("");
-      setHits(null);
       setNote("");
       await reload();
     } catch (e) {
@@ -95,7 +82,11 @@ export default function PartnerPromotions() {
       alert(
         code === 409
           ? "이미 처리를 기다리는 신청이 있습니다. 먼저 취소해 주세요."
-          : "신청하지 못했습니다. 입력값을 확인해 주세요.",
+          : code === 403
+            ? "아직 가게가 확인되지 않았습니다. 운영자에게 확인을 요청해 주세요."
+            : code === 404
+              ? "묶여 있는 가게를 명부에서 찾을 수 없습니다. 운영자에게 알려 주세요."
+              : "신청하지 못했습니다. 입력값을 확인해 주세요.",
       );
     } finally {
       setSaving(false);
@@ -123,7 +114,28 @@ export default function PartnerPromotions() {
 
   return (
     <div style={{ padding: 24, maxWidth: 900 }}>
-      <h2 style={{ margin: "0 0 4px", fontSize: 20 }}>프리미엄 노출</h2>
+      {/* 안경점은 이 화면이 파트너 포털의 전부다. 여기에 로그아웃이 없으면
+          나갈 길이 없다. 병원은 프로필 편집기에서 왔으니 돌아갈 길을 준다. */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h2 style={{ margin: "0 0 4px", fontSize: 20 }}>프리미엄 노출</h2>
+        <div style={{ display: "flex", gap: 8 }}>
+          {businessKind === "hospital" && (
+            <button type="button" style={headBtn} onClick={() => navigate("/partner/profile")}>
+              프로필 관리
+            </button>
+          )}
+          <button
+            type="button"
+            style={headBtn}
+            onClick={() => {
+              clearPartnerToken();
+              navigate("/partner/login");
+            }}
+          >
+            로그아웃
+          </button>
+        </div>
+      </div>
       <p style={hint}>
         찾기 탭에서 내 주변 안과·안경점을 볼 때 목록 맨 위에 광고로 보입니다.
       </p>
@@ -201,64 +213,29 @@ export default function PartnerPromotions() {
           </p>
         )}
 
-        <label style={label}>
-          가게 찾기
-          <input
-            value={term}
-            onChange={(e) => setTerm(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                void runSearch();
-              }
-            }}
-            placeholder="상호 또는 주소 (예: 뉴파피루스, 압구정 안경)"
-            style={input}
-          />
-        </label>
-        <button
-          type="button"
-          style={btn}
-          disabled={term.trim().length < 2 || searching}
-          onClick={() => void runSearch()}
-        >
-          {searching ? "찾는 중…" : "찾기"}
-        </button>
-
-        {picked ? (
+        {/* 고르는 자리가 아니다. 운영자가 확인해 묶어 준 가게를 보여 주고,
+            틀렸으면 사람에게 말하게 한다 - 여기서 바꾸게 하면 묶어 둔
+            뜻이 없어진다. */}
+        {facility == null ? (
+          <div style={warnBox}>
+            <b>가게가 아직 확인되지 않았습니다.</b>
+            <div style={{ marginTop: 4 }}>
+              프리미엄은 확인된 가게에만 걸 수 있습니다. 운영자에게 사업자
+              정보를 보내 확인을 요청해 주세요.
+            </div>
+          </div>
+        ) : (
           <div style={pickedBox}>
             <div>
-              <span style={kindTag}>{picked.kind === "eye" ? "안과" : "안경점"}</span>{" "}
-              <b>{picked.name}</b>
-              <div style={{ color: "#666", fontSize: 12 }}>{picked.address}</div>
+              <span style={kindTag}>
+                {facility.kind === "eye" ? "안과" : "안경점"}
+              </span>{" "}
+              <b>{facility.name}</b>
+              <div style={{ color: "#666", fontSize: 12 }}>{facility.address}</div>
             </div>
-            <button type="button" style={linkBtn} onClick={() => setPicked(null)}>
-              다시 고르기
-            </button>
+            <span style={{ color: "#8a93a1", fontSize: 12 }}>확인된 가게</span>
           </div>
-        ) : hits != null ? (
-          hits.length === 0 ? (
-            <p style={hint}>찾지 못했습니다. 상호 일부만 넣어 보세요.</p>
-          ) : (
-            <div style={hitBox}>
-              {hits.map((h) => (
-                <button
-                  key={h.kind + h.key}
-                  type="button"
-                  style={hitRow}
-                  onClick={() => {
-                    setPicked(h);
-                    setHits(null);
-                  }}
-                >
-                  <span style={kindTag}>{h.kind === "eye" ? "안과" : "안경점"}</span>{" "}
-                  <b>{h.name}</b>
-                  <div style={{ color: "#666", fontSize: 12 }}>{h.address}</div>
-                </button>
-              ))}
-            </div>
-          )
-        ) : null}
+        )}
 
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           <label style={label}>
@@ -302,7 +279,7 @@ export default function PartnerPromotions() {
         <button
           type="button"
           style={{ ...btn, ...btnPrimary }}
-          disabled={picked == null || saving}
+          disabled={facility == null || saving}
           onClick={() => void submit()}
         >
           {saving ? "보내는 중…" : "신청하기"}
@@ -389,6 +366,16 @@ function statusTag(s: PromotionRequest["status"]): CSSProperties {
   return { fontSize: 11.5, fontWeight: 700, color, background: bg, borderRadius: 4, padding: "2px 7px" };
 }
 
+const headBtn: CSSProperties = {
+  border: "1px solid #ddd",
+  background: "#fff",
+  borderRadius: 8,
+  padding: "6px 12px",
+  fontSize: 13,
+  fontWeight: 700,
+  cursor: "pointer",
+};
+
 const card: CSSProperties = {
   border: "1px solid #eee",
   borderRadius: 12,
@@ -466,25 +453,16 @@ const pickedBox: CSSProperties = {
   marginBottom: 10,
   fontSize: 14,
 };
-const hitBox: CSSProperties = {
-  border: "1px solid #ddd",
+const warnBox: CSSProperties = {
+  border: "1px solid #f0d9a8",
+  background: "#fdf6e3",
   borderRadius: 8,
-  maxHeight: 220,
-  overflowY: "auto",
+  padding: "10px 12px",
   marginBottom: 10,
-  background: "#fff",
+  fontSize: 13.5,
+  color: "#6b5613",
 };
-const hitRow: CSSProperties = {
-  display: "block",
-  width: "100%",
-  textAlign: "left",
-  border: 0,
-  borderBottom: "1px solid #f0f0f0",
-  background: "none",
-  padding: "9px 12px",
-  cursor: "pointer",
-  fontSize: 14,
-};
+
 const linkBtn: CSSProperties = {
   border: 0,
   background: "none",

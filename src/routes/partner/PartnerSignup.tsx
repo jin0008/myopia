@@ -5,6 +5,10 @@ import { partnerSignup } from "../../api/partner";
 
 export default function PartnerSignup() {
   const nav = useNavigate();
+  // 병원인지 안경점인지 먼저 고른다. 뒤에 나오는 말이 전부 여기서 갈린다 -
+  // 안경점 사장에게 "병원명"을 묻거나 병원 프로필 이야기를 하면, 잘못
+  // 들어온 줄 알고 나간다.
+  const [kind, setKind] = useState<"hospital" | "optical">("hospital");
   const [form, setForm] = useState({
     hospital_name: "",
     contact_name: "",
@@ -33,6 +37,7 @@ export default function PartnerSignup() {
         password: form.password,
         contact_name: form.contact_name.trim(),
         hospital_name: form.hospital_name.trim(),
+        business_kind: kind,
       });
       setDone(true);
     } catch (e: any) {
@@ -48,8 +53,9 @@ export default function PartnerSignup() {
         <div style={card}>
           <h1 style={{ marginTop: 0 }}>가입 신청 완료</h1>
           <p style={{ color: "#374151" }}>
-            관리자 승인 후 병원 프로필이 앱에 노출됩니다. 승인 전에도 로그인해서
-            프로필을 미리 작성해 둘 수 있어요.
+            {kind === "hospital"
+              ? "관리자 승인 후 병원 프로필이 앱에 노출됩니다. 승인 전에도 로그인해서 프로필을 미리 작성해 둘 수 있어요."
+              : "관리자 승인 후 프리미엄 노출을 신청하실 수 있습니다. 승인 과정에서 사업자 확인을 위해 연락드립니다."}
           </p>
           <button style={btn} onClick={() => nav("/partner/login")}>
             로그인하러 가기
@@ -62,8 +68,25 @@ export default function PartnerSignup() {
   return (
     <div style={wrap}>
       <div style={card}>
-        <h1 style={{ marginTop: 0 }}>병원 파트너 가입</h1>
-        <input style={inp} placeholder="병원명" value={form.hospital_name} onChange={set("hospital_name")} />
+        <h1 style={{ marginTop: 0 }}>파트너 가입</h1>
+        <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+          {(["hospital", "optical"] as const).map((k) => (
+            <button
+              key={k}
+              type="button"
+              style={kindBtn(kind === k)}
+              onClick={() => setKind(k)}
+            >
+              {k === "hospital" ? "병원" : "안경점"}
+            </button>
+          ))}
+        </div>
+        <input
+          style={inp}
+          placeholder={kind === "hospital" ? "병원명" : "안경점 이름"}
+          value={form.hospital_name}
+          onChange={set("hospital_name")}
+        />
         <input style={inp} placeholder="담당자 이름" value={form.contact_name} onChange={set("contact_name")} />
         <input style={inp} placeholder="이메일" value={form.email} onChange={set("email")} />
         <input
@@ -86,6 +109,20 @@ export default function PartnerSignup() {
       </div>
     </div>
   );
+}
+
+function kindBtn(active: boolean): CSSProperties {
+  return {
+    flex: 1,
+    border: active ? 0 : "1px solid #d1d5db",
+    background: active ? "#1a73e8" : "#fff",
+    color: active ? "#fff" : "#374151",
+    borderRadius: 8,
+    padding: "10px 0",
+    fontSize: 14,
+    fontWeight: 700,
+    cursor: "pointer",
+  };
 }
 
 const wrap: CSSProperties = {

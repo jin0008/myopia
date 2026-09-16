@@ -60,7 +60,19 @@ export interface PartnerMe {
   email: string;
   contactName: string;
   hospitalName: string;
+  /** 병원인지 안경점인지. 가입할 때 정해진다. 화면을 가르는 데 쓴다. */
+  businessKind: PartnerBusinessKind;
   status: PartnerStatus;
+  /** 운영자가 묶어 준 가게. 없으면 프리미엄을 신청할 수 없다. */
+  facility: LinkedFacility | null;
+}
+
+/** 계정에 묶인 가게. 운영자가 정한다. */
+export interface LinkedFacility {
+  kind: "eye" | "optical";
+  key: string;
+  name: string;
+  address: string;
 }
 
 export interface PartnerProfile {
@@ -107,24 +119,31 @@ export interface PartnerProfileInput {
   longitude?: number | null;
 }
 
+export type PartnerBusinessKind = "hospital" | "optical";
+
 export function partnerSignup(data: {
   email: string;
   password: string;
   contact_name: string;
   hospital_name: string;
+  business_kind: PartnerBusinessKind;
 }): Promise<{ id: string; status: PartnerStatus }> {
   return partnerFetch("/partner/signup", { method: "POST" }, data, false);
 }
 
-export async function partnerLogin(email: string, password: string): Promise<PartnerStatus> {
-  const r = await partnerFetch<{ token: string; status: PartnerStatus }>(
-    "/partner/login",
-    { method: "POST" },
-    { email, password },
-    false,
-  );
+export async function partnerLogin(
+  email: string,
+  password: string,
+): Promise<{ status: PartnerStatus; businessKind: PartnerBusinessKind }> {
+  const r = await partnerFetch<{
+    token: string;
+    status: PartnerStatus;
+    businessKind: PartnerBusinessKind;
+  }>("/partner/login", { method: "POST" }, { email, password }, false);
   setPartnerToken(r.token);
-  return r.status;
+  // 예전 서버는 업종을 내지 않는다. 배포 사이에 걸친 사용자가 화면도 없이
+  // 떨어지지 않도록 병원으로 본다 - 지금까지 전부 병원이었다.
+  return { status: r.status, businessKind: r.businessKind ?? "hospital" };
 }
 
 /* ---- 비밀번호 재설정 ---------------------------------------------- *
@@ -254,13 +273,6 @@ export function searchPartnerPlaces(q: string): Promise<{
 
 /* ---- 프리미엄 신청 ------------------------------------------------------ */
 
-export interface FacilityHit {
-  kind: "eye" | "optical";
-  key: string;
-  name: string;
-  address: string;
-}
-
 export type PromotionRequestStatus =
   | "pending"
   | "approved"
@@ -298,16 +310,8 @@ export interface MyPromotion {
   days: { day: string; impressions: number; clicks: number }[];
 }
 
-/** 신청서에서 자기 가게를 고른다. 번호를 손으로 적지 않게 하려는 것이다 -
- *  25자짜리 인허가번호는 한 글자만 빠져도 아무 데도 안 붙는다. */
-export function searchMyFacilities(q: string): Promise<FacilityHit[]> {
-  return partnerFetch("/partner/my/facilities?q=" + encodeURIComponent(q));
-}
-
+/** 가게는 보내지 않는다. 운영자가 계정에 묶어 둔 것을 서버가 쓴다. */
 export function createPromotionRequest(body: {
-  kind: "eye" | "optical";
-  key: string;
-  facilityName: string;
   startsOn: string;
   months: number;
   note?: string;

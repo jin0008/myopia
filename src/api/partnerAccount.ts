@@ -10,8 +10,15 @@ export interface PartnerAccount {
   hospitalName: string;
   status: PartnerAccountStatus;
   createdAt: string;
+  /** "hospital" | "optical". 가입할 때 정해진다. */
+  businessKind: "hospital" | "optical";
   claimedPlaceId: string | null;
   claimedName: string | null;
+  /** 광고가 쓰는 가게. 운영자가 묶어 준다. 없으면 프리미엄 신청 불가. */
+  facilityKind: "eye" | "optical" | null;
+  facilityKey: string | null;
+  facilityName: string | null;
+  facilityAddress: string | null;
 }
 
 export function listPartnerAccounts(): Promise<PartnerAccount[]> {
@@ -163,10 +170,14 @@ export function listPromotionRequests(
 
 /** 허락한다. 여기서 광고가 걸린다. 결제가 붙으면 이 자리가 입금 확인이 된다. */
 export function approvePromotionRequest(id: string, note?: string) {
+  // 네 번째 인자가 false 여야 한다. 서버가 204 로 답하는데 기본값(true)은
+  // 빈 본문에 대고 json() 을 불러 터진다 - 승인은 됐는데 화면에는 실패로
+  // 뜨고, 목록도 갱신되지 않아 여전히 '확인 중'으로 남는다.
   return jsonFetchWithSession(
     API_ROOT + `/partner/promotion-requests/${id}/approve`,
     { method: "POST" },
     { note },
+    false,
   );
 }
 
@@ -176,5 +187,23 @@ export function rejectPromotionRequest(id: string, note: string) {
     API_ROOT + `/partner/promotion-requests/${id}/reject`,
     { method: "POST" },
     { note },
+    false,
+  );
+}
+
+/** 계정에 가게를 묶는다. key 를 비우면 푼다.
+ *
+ *  프로필은 카카오 장소로, 광고는 심평원 번호로 식별된다. 그 둘을 잇는
+ *  일이라 사람이 한 번 해야 한다 - 계정이 정말 그 가게인지는 서류나
+ *  통화로 확인할 수밖에 없다. */
+export function setAccountFacility(
+  id: string,
+  facility: { kind: "eye" | "optical"; key: string } | null,
+) {
+  return jsonFetchWithSession(
+    API_ROOT + `/partner/accounts/${id}/facility`,
+    { method: "PUT" },
+    facility ?? { key: "" },
+    false,
   );
 }
