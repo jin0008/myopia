@@ -61,6 +61,16 @@ export interface PartnerMe {
   contactName: string;
   hospitalName: string;
   status: PartnerStatus;
+  /** 운영자가 묶어 준 가게. 없으면 프리미엄을 신청할 수 없다. */
+  facility: LinkedFacility | null;
+}
+
+/** 계정에 묶인 가게. 운영자가 정한다. */
+export interface LinkedFacility {
+  kind: "eye" | "optical";
+  key: string;
+  name: string;
+  address: string;
 }
 
 export interface PartnerProfile {
@@ -254,13 +264,6 @@ export function searchPartnerPlaces(q: string): Promise<{
 
 /* ---- 프리미엄 신청 ------------------------------------------------------ */
 
-export interface FacilityHit {
-  kind: "eye" | "optical";
-  key: string;
-  name: string;
-  address: string;
-}
-
 export type PromotionRequestStatus =
   | "pending"
   | "approved"
@@ -298,16 +301,8 @@ export interface MyPromotion {
   days: { day: string; impressions: number; clicks: number }[];
 }
 
-/** 신청서에서 자기 가게를 고른다. 번호를 손으로 적지 않게 하려는 것이다 -
- *  25자짜리 인허가번호는 한 글자만 빠져도 아무 데도 안 붙는다. */
-export function searchMyFacilities(q: string): Promise<FacilityHit[]> {
-  return partnerFetch("/partner/my/facilities?q=" + encodeURIComponent(q));
-}
-
+/** 가게는 보내지 않는다. 운영자가 계정에 묶어 둔 것을 서버가 쓴다. */
 export function createPromotionRequest(body: {
-  kind: "eye" | "optical";
-  key: string;
-  facilityName: string;
   startsOn: string;
   months: number;
   note?: string;
