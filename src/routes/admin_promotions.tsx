@@ -13,7 +13,7 @@ import {
 } from "../api/partnerAccount";
 
 /**
- * 안과·안경점 찾기의 유료 노출 관리.
+ * 안과·안경원 찾기의 유료 노출 관리.
  *
  * 등급은 여기서만 켠다. 파트너가 스스로 올릴 수 있으면 돈을 내지 않고도
  * 프리미엄이 된다 - 인증 배지를 관리자 전용으로 둔 것과 같은 이유다.
@@ -119,7 +119,7 @@ export default function AdminPromotions() {
         {picked ? (
           <div style={pickedBox}>
             <div>
-              <span style={kindTag}>{picked.kind === "eye" ? "안과" : "안경점"}</span>{" "}
+              <span style={kindTag}>{picked.kind === "eye" ? "안과" : "안경원"}</span>{" "}
               <b>{picked.name}</b>
               <div style={{ color: "#666", fontSize: 12 }}>{picked.address}</div>
               <div style={{ fontFamily: "monospace", fontSize: 11.5, color: "#8a93a1" }}>
@@ -145,7 +145,7 @@ export default function AdminPromotions() {
                     setHits(null);
                   }}
                 >
-                  <span style={kindTag}>{h.kind === "eye" ? "안과" : "안경점"}</span>{" "}
+                  <span style={kindTag}>{h.kind === "eye" ? "안과" : "안경원"}</span>{" "}
                   <b>{h.name}</b>
                   <div style={{ color: "#666", fontSize: 12 }}>{h.address}</div>
                 </button>
@@ -242,7 +242,7 @@ export default function AdminPromotions() {
               <td style={td}>
                 <span style={badge(r.active)}>{r.active ? "노출 중" : "기간 아님"}</span>
               </td>
-              <td style={td}>{r.kind === "eye" ? "안과" : "안경점"}</td>
+              <td style={td}>{r.kind === "eye" ? "안과" : "안경원"}</td>
               <td style={td}>
                 {r.facilityName ? (
                   <>

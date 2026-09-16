@@ -5,7 +5,7 @@ import { partnerSignup } from "../../api/partner";
 
 export default function PartnerSignup() {
   const nav = useNavigate();
-  // 병원인지 안경점인지 먼저 고른다. 뒤에 나오는 말이 전부 여기서 갈린다 -
+  // 병원인지 안경원인지 먼저 고른다. 뒤에 나오는 말이 전부 여기서 갈린다 -
   // 안경점 사장에게 "병원명"을 묻거나 병원 프로필 이야기를 하면, 잘못
   // 들어온 줄 알고 나간다.
   const [kind, setKind] = useState<"hospital" | "optical">("hospital");
@@ -77,13 +77,13 @@ export default function PartnerSignup() {
               style={kindBtn(kind === k)}
               onClick={() => setKind(k)}
             >
-              {k === "hospital" ? "병원" : "안경점"}
+              {k === "hospital" ? "병원" : "안경원"}
             </button>
           ))}
         </div>
         <input
           style={inp}
-          placeholder={kind === "hospital" ? "병원명" : "안경점 이름"}
+          placeholder={kind === "hospital" ? "병원명" : "안경원 이름"}
           value={form.hospital_name}
           onChange={set("hospital_name")}
         />

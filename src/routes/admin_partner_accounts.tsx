@@ -93,7 +93,7 @@ export default function AdminPartnerAccounts() {
         <br />
         <b>찾기탭 · 광고</b> — "실제 업체"를 연결해야 그 계정이 프리미엄 노출을
         신청할 수 있고 자기 노출·클릭 성적을 봅니다. 가입 폼의 상호는 자유
-        입력이라, 사업자등록증이나 통화로 확인한 뒤 연결해 주세요. 안경점은
+        입력이라, 사업자등록증이나 통화로 확인한 뒤 연결해 주세요. 안경원은
         프로필이 없으므로 노출 상태와 상관없이 연결만 되면 신청할 수 있습니다.
       </p>
 
@@ -137,11 +137,11 @@ export default function AdminPartnerAccounts() {
             {listQuery.data?.map((a) => (
               <tr key={a.id}>
                 <td style={td}>
-                  {/* 병원과 안경점이 한 목록에 섞인다. 안경점에는 프로필을
+                  {/* 병원과 안경원이 한 목록에 섞인다. 안경점에는 프로필을
                       넘겨줄 것이 없으니, 어느 쪽인지 먼저 보여야 운영자가
                       할 일을 고를 수 있다. */}
                   <span style={bizTag(a.businessKind)}>
-                    {a.businessKind === "optical" ? "안경점" : "병원"}
+                    {a.businessKind === "optical" ? "안경원" : "병원"}
                   </span>{" "}
                   {a.hospitalName}
                 </td>
@@ -339,7 +339,7 @@ function FacilityCell({
         (hits.length === 0 ? (
           <div style={{ color: "#666", fontSize: 12, marginTop: 4 }}>
             {account.businessKind === "optical"
-              ? "해당하는 안경점을 찾지 못했습니다."
+              ? "해당하는 안경원을 찾지 못했습니다."
               : "해당하는 안과를 찾지 못했습니다."}
           </div>
         ) : (
