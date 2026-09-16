@@ -47,12 +47,12 @@ export default function AdminPartnerAccounts() {
     onError: (e: any) =>
       alert(
         e?.code === 409
-          ? "다른 계정이 이미 이 가게를 쓰고 있습니다."
+          ? "다른 계정이 이미 이 업체에 연결되어 있습니다."
           : e?.code === 404
-            ? "명부에서 찾을 수 없는 가게입니다. 다시 골라 주세요."
+            ? "명부에서 찾을 수 없는 업체입니다. 다시 골라 주세요."
             : e?.code === 400
-              ? (e?.message ?? "업종과 맞지 않는 가게입니다.")
-              : (e?.message ?? "묶지 못했습니다."),
+              ? (e?.message ?? "업종과 맞지 않는 업체입니다.")
+              : (e?.message ?? "연결하지 못했습니다."),
       ),
   });
 
@@ -79,7 +79,7 @@ export default function AdminPartnerAccounts() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
+    <div style={{ padding: 24, maxWidth: 1400, margin: "0 auto" }}>
       <a href="/admin/myodoc" style={{ display: "inline-block", marginBottom: 12, color: "#6b7280" }}>
         ← myodoc 관리
       </a>
@@ -93,12 +93,16 @@ export default function AdminPartnerAccounts() {
       {listQuery.isLoading ? (
         <div>Loading…</div>
       ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 12 }}>
+        <div style={{ overflowX: "auto", marginTop: 12 }}>
+          {/* 칸이 여덟이라 좁은 화면에서는 어차피 다 안 들어간다. 줄바꿈으로
+              뭉개지 말고 표 안에서만 옆으로 밀리게 둔다 - 페이지가 가로로
+              흐르면 다른 화면까지 어긋난다. */}
+          <table style={{ width: "100%", minWidth: 1180, borderCollapse: "collapse" }}>
           <thead>
             <tr>
               <th style={th}>신청 병원명</th>
               <th style={th}>claim한 병원 (place id)</th>
-              <th style={th}>광고용 가게</th>
+              <th style={th}>실제 업체</th>
               <th style={th}>담당자</th>
               <th style={th}>이메일</th>
               <th style={th}>가입일</th>
@@ -189,6 +193,7 @@ export default function AdminPartnerAccounts() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );
@@ -209,7 +214,11 @@ const STATUS_LABEL: Record<PartnerAccountStatus, string> = {
 };
 
 /**
- * 계정에 묶인 광고용 가게 한 칸.
+ * 이 계정이 실제로 어느 업체인지.
+ *
+ * 가입 폼의 상호는 자유 입력이라 누구나 남의 상호를 칠 수 있다. 운영자가
+ * 사업자등록증이나 통화로 확인한 뒤 여기서 명부의 실제 업체를 지정한다.
+ * 그 지정이 있어야 그 계정이 그 업체로 프리미엄을 신청하고 성적을 본다.
  *
  * 번호를 손으로 적게 하지 않는다 - 25자짜리 인허가번호는 한 글자만 빠져도
  * 아무 데도 안 붙고, 등록은 성공한 것처럼 보인다. 이미 한 번 그렇게 당했다.
@@ -249,7 +258,7 @@ function FacilityCell({
           {account.facilityKey}
         </div>
         <button type="button" style={linkBtn} disabled={busy} onClick={() => setOpen(true)}>
-          바꾸기
+          변경
         </button>{" "}
         <button
           type="button"
@@ -258,12 +267,12 @@ function FacilityCell({
           onClick={() => {
             // 풀면 그 계정은 더 신청할 수 없다. 이미 걸린 광고는 그대로다 -
             // 돈을 받은 기간까지는 나가야 한다.
-            if (confirm("묶음을 풀면 이 계정은 프리미엄을 신청할 수 없습니다. 이미 걸린 광고는 그대로 나갑니다.")) {
+            if (confirm("연결을 해제하면 이 계정은 프리미엄을 신청할 수 없습니다. 이미 걸린 광고는 기간이 끝날 때까지 그대로 나갑니다.")) {
               onSet(null);
             }
           }}
         >
-          풀기
+          연결 해제
         </button>
       </div>
     );
@@ -272,7 +281,7 @@ function FacilityCell({
   if (!open) {
     return (
       <button type="button" style={linkBtn} disabled={busy} onClick={() => setOpen(true)}>
-        가게 묶기
+        업체 연결
       </button>
     );
   }

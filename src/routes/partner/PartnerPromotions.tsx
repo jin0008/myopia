@@ -30,9 +30,9 @@ export default function PartnerPromotions() {
   const [requests, setRequests] = useState<PromotionRequest[] | null>(null);
   const [error, setError] = useState(false);
 
-  // 신청서. 가게는 고르지 않는다 - 운영자가 계정에 묶어 둔 것이 곧 내
-  // 가게다. 고르게 두면 남의 가게로도 신청할 수 있고, 처리 대기 신청이
-  // 가게당 하나뿐이라 남의 신청을 막아 버릴 수도 있다.
+  // 신청서. 업체는 고르지 않는다 - 운영자가 확인해 연결해 둔 것이 곧 내
+  // 업체다. 고르게 두면 남의 업체로도 신청할 수 있고, 처리 대기 신청이
+  // 업체당 하나뿐이라 남의 신청을 막아 버릴 수도 있다.
   const [facility, setFacility] = useState<LinkedFacility | null>(null);
   const [businessKind, setBusinessKind] = useState<PartnerBusinessKind>("hospital");
   const [startsOn, setStartsOn] = useState(today());
@@ -83,9 +83,9 @@ export default function PartnerPromotions() {
         code === 409
           ? "이미 처리를 기다리는 신청이 있습니다. 먼저 취소해 주세요."
           : code === 403
-            ? "아직 가게가 확인되지 않았습니다. 운영자에게 확인을 요청해 주세요."
+            ? "아직 업체 확인이 되지 않았습니다. 담당자에게 확인을 요청해 주세요."
             : code === 404
-              ? "묶여 있는 가게를 명부에서 찾을 수 없습니다. 운영자에게 알려 주세요."
+              ? "연결된 업체를 명부에서 찾을 수 없습니다. 담당자에게 알려 주세요."
               : "신청하지 못했습니다. 입력값을 확인해 주세요.",
       );
     } finally {
@@ -209,19 +209,20 @@ export default function PartnerPromotions() {
         <h3 style={h3}>신청</h3>
         {pending.length > 0 && (
           <p style={hint}>
-            처리를 기다리는 신청이 있습니다. 한 가게에 한 건씩만 접수됩니다.
+            처리를 기다리는 신청이 있습니다. 한 업체에 한 건씩만 접수됩니다.
           </p>
         )}
 
-        {/* 고르는 자리가 아니다. 운영자가 확인해 묶어 준 가게를 보여 주고,
-            틀렸으면 사람에게 말하게 한다 - 여기서 바꾸게 하면 묶어 둔
-            뜻이 없어진다. */}
+        {/* 고르는 자리가 아니다. 운영자가 확인해 연결해 준 업체를 보여 주고,
+            틀렸으면 사람에게 말하게 한다 - 여기서 바꾸게 하면 확인한 뜻이
+            없어진다. */}
         {facility == null ? (
           <div style={warnBox}>
-            <b>가게가 아직 확인되지 않았습니다.</b>
+            <b>아직 업체 확인이 되지 않았습니다.</b>
             <div style={{ marginTop: 4 }}>
-              프리미엄은 확인된 가게에만 걸 수 있습니다. 운영자에게 사업자
-              정보를 보내 확인을 요청해 주세요.
+              프리미엄은 확인된 업체에만 걸 수 있습니다. 사업자등록증을 담당자
+              에게 보내 확인을 요청해 주세요. 확인이 끝나면 이 자리에 업체
+              이름이 표시되고 신청할 수 있습니다.
             </div>
           </div>
         ) : (
@@ -233,7 +234,7 @@ export default function PartnerPromotions() {
               <b>{facility.name}</b>
               <div style={{ color: "#666", fontSize: 12 }}>{facility.address}</div>
             </div>
-            <span style={{ color: "#8a93a1", fontSize: 12 }}>확인된 가게</span>
+            <span style={{ color: "#8a93a1", fontSize: 12 }}>확인된 업체</span>
           </div>
         )}
 
