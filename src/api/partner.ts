@@ -251,3 +251,78 @@ export function searchPartnerPlaces(q: string): Promise<{
 }> {
   return partnerFetch(`/partner/place-search?q=${encodeURIComponent(q)}`);
 }
+
+/* ---- 프리미엄 신청 ------------------------------------------------------ */
+
+export interface FacilityHit {
+  kind: "eye" | "optical";
+  key: string;
+  name: string;
+  address: string;
+}
+
+export type PromotionRequestStatus =
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "cancelled";
+
+export interface PromotionRequest {
+  id: string;
+  kind: "eye" | "optical";
+  key: string;
+  facilityName: string;
+  startsOn: string;
+  months: number;
+  status: PromotionRequestStatus;
+  note: string | null;
+  /** 거절 사유. 운영자가 적는다. */
+  reviewNote: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+}
+
+/** 내 광고 하나와 그 성적. days 는 일자별 줄이다. */
+export interface MyPromotion {
+  id: string;
+  kind: "eye" | "optical";
+  key: string;
+  name: string | null;
+  address: string | null;
+  tier: string;
+  startsAt: string;
+  endsAt: string;
+  live: boolean;
+  impressions: number;
+  clicks: number;
+  days: { day: string; impressions: number; clicks: number }[];
+}
+
+/** 신청서에서 자기 가게를 고른다. 번호를 손으로 적지 않게 하려는 것이다 -
+ *  25자짜리 인허가번호는 한 글자만 빠져도 아무 데도 안 붙는다. */
+export function searchMyFacilities(q: string): Promise<FacilityHit[]> {
+  return partnerFetch("/partner/my/facilities?q=" + encodeURIComponent(q));
+}
+
+export function createPromotionRequest(body: {
+  kind: "eye" | "optical";
+  key: string;
+  facilityName: string;
+  startsOn: string;
+  months: number;
+  note?: string;
+}): Promise<PromotionRequest> {
+  return partnerFetch("/partner/promotion-requests", { method: "POST" }, body);
+}
+
+export function listMyPromotionRequests(): Promise<PromotionRequest[]> {
+  return partnerFetch("/partner/promotion-requests/mine");
+}
+
+export function cancelPromotionRequest(id: string): Promise<void> {
+  return partnerFetch(`/partner/promotion-requests/${id}`, { method: "DELETE" });
+}
+
+export function listMyPromotions(days = 30): Promise<MyPromotion[]> {
+  return partnerFetch(`/partner/promotions/mine?days=${days}`);
+}

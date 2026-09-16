@@ -230,6 +230,7 @@ export default function AdminPromotions() {
             <th style={th}>구분</th>
             <th style={th}>업체</th>
             <th style={th}>기간</th>
+            <th style={th}>30일 노출/클릭</th>
             <th style={th}>파트너</th>
             <th style={th}>메모</th>
             <th style={th} />
@@ -261,6 +262,11 @@ export default function AdminPromotions() {
               <td style={td}>
                 {r.startsOn} ~ {r.endsOn}
               </td>
+              {/* 파트너가 자기 화면에서 보는 것과 같은 숫자다. 문의가 왔을
+                  때 서로 다른 것을 보고 있으면 이야기가 안 된다. */}
+              <td style={{ ...td, fontVariantNumeric: "tabular-nums" }}>
+                {r.impressions30d.toLocaleString()} / {r.clicks30d.toLocaleString()}
+              </td>
               <td style={td}>{r.accountName ?? "-"}</td>
               <td style={{ ...td, color: "#666", fontSize: 12 }}>{r.note ?? "-"}</td>
               <td style={td}>
@@ -277,7 +283,7 @@ export default function AdminPromotions() {
           ))}
           {rows.length === 0 && (
             <tr>
-              <td style={{ ...td, color: "#888" }} colSpan={7}>
+              <td style={{ ...td, color: "#888" }} colSpan={8}>
                 등록된 광고가 없습니다.
               </td>
             </tr>
