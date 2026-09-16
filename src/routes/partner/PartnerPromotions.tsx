@@ -2,6 +2,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { useNavigate } from "react-router";
 
 import {
+  clearPartnerToken,
   cancelPromotionRequest,
   createPromotionRequest,
   getPartnerToken,
@@ -9,6 +10,7 @@ import {
   listMyPromotions,
   partnerMe,
   type LinkedFacility,
+  type PartnerBusinessKind,
   type MyPromotion,
   type PromotionRequest,
 } from "../../api/partner";
@@ -32,6 +34,7 @@ export default function PartnerPromotions() {
   // 가게다. 고르게 두면 남의 가게로도 신청할 수 있고, 처리 대기 신청이
   // 가게당 하나뿐이라 남의 신청을 막아 버릴 수도 있다.
   const [facility, setFacility] = useState<LinkedFacility | null>(null);
+  const [businessKind, setBusinessKind] = useState<PartnerBusinessKind>("hospital");
   const [startsOn, setStartsOn] = useState(today());
   const [months, setMonths] = useState(1);
   const [note, setNote] = useState("");
@@ -55,6 +58,7 @@ export default function PartnerPromotions() {
       setPromotions(p);
       setRequests(r);
       setFacility(me.facility);
+      setBusinessKind(me.businessKind);
     } catch {
       setError(true);
     }
@@ -110,7 +114,28 @@ export default function PartnerPromotions() {
 
   return (
     <div style={{ padding: 24, maxWidth: 900 }}>
-      <h2 style={{ margin: "0 0 4px", fontSize: 20 }}>프리미엄 노출</h2>
+      {/* 안경점은 이 화면이 파트너 포털의 전부다. 여기에 로그아웃이 없으면
+          나갈 길이 없다. 병원은 프로필 편집기에서 왔으니 돌아갈 길을 준다. */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h2 style={{ margin: "0 0 4px", fontSize: 20 }}>프리미엄 노출</h2>
+        <div style={{ display: "flex", gap: 8 }}>
+          {businessKind === "hospital" && (
+            <button type="button" style={headBtn} onClick={() => navigate("/partner/profile")}>
+              프로필 관리
+            </button>
+          )}
+          <button
+            type="button"
+            style={headBtn}
+            onClick={() => {
+              clearPartnerToken();
+              navigate("/partner/login");
+            }}
+          >
+            로그아웃
+          </button>
+        </div>
+      </div>
       <p style={hint}>
         찾기 탭에서 내 주변 안과·안경점을 볼 때 목록 맨 위에 광고로 보입니다.
       </p>
@@ -340,6 +365,16 @@ function statusTag(s: PromotionRequest["status"]): CSSProperties {
     s === "approved" ? "#eaf6ef" : s === "rejected" ? "#fbeeee" : s === "pending" ? "#fdf6e3" : "#f1f1f1";
   return { fontSize: 11.5, fontWeight: 700, color, background: bg, borderRadius: 4, padding: "2px 7px" };
 }
+
+const headBtn: CSSProperties = {
+  border: "1px solid #ddd",
+  background: "#fff",
+  borderRadius: 8,
+  padding: "6px 12px",
+  fontSize: 13,
+  fontWeight: 700,
+  cursor: "pointer",
+};
 
 const card: CSSProperties = {
   border: "1px solid #eee",

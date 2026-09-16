@@ -10,6 +10,8 @@ export interface PartnerAccount {
   hospitalName: string;
   status: PartnerAccountStatus;
   createdAt: string;
+  /** "hospital" | "optical". 가입할 때 정해진다. */
+  businessKind: "hospital" | "optical";
   claimedPlaceId: string | null;
   claimedName: string | null;
   /** 광고가 쓰는 가게. 운영자가 묶어 준다. 없으면 프리미엄 신청 불가. */

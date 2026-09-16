@@ -60,6 +60,8 @@ export interface PartnerMe {
   email: string;
   contactName: string;
   hospitalName: string;
+  /** 병원인지 안경점인지. 가입할 때 정해진다. 화면을 가르는 데 쓴다. */
+  businessKind: PartnerBusinessKind;
   status: PartnerStatus;
   /** 운영자가 묶어 준 가게. 없으면 프리미엄을 신청할 수 없다. */
   facility: LinkedFacility | null;
@@ -117,11 +119,14 @@ export interface PartnerProfileInput {
   longitude?: number | null;
 }
 
+export type PartnerBusinessKind = "hospital" | "optical";
+
 export function partnerSignup(data: {
   email: string;
   password: string;
   contact_name: string;
   hospital_name: string;
+  business_kind: PartnerBusinessKind;
 }): Promise<{ id: string; status: PartnerStatus }> {
   return partnerFetch("/partner/signup", { method: "POST" }, data, false);
 }

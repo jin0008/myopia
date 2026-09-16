@@ -107,7 +107,15 @@ export default function AdminPartnerAccounts() {
           <tbody>
             {listQuery.data?.map((a) => (
               <tr key={a.id}>
-                <td style={td}>{a.hospitalName}</td>
+                <td style={td}>
+                  {/* 병원과 안경점이 한 목록에 섞인다. 안경점에는 프로필을
+                      넘겨줄 것이 없으니, 어느 쪽인지 먼저 보여야 운영자가
+                      할 일을 고를 수 있다. */}
+                  <span style={bizTag(a.businessKind)}>
+                    {a.businessKind === "optical" ? "안경점" : "병원"}
+                  </span>{" "}
+                  {a.hospitalName}
+                </td>
                 <td style={td}>
                   {a.claimedName ? (
                     <>
@@ -335,6 +343,17 @@ const linkBtn: CSSProperties = {
   cursor: "pointer",
   padding: 0,
 };
+
+function bizTag(kind: "hospital" | "optical"): CSSProperties {
+  return {
+    fontSize: 11,
+    fontWeight: 700,
+    color: kind === "optical" ? "#1c5a7c" : "#5b6472",
+    background: kind === "optical" ? "#e6f1f7" : "#eef1f6",
+    borderRadius: 4,
+    padding: "1px 6px",
+  };
+}
 
 function badge(status: PartnerAccountStatus): CSSProperties {
   const color =
