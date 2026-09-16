@@ -131,15 +131,19 @@ export function partnerSignup(data: {
   return partnerFetch("/partner/signup", { method: "POST" }, data, false);
 }
 
-export async function partnerLogin(email: string, password: string): Promise<PartnerStatus> {
-  const r = await partnerFetch<{ token: string; status: PartnerStatus }>(
-    "/partner/login",
-    { method: "POST" },
-    { email, password },
-    false,
-  );
+export async function partnerLogin(
+  email: string,
+  password: string,
+): Promise<{ status: PartnerStatus; businessKind: PartnerBusinessKind }> {
+  const r = await partnerFetch<{
+    token: string;
+    status: PartnerStatus;
+    businessKind: PartnerBusinessKind;
+  }>("/partner/login", { method: "POST" }, { email, password }, false);
   setPartnerToken(r.token);
-  return r.status;
+  // 예전 서버는 업종을 내지 않는다. 배포 사이에 걸친 사용자가 화면도 없이
+  // 떨어지지 않도록 병원으로 본다 - 지금까지 전부 병원이었다.
+  return { status: r.status, businessKind: r.businessKind ?? "hospital" };
 }
 
 /* ---- 비밀번호 재설정 ---------------------------------------------- *

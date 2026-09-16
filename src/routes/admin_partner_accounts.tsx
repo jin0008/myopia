@@ -50,7 +50,9 @@ export default function AdminPartnerAccounts() {
           ? "다른 계정이 이미 이 가게를 쓰고 있습니다."
           : e?.code === 404
             ? "명부에서 찾을 수 없는 가게입니다. 다시 골라 주세요."
-            : (e?.message ?? "묶지 못했습니다."),
+            : e?.code === 400
+              ? (e?.message ?? "업종과 맞지 않는 가게입니다.")
+              : (e?.message ?? "묶지 못했습니다."),
       ),
   });
 
@@ -229,8 +231,9 @@ function FacilityCell({
   async function run() {
     if (term.trim().length < 2) return;
     setSearching(true);
+    const want = account.businessKind === "optical" ? "optical" : "eye";
     try {
-      setHits(await searchFacilities(term.trim()));
+      setHits((await searchFacilities(term.trim())).filter((h) => h.kind === want));
     } catch {
       setHits([]);
     } finally {
@@ -297,8 +300,14 @@ function FacilityCell({
         </button>
       </div>
       {hits != null &&
+        // 계정 업종과 맞지 않는 것은 고를 수 있게 두지 않는다. 서버도
+        // 막지만, 고를 수 있게 두면 고른 뒤에야 안 된다는 말을 듣는다.
         (hits.length === 0 ? (
-          <div style={{ color: "#666", fontSize: 12, marginTop: 4 }}>찾지 못했습니다.</div>
+          <div style={{ color: "#666", fontSize: 12, marginTop: 4 }}>
+            {account.businessKind === "optical"
+              ? "해당하는 안경점을 찾지 못했습니다."
+              : "해당하는 안과를 찾지 못했습니다."}
+          </div>
         ) : (
           <div style={{ border: "1px solid #eee", borderRadius: 6, maxHeight: 160, overflowY: "auto", marginTop: 4 }}>
             {hits.map((h) => (

@@ -1,7 +1,7 @@
 import { useState, type CSSProperties } from "react";
 import { useNavigate } from "react-router";
 
-import { partnerMe, partnerLogin } from "../../api/partner";
+import { partnerLogin } from "../../api/partner";
 
 export default function PartnerLogin() {
   const nav = useNavigate();
@@ -14,11 +14,10 @@ export default function PartnerLogin() {
     setError(null);
     setBusy(true);
     try {
-      await partnerLogin(email.trim(), password);
       // 안경점에는 병원 프로필 편집기(카카오 장소, 진료시간, 의사,
       // 치료항목)에 채울 것이 하나도 없다. 프리미엄이 이들이 여기 오는
       // 이유이니 그리로 보낸다.
-      const me = await partnerMe();
+      const me = await partnerLogin(email.trim(), password);
       nav(me.businessKind === "optical" ? "/partner/promotions" : "/partner/profile");
     } catch (e: any) {
       setError(e?.message ?? "로그인 실패");
