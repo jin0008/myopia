@@ -118,7 +118,7 @@ export default function PartnerProfile() {
           // 장소 검색에서 고르면 채워진다.
           setForm((f) => ({ ...f, name: m.hospitalName }));
         }
-        // 안경점에는 이 화면에 채울 것이 하나도 없다 - 카카오 장소도,
+        // 안경원에는 이 화면에 채울 것이 하나도 없다 - 카카오 장소도,
         // 진료시간도, 의사도, 치료항목도 병원 이야기다. 주소창으로 직접
         // 들어와도 자기 자리로 돌려보낸다.
         if (m?.businessKind === "optical") {

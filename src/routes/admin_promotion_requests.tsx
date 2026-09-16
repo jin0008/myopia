@@ -113,7 +113,7 @@ function Row({
   return (
     <tr>
       <td style={td}>
-        <span style={kindTag}>{r.kind === "eye" ? "안과" : "안경점"}</span>{" "}
+        <span style={kindTag}>{r.kind === "eye" ? "안과" : "안경원"}</span>{" "}
         <b>{r.facilityName}</b>
         {/* 번호를 그대로 보인다. 승인이 곧 "이 번호가 맞나"를 사람이
             확인하는 자리다 - 여기서 틀린 것을 놓치면 광고가 아무 데도

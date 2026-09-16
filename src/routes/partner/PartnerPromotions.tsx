@@ -114,7 +114,7 @@ export default function PartnerPromotions() {
 
   return (
     <div style={{ padding: 24, maxWidth: 900 }}>
-      {/* 안경점은 이 화면이 파트너 포털의 전부다. 여기에 로그아웃이 없으면
+      {/* 안경원은 이 화면이 파트너 포털의 전부다. 여기에 로그아웃이 없으면
           나갈 길이 없다. 병원은 프로필 편집기에서 왔으니 돌아갈 길을 준다. */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <h2 style={{ margin: "0 0 4px", fontSize: 20 }}>프리미엄 노출</h2>
@@ -137,7 +137,7 @@ export default function PartnerPromotions() {
         </div>
       </div>
       <p style={hint}>
-        찾기 탭에서 내 주변 안과·안경점을 볼 때 목록 맨 위에 광고로 보입니다.
+        찾기 탭에서 내 주변 안과·안경원을 볼 때 목록 맨 위에 광고로 보입니다.
       </p>
 
       {/* 성적 */}
@@ -229,7 +229,7 @@ export default function PartnerPromotions() {
           <div style={pickedBox}>
             <div>
               <span style={kindTag}>
-                {facility.kind === "eye" ? "안과" : "안경점"}
+                {facility.kind === "eye" ? "안과" : "안경원"}
               </span>{" "}
               <b>{facility.name}</b>
               <div style={{ color: "#666", fontSize: 12 }}>{facility.address}</div>

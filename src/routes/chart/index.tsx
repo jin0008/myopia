@@ -132,6 +132,10 @@ export default function ChartRoute() {
   const [viewMode, setViewMode] = useState<"default" | "list">("default");
   const [referenceEthnicity, setReferenceEthnicity] = useState<string>("Asian");
   const [displayAxialLength, setDisplayAxialLength] = useState(true);
+  // 어느 출처를 볼지. 둘 다 켠 채로 시작한다 - 지금까지 보이던 병원 값이
+  // 갑자기 사라지면 안 되고, 보호자 값은 있는데 안 보이면 없는 것이 된다.
+  const [showHospital, setShowHospital] = useState(true);
+  const [showParent, setShowParent] = useState(true);
   const [refractiveErrorType, setRefractiveErrorType] = useState<
     "sph" | "se" | null
   >(null);
@@ -254,6 +258,15 @@ export default function ChartRoute() {
         new Date(b.date).getTime() - new Date(a.date).getTime(),
     );
   }, [patientQuery.data?.measurement]);
+
+  // 보호자가 앱에 옮겨 적은 안축장. 병원 값과 한 배열로 합치지 않는다 -
+  // 합치면 그래프에서 어느 점이 측정이고 어느 점이 기억인지 알 수 없다.
+  const sortedParentRecord = useMemo<Measurement[]>(() => {
+    return (patientQuery.data?.parent_record ?? []).sort(
+      (a: Measurement, b: Measurement) =>
+        new Date(b.date).getTime() - new Date(a.date).getTime(),
+    );
+  }, [patientQuery.data?.parent_record]);
 
   const sortedRefractiveError = useMemo<Measurement[]>(() => {
     return (patientQuery.data?.refractive_error ?? [])
@@ -462,6 +475,34 @@ export default function ChartRoute() {
             </span>
           </div>
 
+          {/* 어느 출처를 볼지. 안축장을 보고 있을 때만 뜻이 있다 -
+              도수에는 보호자 입력이 없다. */}
+          {displayAxialLength && (
+            <div style={{ display: "flex", gap: 14, alignItems: "center", fontSize: 13 }}>
+              <label style={{ display: "flex", gap: 5, alignItems: "center", cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={showHospital}
+                  onChange={(e) => setShowHospital(e.target.checked)}
+                />
+                병원 입력 ({sortedAxialLength.length})
+              </label>
+              <label style={{ display: "flex", gap: 5, alignItems: "center", cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={showParent}
+                  onChange={(e) => setShowParent(e.target.checked)}
+                />
+                환자 입력 ({sortedParentRecord.length})
+              </label>
+              {sortedParentRecord.length > 0 && (
+                <span style={{ color: "#8a93a1", fontSize: 12 }}>
+                  환자 입력은 보호자가 앱에 옮겨 적은 값입니다(점선·삼각형).
+                </span>
+              )}
+            </div>
+          )}
+
           <div style={{ display: "flex", flexDirection: "row", gap: "4px" }}>
             <SmallTextButton
               $active={displayAxialLength}
@@ -537,7 +578,8 @@ export default function ChartRoute() {
             <Chart
               displayAxialLength={displayAxialLength}
               refractiveErrorType={refractiveErrorType}
-              sortedAxialLengthMeasurement={sortedAxialLength}
+              sortedAxialLengthMeasurement={showHospital ? sortedAxialLength : []}
+              sortedParentRecord={showParent ? sortedParentRecord : []}
               sortedRefractiveErrorMeasurement={sortedRefractiveError}
               sortedTreatment={sortedTreatment}
               patientBirthday={new Date(patientQuery.data.date_of_birth)}
