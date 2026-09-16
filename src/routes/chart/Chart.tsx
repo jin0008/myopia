@@ -38,6 +38,8 @@ interface ChartProps {
   displayAxialLength: boolean;
   refractiveErrorType: "sph" | "se" | null;
   sortedAxialLengthMeasurement: Measurement[];
+  /** 보호자가 앱에 옮겨 적은 안축장. 병원이 잰 값과 섞지 않는다. */
+  sortedParentRecord?: Measurement[];
   sortedRefractiveErrorMeasurement: Measurement[];
   sortedTreatment: Treatment[];
   patientBirthday: Date;
@@ -48,6 +50,7 @@ interface ChartProps {
 
 export function Chart({
   sortedAxialLengthMeasurement = [],
+  sortedParentRecord = [],
   sortedRefractiveErrorMeasurement = [],
   sortedTreatment = [],
   displayAxialLength,
@@ -168,7 +171,7 @@ export function Chart({
       ? sortedAxialLengthMeasurement
       : sortedRefractiveErrorMeasurement;
 
-    return ["od", "os"].map((side, index) => ({
+    const hospital = ["od", "os"].map((side, index) => ({
       label: side,
       data: toData(measurement, side as "od" | "os"),
       elements: {
@@ -180,11 +183,34 @@ export function Chart({
       borderColor: index ? "red" : "blue",
       yAxisID: "y",
     }));
+
+    // 보호자가 옮겨 적은 값은 안축장에만 있고, 점선과 빈 삼각형으로 그린다.
+    //
+    // 색으로만 가르면 눈에서 섞인다 - 차트를 흘끗 보고 진행을 읽는 자리라,
+    // 어느 점이 병원 측정인지 한 번 더 생각해야 한다면 구분한 것이 아니다.
+    // 모양과 선이 함께 달라야 스치듯 봐도 갈린다.
+    if (!displayAxialLength || sortedParentRecord.length === 0) return hospital;
+
+    return [
+      ...hospital,
+      ...["od", "os"].map((side, index) => ({
+        label: `${side} (보호자 입력)`,
+        data: toData(sortedParentRecord, side as "od" | "os"),
+        elements: { point: { radius: 4 } },
+        pointStyle: "triangle",
+        showLine: true,
+        borderDash: [4, 4],
+        backgroundColor: "transparent",
+        borderColor: index ? "rgba(220,0,0,0.55)" : "rgba(0,80,220,0.55)",
+        yAxisID: "y",
+      })),
+    ];
   }, [
     displayAxialLength,
     refractiveErrorType,
     sortedAxialLengthMeasurement,
     sortedRefractiveErrorMeasurement,
+    sortedParentRecord,
   ]);
 
   const { minX, maxX } = useMemo(() => {
