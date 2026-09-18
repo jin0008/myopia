@@ -6,6 +6,7 @@ import type { HospitalSummary } from "../types/hospital";
 import { MOBILE_MEDIA } from "../lib/constants";
 import { LocationOn } from "@mui/icons-material";
 import { useLanguage } from "../lib/language_context";
+import { hospitalDisplayName } from "../lib/hospitalName";
 
 const PageContainer = styled.div`
   max-width: 1100px;
@@ -168,7 +169,7 @@ export default function WhoWeAre() {
         <HospitalGrid>
           {hospitals.map((hospital) => (
             <HospitalCard key={hospital.id}>
-              <HospitalName>{hospital.name}</HospitalName>
+              <HospitalName>{hospitalDisplayName(hospital, language)}</HospitalName>
               <HospitalLocation>
                 <LocationOn style={{ fontSize: "16px" }} />
                 {hospital.country?.name ?? (ko ? "국가 미상" : "Unknown country")}

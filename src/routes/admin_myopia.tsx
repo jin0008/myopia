@@ -1,5 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getHospitalList, getMembersByHospital } from "../api/hospital";
+import {
+  getHospitalList,
+  getMembersByHospital,
+  updateHospitalNameKo,
+} from "../api/hospital";
+import {
+  hospitalDisplayName,
+  hospitalMatches,
+  hospitalOriginalNameIfDifferent,
+} from "../lib/hospitalName";
+import HospitalNameKoEditor from "../components/hospital_name_ko_editor";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import {
@@ -102,6 +112,14 @@ export default function AdminMyopia() {
   const { user } = useContext(UserContext);
   const [selectedHospitalId, setSelectedHospitalId] = useState("");
 
+  const hospitalListQuery = useQuery({
+    queryKey: ["hospital"],
+    queryFn: getHospitalList,
+  });
+  const selectedHospital = (hospitalListQuery.data ?? []).find(
+    (h: any) => h.id === selectedHospitalId,
+  );
+
   const memberListQuery = useQuery({
     queryKey: ["hospital", selectedHospitalId, "member"],
     queryFn: () => getMembersByHospital(selectedHospitalId),
@@ -148,6 +166,14 @@ export default function AdminMyopia() {
       <TopRow>
         <HospitalList onSelect={setSelectedHospitalId} />
         <Card style={{ flex: 1, minWidth: 0 }}>
+          {selectedHospital && (
+            <HospitalNameKoEditor
+              hospital={selectedHospital}
+              onSave={(nameKo) =>
+                updateHospitalNameKo(selectedHospital.id, nameKo)
+              }
+            />
+          )}
           <SectionTitle>Member List</SectionTitle>
           <TableScroll>
           <Table>
@@ -353,8 +379,13 @@ function HospitalCard({
     <HospitalCardDiv onClick={onSelect}>
       <div>
         <p>
-          {hospital.name}({hospital.country.code})
+          {hospitalDisplayName(hospital)}({hospital.country.code})
         </p>
+        {hospitalOriginalNameIfDifferent(hospital) && (
+          <p style={{ fontSize: 12, color: "#6b7280" }}>
+            {hospitalOriginalNameIfDifferent(hospital)}
+          </p>
+        )}
         <p>Code: {hospital.code}</p>
       </div>
       <img
@@ -803,11 +834,7 @@ function StudyHospitalAssign({
   const filtered = useMemo(() => {
     const list = (hospitalsQuery.data as any[]) ?? [];
     if (!search) return list;
-    return list.filter(
-      (h) =>
-        h.name.toLowerCase().includes(search.toLowerCase()) ||
-        h.code.includes(search),
-    );
+    return list.filter((h) => hospitalMatches(h, search));
   }, [hospitalsQuery.data, search]);
 
   if (assignedQuery.isLoading || hospitalsQuery.isLoading)
@@ -840,7 +867,7 @@ function StudyHospitalAssign({
               onChange={() => toggle(h.id)}
             />
             <span>
-              {h.name} ({h.code})
+              {hospitalDisplayName(h)} ({h.code})
             </span>
           </HospitalCheckRow>
         ))}
@@ -864,11 +891,7 @@ function HospitalList({ onSelect }: { onSelect: (hospitalId: any) => void }) {
 
   const filteredData = useMemo(() => {
     if (query.data) {
-      return query.data.filter(
-        (e: any) =>
-          e.name.toLowerCase().includes(search.toLowerCase()) ||
-          e.code.includes(search),
-      );
+      return query.data.filter((e: any) => hospitalMatches(e, search));
     }
     return [];
   }, [query.data, search]);
