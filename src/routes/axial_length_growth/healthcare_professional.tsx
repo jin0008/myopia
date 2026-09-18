@@ -35,6 +35,8 @@ import { LinkInviteDialog } from "../../components/link_invite_dialog";
 import NotLoggedIn from "../../components/not_logged_in";
 import { professionalRoleList, MOBILE_MEDIA } from "../../lib/constants";
 import HospitalSelector from "../../components/hospital_selector";
+import { hospitalDisplayName } from "../../lib/hospitalName";
+import { useLanguage } from "../../lib/language_context";
 
 const CenteredDivWithGap = styled(CenteredDiv)`
   gap: 32px;
@@ -212,6 +214,7 @@ function PatientManage() {
   );
 
   const hospital = user.healthcare_professional.hospital;
+  const { language } = useLanguage();
   return (
     <>
       <ContainerDiv>
@@ -221,7 +224,7 @@ function PatientManage() {
           color: "#1d1d1f",
           marginTop: "48px",
         }}>
-          {hospital.name}<span style={{
+          {hospitalDisplayName(hospital, language)}<span style={{
             display: "inline-block",
             width: "10px",
             height: "10px",
@@ -320,6 +323,7 @@ function ProfessionalRegisterDialog({
 
   const [hospitalCode, setHospitalCode] = useState("");
   const hospitalName = useRef("");
+  const hospitalNameKo = useRef("");
   const [hospitalCountryId, setHospitalCountryId] = useState("");
 
   const defaultEthnicityId = useRef("");
@@ -371,6 +375,7 @@ function ProfessionalRegisterDialog({
     const hospitalData = createNewHospital
       ? {
           name: hospitalName.current,
+          name_ko: hospitalNameKo.current.trim() || null,
           country_id: hospitalCountryId,
           code: hospitalCode,
         }
@@ -447,6 +452,13 @@ function ProfessionalRegisterDialog({
                 <TextInput
                   placeholder="Hospital name"
                   onChange={(e) => (hospitalName.current = e.target.value)}
+                ></TextInput>
+              </label>
+              <label>
+                Korean name (optional):
+                <TextInput
+                  placeholder="한글 병원 이름 (선택)"
+                  onChange={(e) => (hospitalNameKo.current = e.target.value)}
                 ></TextInput>
               </label>
               <label>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { hospitalDisplayName } from "../lib/hospitalName";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import styled from "styled-components";
 import {
@@ -179,7 +180,7 @@ export default function StudyAuditLog() {
     staleTime: Infinity,
   });
   const hospitalNameById = new Map<string, string>(
-    (hospitalQuery.data ?? []).map((h: any) => [h.id, `${h.name} (${h.code})`]),
+    (hospitalQuery.data ?? []).map((h: any) => [h.id, `${hospitalDisplayName(h)} (${h.code})`]),
   );
 
   const updateDraft = (patch: Partial<AuditLogFilters>) =>
@@ -222,7 +223,7 @@ export default function StudyAuditLog() {
               <option value="">All hospitals</option>
               {hospitalQuery.data?.map((h: any) => (
                 <option key={h.id} value={h.id}>
-                  {h.name} ({h.code})
+                  {hospitalDisplayName(h)} ({h.code})
                 </option>
               ))}
             </TextInput>

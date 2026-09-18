@@ -37,3 +37,17 @@ export function editMember(userId: string, data: EditMemberData) {
     false
   );
 }
+
+/** 병원 관리자: 자기 병원의 한글 표시 이름. 빈 값이면 지운다. */
+export function updateMyHospitalNameKo(nameKo: string | null) {
+  return jsonFetchWithSession(API_ROOT + "/hospital/name_ko", {
+    method: "PATCH",
+  }, { name_ko: nameKo });
+}
+
+/** 사이트 관리자: 아무 병원의 한글 표시 이름. 빈 값이면 지운다. */
+export function updateHospitalNameKo(hospitalId: string, nameKo: string | null) {
+  return jsonFetchWithSession(API_ROOT + `/hospital/${hospitalId}/name_ko`, {
+    method: "PATCH",
+  }, { name_ko: nameKo });
+}

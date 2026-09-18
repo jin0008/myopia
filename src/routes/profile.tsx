@@ -25,6 +25,7 @@ import {
   editMember,
   getHospitalList,
   getMembers,
+  updateMyHospitalNameKo,
 } from "../api/hospital";
 import {
   getAlertRecipients,
@@ -45,6 +46,9 @@ import {
 import { GoogleLogin } from "@react-oauth/google";
 import { professionalRoleList, MOBILE_MEDIA } from "../lib/constants";
 import HospitalSelector from "../components/hospital_selector";
+import { hospitalDisplayName } from "../lib/hospitalName";
+import { useLanguage } from "../lib/language_context";
+import HospitalNameKoEditor from "../components/hospital_name_ko_editor";
 import { Reactive } from "../components/reactive";
 
 const PageWrapper = styled.div`
@@ -674,6 +678,7 @@ function ChangePasswordDialog({
 }
 
 function ProfessionalProfile() {
+  const { language } = useLanguage();
   const { user } = useContext(UserContext);
 
   const ethnicityQuery = useQuery({
@@ -728,8 +733,8 @@ function ProfessionalProfile() {
           Your hospital is
           <Reactive desktop={<span> </span>} mobile={<br />} />
           <strong>
-            {user.healthcare_professional.hospital.name}(Code :{" "}
-            {user.healthcare_professional.hospital.code})
+            {hospitalDisplayName(user.healthcare_professional.hospital, language)}
+            (Code : {user.healthcare_professional.hospital.code})
           </strong>
         </p>
         <PrimaryButton onClick={() => setIsChangeHospitalDialogOpen(true)}>
@@ -741,6 +746,12 @@ function ProfessionalProfile() {
           onClose={() => setIsChangeHospitalDialogOpen(false)}
         />
       </div>
+      {user.healthcare_professional.is_admin && (
+        <HospitalNameKoEditor
+          hospital={user.healthcare_professional.hospital}
+          onSave={updateMyHospitalNameKo}
+        />
+      )}
       {shouldDisplayWarning && (
         <p style={{ color: "red" }}>
           Warning: You are the only admin in this hospital. If you change your
@@ -819,6 +830,7 @@ function ChangeHospitalDialog({
   const [createNewHospital, setCreateNewHospital] = useState(false);
   const [hospitalCode, setHospitalCode] = useState("");
   const hospitalName = useRef("");
+  const hospitalNameKo = useRef("");
   const [hospitalCountryId, setHospitalCountryId] = useState("");
 
   const countryQuery = useQuery({
@@ -881,6 +893,7 @@ function ChangeHospitalDialog({
     const hospitalData = createNewHospital
       ? {
           name: hospitalName.current,
+          name_ko: hospitalNameKo.current.trim() || null,
           country_id: hospitalCountryId,
           code: hospitalCode,
         }
@@ -923,6 +936,13 @@ function ChangeHospitalDialog({
               <TextInput
                 placeholder="Hospital name"
                 onChange={(e) => (hospitalName.current = e.target.value)}
+              ></TextInput>
+            </label>
+            <label>
+              Korean name (optional):
+              <TextInput
+                placeholder="한글 병원 이름 (선택)"
+                onChange={(e) => (hospitalNameKo.current = e.target.value)}
               ></TextInput>
             </label>
             <label>

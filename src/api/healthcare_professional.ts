@@ -35,6 +35,7 @@ export function updateProfessionalHospital(
       }
     | {
         name: string;
+        name_ko?: string | null;
         country_id: string;
       }
 ) {

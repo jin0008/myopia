@@ -9,6 +9,8 @@ import {
 import { PrimaryButton } from "./button";
 import { SearchInput } from "./input";
 import { useEffect, useMemo, useState } from "react";
+import { hospitalDisplayName, hospitalMatches } from "../lib/hospitalName";
+import { useLanguage } from "../lib/language_context";
 
 export default function HospitalSelector({
   open,
@@ -24,16 +26,15 @@ export default function HospitalSelector({
     queryFn: getHospitalList,
   });
   const [search, setSearch] = useState("");
+  const { language } = useLanguage();
 
   useEffect(() => {
     if (open) setSearch("");
   }, [open]);
 
   const filteredData = useMemo(() => {
-    return hospitalQuery.data?.filter(
-      (hospital: any) =>
-        hospital.name.toLowerCase().includes(search) ||
-        hospital.code.includes(search),
+    return hospitalQuery.data?.filter((hospital: any) =>
+      hospitalMatches(hospital, search),
     );
   }, [hospitalQuery.data, search]);
 
@@ -57,7 +58,7 @@ export default function HospitalSelector({
           <ul style={{ listStylePosition: "inside", userSelect: "none" }}>
             {filteredData.map((hospital: any) => (
               <li key={hospital.id} onClick={() => onSelect(hospital)}>
-                {hospital.name}({hospital.code})
+                {hospitalDisplayName(hospital, language)}({hospital.code})
               </li>
             ))}
           </ul>

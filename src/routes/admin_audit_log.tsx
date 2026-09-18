@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { hospitalDisplayName } from "../lib/hospitalName";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import styled from "styled-components";
 import {
@@ -167,7 +168,7 @@ export default function AdminAuditLog() {
   const hospitalNameById = new Map<string, string>(
     (hospitalQuery.data ?? []).map((h: any) => [
       h.id,
-      `${h.name} (${h.code})`,
+      `${hospitalDisplayName(h)} (${h.code})`,
     ]),
   );
 
@@ -212,7 +213,7 @@ export default function AdminAuditLog() {
               <option value="">All hospitals</option>
               {hospitalQuery.data?.map((h: any) => (
                 <option key={h.id} value={h.id}>
-                  {h.name} ({h.code})
+                  {hospitalDisplayName(h)} ({h.code})
                 </option>
               ))}
             </TextInput>
