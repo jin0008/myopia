@@ -268,6 +268,34 @@ export default function ChartRoute() {
     );
   }, [patientQuery.data?.parent_record]);
 
+  // 보호자가 앱에 옮겨 적은 도수. 병원 값과 같은 자리에 그리되 배열은
+  // 나눠 둔다 - 처방전을 보고 옮겨 적은 값이라 병원 측정과 신뢰도가 다르다.
+  //
+  // 원주(C)가 비어 있으면 구면(S)만 쓴다. 병원 값은 C 가 없으면 점을 버리는데,
+  // 보호자는 S 만 적어 오는 일이 흔해 그대로 두면 앱에 적은 것이 통째로
+  // 사라진다. 앱의 차트도 같은 규칙으로 접는다.
+  const sortedParentRefractiveError = useMemo<Measurement[]>(() => {
+    return (patientQuery.data?.parent_refractive_error ?? [])
+      .map((e: RefractiveError) => {
+        const fold = (sph: number | null, cyl: number | null) =>
+          sph === null
+            ? null
+            : refractiveErrorType === "sph" || cyl === null
+              ? sph
+              : sph + cyl * 0.5;
+        return {
+          id: e.id,
+          date: e.date,
+          od: fold(e.od_sph, e.od_cyl),
+          os: fold(e.os_sph, e.os_cyl),
+        };
+      })
+      .sort(
+        (a: Measurement, b: Measurement) =>
+          new Date(b.date).getTime() - new Date(a.date).getTime(),
+      );
+  }, [patientQuery.data?.parent_refractive_error, refractiveErrorType]);
+
   const sortedRefractiveError = useMemo<Measurement[]>(() => {
     return (patientQuery.data?.refractive_error ?? [])
       .map((e: RefractiveError) => ({
@@ -295,6 +323,15 @@ export default function ChartRoute() {
           new Date(b.date).getTime() - new Date(a.date).getTime(),
       );
   }, [patientQuery.data?.refractive_error, refractiveErrorType]);
+
+  // 지금 그려지는 점의 수. 두 축을 함께 켜면 둘 다 센다 - 체크박스가
+  // 양쪽을 함께 숨기므로 개수도 함께 세야 말이 맞는다.
+  const hospitalCount =
+    (displayAxialLength ? sortedAxialLength.length : 0) +
+    (refractiveErrorType ? sortedRefractiveError.length : 0);
+  const parentCount =
+    (displayAxialLength ? sortedParentRecord.length : 0) +
+    (refractiveErrorType ? sortedParentRefractiveError.length : 0);
 
   const sortedTreatment = useMemo<Treatment[]>(() => {
     return (patientQuery.data?.patient_treatment ?? []).sort(
@@ -475,9 +512,10 @@ export default function ChartRoute() {
             </span>
           </div>
 
-          {/* 어느 출처를 볼지. 안축장을 보고 있을 때만 뜻이 있다 -
-              도수에는 보호자 입력이 없다. */}
-          {displayAxialLength && (
+          {/* 어느 출처를 볼지. 개수는 지금 그려지는 것만 센다 - 안축장을
+              보는데 도수까지 세어 넣으면 점을 세어 봐도 안 맞는다.
+              축 토글 구조상 둘 다 꺼지는 경우는 없어 줄은 늘 보인다. */}
+          {(
             <div style={{ display: "flex", gap: 14, alignItems: "center", fontSize: 13 }}>
               <label style={{ display: "flex", gap: 5, alignItems: "center", cursor: "pointer" }}>
                 <input
@@ -485,7 +523,7 @@ export default function ChartRoute() {
                   checked={showHospital}
                   onChange={(e) => setShowHospital(e.target.checked)}
                 />
-                병원 입력 ({sortedAxialLength.length})
+                병원 입력 ({hospitalCount})
               </label>
               <label style={{ display: "flex", gap: 5, alignItems: "center", cursor: "pointer" }}>
                 <input
@@ -493,9 +531,9 @@ export default function ChartRoute() {
                   checked={showParent}
                   onChange={(e) => setShowParent(e.target.checked)}
                 />
-                환자 입력 ({sortedParentRecord.length})
+                환자 입력 ({parentCount})
               </label>
-              {sortedParentRecord.length > 0 && (
+              {parentCount > 0 && (
                 <span style={{ color: "#8a93a1", fontSize: 12 }}>
                   환자 입력은 보호자가 앱에 옮겨 적은 값입니다(점선·삼각형).
                 </span>
@@ -580,7 +618,12 @@ export default function ChartRoute() {
               refractiveErrorType={refractiveErrorType}
               sortedAxialLengthMeasurement={showHospital ? sortedAxialLength : []}
               sortedParentRecord={showParent ? sortedParentRecord : []}
-              sortedRefractiveErrorMeasurement={sortedRefractiveError}
+              sortedParentRefractiveError={
+                showParent ? sortedParentRefractiveError : []
+              }
+              sortedRefractiveErrorMeasurement={
+                showHospital ? sortedRefractiveError : []
+              }
               sortedTreatment={sortedTreatment}
               patientBirthday={new Date(patientQuery.data.date_of_birth)}
               patientSex={patientQuery.data.sex}
