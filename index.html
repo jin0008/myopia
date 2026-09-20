@@ -5,6 +5,15 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Myopia Management</title>
+    <!-- iOS 사파리는 글자가 16px 보다 작은 입력창을 누르면 페이지를 통째로
+         확대한다. 파트너가 휴대폰으로 병원 검색창을 누를 때마다 화면이 튀었다.
+         확대를 막는 viewport 설정은 손가락 확대까지 함께 막으므로 쓰지 않고,
+         iOS 에서만 입력 글자를 키운다. -->
+    <style>
+      @supports (-webkit-touch-callout: none) {
+        input, select, textarea { font-size: 16px !important; }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
