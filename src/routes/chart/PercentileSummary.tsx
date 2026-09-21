@@ -284,8 +284,8 @@ export function PercentileSummary({
         : `Above the highest reference percentile`;
     const n = Math.round(r.value as number);
     return ko
-      ? `또래 ${peer} 100명 중 안축장이 약 ${n}번째로 긴 위치`
-      : `About the ${n}th longest axial length among 100 ${peer} of the same age`;
+      ? `또래 ${peer} 100명 중 약 ${n}명보다 안축장이 긴 위치`
+      : `Longer than about ${n} of 100 ${peer} of the same age`;
   };
 
   const measuredDate =
