@@ -3,7 +3,8 @@ import { UserContext } from "../../App";
 import { PrimaryButton, PrimaryNagativeButton, BlackButton, DangerButton } from "../../components/button";
 import { CenteredDiv } from "../../components/div";
 import { SearchInput, TextInput } from "../../components/input";
-import { Search, Add } from "@mui/icons-material";
+import Search from "@mui/icons-material/Search";
+import Add from "@mui/icons-material/Add";
 import styled from "styled-components";
 import {
   Dialog,

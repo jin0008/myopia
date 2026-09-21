@@ -11,7 +11,8 @@ import { GoogleLogin } from "@react-oauth/google";
 import styled from "styled-components";
 import theme from "../theme";
 import { MOBILE_MEDIA } from "../lib/constants";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import Logo from "../components/logo";
 import ConsentChecklist, {
   ConsentValue,

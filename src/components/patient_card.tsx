@@ -1,12 +1,10 @@
 import styled from "styled-components";
 import theme from "../theme";
-import {
-  Description,
-  Edit,
-  DeleteOutline,
-  Link as LinkIcon,
-  LinkOff,
-} from "@mui/icons-material";
+import Description from "@mui/icons-material/Description";
+import Edit from "@mui/icons-material/Edit";
+import DeleteOutline from "@mui/icons-material/DeleteOutline";
+import LinkIcon from "@mui/icons-material/Link";
+import LinkOff from "@mui/icons-material/LinkOff";
 
 const CardDiv = styled.div`
   background-color: white;

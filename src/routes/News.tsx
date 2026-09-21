@@ -3,7 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import theme from "../theme";
 import { MOBILE_MEDIA } from "../lib/constants";
-import { ExpandMore, ExpandLess, OpenInNew } from "@mui/icons-material";
+import ExpandMore from "@mui/icons-material/ExpandMore";
+import ExpandLess from "@mui/icons-material/ExpandLess";
+import OpenInNew from "@mui/icons-material/OpenInNew";
 import { useLanguage } from "../lib/language_context";
 import { API_ROOT } from "../api/root";
 

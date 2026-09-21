@@ -5,7 +5,7 @@ import { useContext } from "react";
 import { MOBILE_MEDIA } from "../lib/constants";
 import { UserContext } from "../App";
 import { useLanguage } from "../lib/language_context";
-import { ArrowForward } from "@mui/icons-material";
+import ArrowForward from "@mui/icons-material/ArrowForward";
 import childImage from "../assets/child-placeholder.webp";
 import doctorImage from "../assets/doctor-placeholder.webp";
 

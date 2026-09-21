@@ -4,7 +4,7 @@ import { MOBILE_MEDIA } from "../lib/constants";
 import { getTreatmentContent } from "../api/treatment_content";
 import { Link } from "react-router";
 import theme from "../theme";
-import { ArrowForward } from "@mui/icons-material";
+import ArrowForward from "@mui/icons-material/ArrowForward";
 import { useLanguage } from "../lib/language_context";
 
 const PageContainer = styled.div`

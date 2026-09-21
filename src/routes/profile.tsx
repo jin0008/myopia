@@ -33,7 +33,8 @@ import {
   deleteAlertRecipient,
 } from "../api/alert_recipient";
 import styled from "styled-components";
-import { Edit, DeleteOutline } from "@mui/icons-material";
+import Edit from "@mui/icons-material/Edit";
+import DeleteOutline from "@mui/icons-material/DeleteOutline";
 import {
   addGoogleAuth,
   addPasswordAuth,

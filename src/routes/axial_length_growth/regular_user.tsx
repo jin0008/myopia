@@ -15,7 +15,7 @@ import ConfirmDialog from "../../components/dialog";
 import theme from "../../theme";
 import { getHospitalList } from "../../api/hospital";
 import { MOBILE_MEDIA } from "../../lib/constants";
-import { Add } from "@mui/icons-material";
+import Add from "@mui/icons-material/Add";
 import {
   Dialog,
   DialogTitle,

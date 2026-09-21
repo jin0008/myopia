@@ -7,7 +7,8 @@ import { HttpError } from "../lib/fetch";
 import { useQueryClient } from "@tanstack/react-query";
 import { GoogleLogin } from "@react-oauth/google";
 import { MOBILE_MEDIA } from "../lib/constants";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import theme from "../theme";
 import Logo from "../components/logo";
 

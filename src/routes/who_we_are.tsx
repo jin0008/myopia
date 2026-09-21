@@ -4,7 +4,7 @@ import { getHospitalList } from "../api/hospital";
 import theme from "../theme";
 import type { HospitalSummary } from "../types/hospital";
 import { MOBILE_MEDIA } from "../lib/constants";
-import { LocationOn } from "@mui/icons-material";
+import LocationOn from "@mui/icons-material/LocationOn";
 import { useLanguage } from "../lib/language_context";
 import { hospitalDisplayName } from "../lib/hospitalName";
 
