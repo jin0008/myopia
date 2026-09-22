@@ -1,6 +1,7 @@
 import { useContext, type CSSProperties } from "react";
 
 import { UserContext } from "../App";
+import { MyodocLinks } from "./admin_myodoc";
 
 /** Landing page: pick which system to administer, then drill into its own
  * page. Previously this route held every management section (hospitals,
@@ -25,9 +26,11 @@ export default function Admin() {
         </a>
         <a href="/admin/myodoc" style={cardLink}>
           <div style={cardTitle}>myodoc 관리</div>
-          <div style={cardDesc}>전문칼럼 · 홈 배너</div>
+          <div style={cardDesc}>전문칼럼 · 홈 배너 · 병원 · 프리미엄 · 신고</div>
         </a>
       </div>
+      <h2 style={{ marginTop: 32, marginBottom: 0, fontSize: 18 }}>myodoc 바로가기</h2>
+      <MyodocLinks />
     </div>
   );
 }
