@@ -12,6 +12,21 @@ import {
   type ExpertColumn,
 } from "../api/column";
 
+// 앱(myodoc src/features/columns/ColumnIcon.tsx)이 아이콘을 그리는 분류.
+// 여기 없는 분류로 쓰면 앱은 아이콘 대신 이모지를 보인다.
+const CATEGORIES: { key: string; label: string; emoji: string }[] = [
+  { key: "atropine", label: "아트로핀", emoji: "💧" },
+  { key: "orthok", label: "드림렌즈", emoji: "🌙" },
+  { key: "myopia_lenses", label: "근시 억제 안경·렌즈", emoji: "👓" },
+  { key: "lifestyle", label: "생활습관", emoji: "☀️" },
+  { key: "basics", label: "근시 기본", emoji: "👁️" },
+  { key: "checkup", label: "검진·안축장", emoji: "📏" },
+  { key: "emergency", label: "응급·경고 증상", emoji: "🚨" },
+  { key: "strabismus", label: "사시", emoji: "👀" },
+];
+
+const EMOJIS = ["📄", "💧", "🌙", "👓", "☀️", "👁️", "📏", "🚨", "👀", "🩺", "💊", "📚", "🧒", "🥕", "📱", "🏃", "💡", "❓"];
+
 const EMPTY: ColumnInput = {
   title: "",
   body: "",
@@ -81,16 +96,38 @@ export default function AdminColumns() {
           <input value={form.title} onChange={set("title")} style={inp} />
         </Field>
         <Field label="카테고리">
-          <input
+          <select
             value={form.category}
-            onChange={set("category")}
+            // 분류를 고르면 어울리는 이모지를 같이 넣는다. 그 뒤에 바꿔도 된다.
+            onChange={(e) => {
+              const cat = CATEGORIES.find((x) => x.key === e.target.value);
+              setForm((f) => ({ ...f, category: e.target.value, thumbnail_emoji: cat?.emoji ?? f.thumbnail_emoji }));
+            }}
             style={inp}
-            placeholder="예: atropine, lifestyle, basics"
-          />
+          >
+            <option value="" disabled>
+              선택하세요
+            </option>
+            {CATEGORIES.map((x) => (
+              <option key={x.key} value={x.key}>
+                {x.emoji} {x.label}
+              </option>
+            ))}
+            {/* 목록에 없는 분류로 쓴 옛 칼럼도 고칠 수 있게 그 값을 남긴다. */}
+            {form.category && !CATEGORIES.some((x) => x.key === form.category) && (
+              <option value={form.category}>{form.category}</option>
+            )}
+          </select>
         </Field>
         <div style={{ display: "flex", gap: 12 }}>
           <Field label="이모지">
-            <input value={form.thumbnail_emoji} onChange={set("thumbnail_emoji")} style={{ ...inp, width: 90 }} />
+            <select value={form.thumbnail_emoji} onChange={set("thumbnail_emoji")} style={{ ...inp, width: 90 }}>
+              {(EMOJIS.includes(form.thumbnail_emoji ?? "") ? EMOJIS : [form.thumbnail_emoji ?? "📄", ...EMOJIS]).map((e) => (
+                <option key={e} value={e}>
+                  {e}
+                </option>
+              ))}
+            </select>
           </Field>
           <Field label="저자">
             <input value={form.author} onChange={set("author")} style={inp} />
@@ -144,7 +181,7 @@ export default function AdminColumns() {
                 <td style={td}>
                   {c.thumbnail_emoji} {c.title}
                 </td>
-                <td style={td}>{c.category}</td>
+                <td style={td}>{CATEGORIES.find((x) => x.key === c.category)?.label ?? c.category}</td>
                 <td style={td}>{c.published ? "O" : "-"}</td>
                 <td style={{ ...td, whiteSpace: "nowrap" }}>
                   <PrimaryButton onClick={() => startEdit(c)}>수정</PrimaryButton>{" "}
