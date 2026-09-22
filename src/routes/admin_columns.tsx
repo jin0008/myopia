@@ -13,7 +13,9 @@ import {
 } from "../api/column";
 
 // 앱(myodoc src/features/columns/ColumnIcon.tsx)이 아이콘을 그리는 분류.
-// 여기 없는 분류로 쓰면 앱은 아이콘 대신 이모지를 보인다.
+// 앱의 칼럼 그림은 이 분류로 정해진다. 이모지는 따로 고르지 않고 분류를
+// 고를 때 같이 들어간다 - 고를 수 있게 두면 바꿔도 앱에 티가 나지 않아
+// 헷갈린다.
 const CATEGORIES: { key: string; label: string; emoji: string }[] = [
   { key: "atropine", label: "아트로핀", emoji: "💧" },
   { key: "orthok", label: "드림렌즈", emoji: "🌙" },
@@ -24,8 +26,6 @@ const CATEGORIES: { key: string; label: string; emoji: string }[] = [
   { key: "emergency", label: "응급·경고 증상", emoji: "🚨" },
   { key: "strabismus", label: "사시", emoji: "👀" },
 ];
-
-const EMOJIS = ["📄", "💧", "🌙", "👓", "☀️", "👁️", "📏", "🚨", "👀", "🩺", "💊", "📚", "🧒", "🥕", "📱", "🏃", "💡", "❓"];
 
 const EMPTY: ColumnInput = {
   title: "",
@@ -98,7 +98,7 @@ export default function AdminColumns() {
         <Field label="카테고리">
           <select
             value={form.category}
-            // 분류를 고르면 어울리는 이모지를 같이 넣는다. 그 뒤에 바꿔도 된다.
+            // 분류를 고르면 어울리는 이모지를 같이 넣는다.
             onChange={(e) => {
               const cat = CATEGORIES.find((x) => x.key === e.target.value);
               setForm((f) => ({ ...f, category: e.target.value, thumbnail_emoji: cat?.emoji ?? f.thumbnail_emoji }));
@@ -120,15 +120,6 @@ export default function AdminColumns() {
           </select>
         </Field>
         <div style={{ display: "flex", gap: 12 }}>
-          <Field label="이모지">
-            <select value={form.thumbnail_emoji} onChange={set("thumbnail_emoji")} style={{ ...inp, width: 90 }}>
-              {(EMOJIS.includes(form.thumbnail_emoji ?? "") ? EMOJIS : [form.thumbnail_emoji ?? "📄", ...EMOJIS]).map((e) => (
-                <option key={e} value={e}>
-                  {e}
-                </option>
-              ))}
-            </select>
-          </Field>
           <Field label="저자">
             <input value={form.author} onChange={set("author")} style={inp} />
           </Field>
