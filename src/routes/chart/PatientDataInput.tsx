@@ -22,6 +22,18 @@ import {
 } from "./styles";
 import { Slider } from "@mui/material";
 import styled from "styled-components";
+import {
+  Chart as ChartJS,
+  LinearScale,
+  LineElement,
+  PointElement,
+  Tooltip,
+} from "chart.js";
+import { Scatter } from "react-chartjs-2";
+
+ChartJS.register(LinearScale, PointElement, LineElement, Tooltip);
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** 최근 몇 줄만. 전부 늘어놓으면 차트가 목록에 파묻힌다. */
 const HISTORY_ROWS = 6;
@@ -32,6 +44,101 @@ function sourceLabel(source?: string | null): string {
   if (source === "parent") return "app";
   if (source === "clinic") return "clinic";
   return "";
+}
+
+/** 최소제곱 직선. 점이 둘 이상이고 날짜가 다를 때만. */
+function trendLine(pts: { x: number; y: number }[]) {
+  if (pts.length < 2) return null;
+  const mx = pts.reduce((a, p) => a + p.x, 0) / pts.length;
+  const my = pts.reduce((a, p) => a + p.y, 0) / pts.length;
+  const sxx = pts.reduce((a, p) => a + (p.x - mx) ** 2, 0);
+  if (sxx === 0) return null;
+  const slope = pts.reduce((a, p) => a + (p.x - mx) * (p.y - my), 0) / sxx;
+  return { slope, at: (x: number) => my + slope * (x - mx) };
+}
+
+/**
+ * 날짜별 시간과 추세선. 슬라이더와 목록은 최근 값만 보여서 "늘고 있나
+ * 줄고 있나"는 줄을 하나씩 읽어야 알 수 있었다.
+ *
+ * 가로축은 날짜를 ms 숫자로 둔다. 시간 축(type: "time")은 날짜 어댑터
+ * 패키지가 따로 필요하다.
+ */
+function ActivityTrend({ rows }: { rows: ActivityRow[] }) {
+  const pts = rows
+    .filter((r) => r.hours != null)
+    .map((r) => ({ x: Date.parse(r.timestamp), y: r.hours as number }))
+    .sort((a, b) => a.x - b.x);
+  const trend = trendLine(pts);
+  if (trend == null) return null;
+  const x0 = pts[0].x;
+  const x1 = pts[pts.length - 1].x;
+  const perMonth = trend.slope * 30 * DAY_MS;
+
+  return (
+    <>
+      <div style={{ height: 150, marginTop: 6 }}>
+        <Scatter
+          data={{
+            datasets: [
+              {
+                label: "h/day",
+                data: pts,
+                showLine: true,
+                borderColor: theme.primary,
+                backgroundColor: theme.primary,
+                pointRadius: 3,
+                borderWidth: 2,
+              },
+              {
+                label: "trend",
+                data: [
+                  { x: x0, y: trend.at(x0) },
+                  { x: x1, y: trend.at(x1) },
+                ],
+                showLine: true,
+                borderColor: "#8a8f98",
+                borderDash: [6, 4],
+                borderWidth: 1.5,
+                pointRadius: 0,
+              },
+            ],
+          }}
+          options={{
+            maintainAspectRatio: false,
+            animation: false,
+            plugins: {
+              legend: { display: false },
+              // Chart.tsx 가 전역으로 켠 자동 색이 위 색을 덮는다.
+              autocolors: { enabled: false },
+              tooltip: {
+                callbacks: {
+                  label: (ctx: { parsed: { x: number; y: number } }) =>
+                    `${new Date(ctx.parsed.x).toISOString().slice(0, 10)}: ${ctx.parsed.y} h/day`,
+                },
+              },
+            } as never,
+            scales: {
+              x: {
+                type: "linear",
+                min: x0,
+                max: x1,
+                ticks: {
+                  maxTicksLimit: 5,
+                  callback: (v) => new Date(Number(v)).toISOString().slice(2, 10),
+                },
+              },
+              y: { min: 0, suggestedMax: 4, title: { display: true, text: "h/day" } },
+            },
+          }}
+        />
+      </div>
+      <TrendNote>
+        Trend: {perMonth >= 0 ? "+" : ""}
+        {perMonth.toFixed(1)} h/day per month
+      </TrendNote>
+    </>
+  );
 }
 
 function ActivityHistory({ rows }: { rows?: ActivityRow[] }) {
@@ -52,6 +159,7 @@ function ActivityHistory({ rows }: { rows?: ActivityRow[] }) {
       <HistoryTitle>
         Records ({unique.length})
       </HistoryTitle>
+      <ActivityTrend rows={unique} />
       {unique.slice(0, HISTORY_ROWS).map((r) => (
         <HistoryRow key={r.id}>
           <span>
@@ -112,6 +220,12 @@ const Tag = styled.span`
   font-size: 11px;
   font-weight: 700;
 `;
+const TrendNote = styled.p`
+  margin: 4px 0 8px;
+  font-size: 12px;
+  color: #6b7280;
+`;
+
 const HistoryMore = styled.p`
   margin: 6px 0 0;
   font-size: 12px;
