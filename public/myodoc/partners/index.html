@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>마이오닥 광고 파트너 모집</title>
+<meta name="description" content="소아 근시관리 포털 마이오닥의 광고 파트너를 모집합니다.">
+<link rel="icon" href="/favicon.svg">
+<style>
+/* 색은 앱의 디자인 토큰을 그대로 옮겼다(myodoc/src/theme/tokens.ts,
+   constants/theme.ts). 앱에서 이 페이지로 넘어올 때 다른 서비스로 보이면
+   안 된다. 값을 고칠 일이 있으면 그쪽을 먼저 보고 맞춘다. */
+:root{
+  --blue:#1A73E8; --blue-dark:#1257B0; --blue-soft:#E8F0FE;
+  --coral:#FF9F87; --warm:#B5451F; --warm-soft:#FFF0EA;
+  --ink:#151A21; --sub:#5B6472; --line:#E4E9F2;
+  --paper:#F6F8FB; --surface:#FFFFFF; --selected:#E8EDF5;
+  --danger:#b3261e;
+  --r-sm:10px; --r-md:14px; --r-lg:18px; --r-xl:26px;
+  --font:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Pretendard','Malgun Gothic',sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#F3F5F8; --sub:#A8AEB9; --line:#2A2F38;
+    --paper:#0F1115; --surface:#181B21; --selected:#242932;
+    --blue-soft:#1B2A44; --warm-soft:#2A1C17; --danger:#F2B8B5;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#F3F5F8; --sub:#A8AEB9; --line:#2A2F38;
+  --paper:#0F1115; --surface:#181B21; --selected:#242932;
+  --blue-soft:#1B2A44; --warm-soft:#2A1C17; --danger:#F2B8B5;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.65;
+  -webkit-font-smoothing:antialiased;word-break:keep-all;overflow-wrap:break-word;
+  padding-top:env(safe-area-inset-top,0);padding-bottom:env(safe-area-inset-bottom,0)}
+a{color:var(--blue)}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px;border-radius:4px}
+.wrap{max-width:1000px;margin:0 auto;padding:0 20px}
+
+header{border-bottom:1px solid var(--line);background:var(--surface)}
+header .wrap{display:flex;align-items:center;justify-content:space-between;min-height:62px;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:18px;letter-spacing:-.3px}
+.mark{width:30px;height:30px;border-radius:var(--r-sm);background:var(--blue);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dot{position:relative;top:-6px;margin-left:-3px;width:5px;height:5px;border-radius:50%;background:var(--coral)}
+.hmail{font-size:14px;color:var(--sub);text-decoration:none}
+.hmail:hover{color:var(--blue)}
+
+.hero{padding:72px 0 56px}
+.hero h1{font-size:clamp(30px,5.2vw,52px);line-height:1.22;font-weight:800;letter-spacing:-1.2px}
+.hero h1 span{display:block}
+.hero h1 em{font-style:normal;color:var(--blue)}
+.hero p{margin-top:22px;font-size:17px;color:var(--sub);max-width:44ch}
+.facts{margin-top:30px;display:flex;flex-wrap:wrap;gap:10px}
+.fact{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:14px}
+.fact b{color:var(--blue);font-weight:700}
+.fact.warm b{color:var(--warm)}
+
+section{border-top:1px solid var(--line)}
+.pick{padding:52px 0 20px}
+h2{font-size:24px;font-weight:800;letter-spacing:-.5px}
+.lead{color:var(--sub);margin-top:6px}
+.opts{margin-top:26px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.opt{position:relative;display:block;padding:24px 22px;cursor:pointer;background:var(--surface);
+  border:1.5px solid var(--line);border-radius:var(--r-lg);transition:border-color .15s,background .15s}
+.opt input{position:absolute;opacity:0;pointer-events:none}
+.who{font-size:19px;font-weight:800;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex-shrink:0;transition:border-color .15s,border-width .15s}
+.opt ul{list-style:none;margin-top:14px;font-size:14.5px;color:var(--sub)}
+.opt li{padding:3px 0 3px 15px;position:relative}
+.opt li::before{content:'';position:absolute;left:0;top:13px;width:5px;height:5px;border-radius:50%;background:var(--coral)}
+.price{margin-top:18px;font-size:14.5px;color:var(--sub)}
+.price b{font-size:21px;font-weight:800;color:var(--ink)}
+.opt:hover{border-color:var(--blue)}
+.opt:has(input:checked){border-color:var(--blue);background:var(--blue-soft)}
+.opt:has(input:checked) .radio{border:6px solid var(--blue)}
+.note{font-size:13.5px;color:var(--sub);margin-top:14px}
+
+.form{padding:40px 0 80px}
+.formgrid{display:grid;grid-template-columns:1fr 1.35fr;gap:44px;align-items:start}
+.side p{color:var(--sub);margin-top:10px;max-width:32ch}
+.steps{list-style:none;margin-top:22px;counter-reset:s}
+.steps li{counter-increment:s;position:relative;padding:8px 0 8px 34px;color:var(--sub);font-size:15px}
+.steps li::before{content:counter(s);position:absolute;left:0;top:9px;width:24px;height:24px;border-radius:50%;
+  background:var(--blue-soft);color:var(--blue);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center}
+form{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:26px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field{margin-bottom:16px}
+label.l{display:block;font-size:14px;font-weight:700;margin-bottom:6px}
+label.l small{font-weight:400;color:var(--sub)}
+input[type=text],input[type=tel],input[type=email],textarea{
+  width:100%;min-width:0;font:inherit;font-size:16px;color:var(--ink);background:var(--paper);
+  border:1.5px solid var(--line);border-radius:var(--r-md);padding:12px 14px;transition:border-color .15s}
+textarea{min-height:88px;resize:vertical}
+input:focus,textarea:focus{outline:none;border-color:var(--blue)}
+.field.bad input,.field.bad textarea{border-color:var(--danger)}
+.msg{font-size:13px;color:var(--danger);margin-top:5px;display:none}
+.field.bad .msg,.agree.bad .msg{display:block}
+.typeshow{font-size:15px;color:var(--sub)}
+.typeshow.on{color:var(--ink);font-weight:700}
+.agree{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--sub);margin:2px 0 18px}
+.agree input{width:18px;height:18px;margin-top:3px;accent-color:var(--blue);flex-shrink:0}
+.agree summary{cursor:pointer;color:var(--blue);margin-top:4px}
+.terms{margin-top:6px;font-size:13px;line-height:1.6}
+/* 허니팟. 사람에게는 보이지 않고 봇만 채운다. display:none 은 일부 봇이
+   걸러내므로 화면 밖으로 밀어낸다. */
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+button.send{width:100%;font:inherit;font-size:17px;font-weight:700;color:#fff;background:var(--blue);
+  border:none;border-radius:var(--r-md);padding:15px;cursor:pointer;transition:background .15s}
+button.send:hover{background:var(--blue-dark)}
+button.send:disabled{opacity:.6;cursor:default}
+.status{margin-top:12px;font-size:14px;color:var(--danger)}
+.done{display:none;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:30px}
+.done h3{font-size:21px;font-weight:800}
+.done p{color:var(--sub);margin-top:8px}
+.again{margin-top:18px;font:inherit;font-size:15px;background:none;border:1.5px solid var(--line);
+  color:var(--ink);border-radius:var(--r-md);padding:10px 16px;cursor:pointer}
+footer{border-top:1px solid var(--line);padding:26px 0;font-size:13px;color:var(--sub)}
+
+@media (max-width:860px){
+  .opts{grid-template-columns:1fr}
+  .formgrid{grid-template-columns:1fr;gap:26px}
+  .hero{padding:48px 0 40px}
+}
+@media (max-width:520px){ .row{grid-template-columns:1fr;gap:0} form{padding:20px} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <span class="mark">
+        <svg width="20" height="15" viewBox="2.8 6.6 25 18.8" aria-hidden="true">
+          <path fill-rule="evenodd" fill="#fff"
+            d="M2.8 16a9.4 9.4 0 1 0 18.8 0 9.4 9.4 0 1 0-18.8 0Z M15 16a6.4 6.4 0 1 0 12.8 0 6.4 6.4 0 1 0-12.8 0Z"/>
+        </svg>
+      </span>
+      마이오닥 파트너스<span class="dot"></span>
+    </div>
+    <a class="hmail" href="mailto:myodoc@idx.ai.kr">myodoc@idx.ai.kr</a>
+  </div>
+</header>
+
+<main>
+  <section class="hero" style="border:none">
+    <div class="wrap">
+      <h1><span>근시 아이를 둔 보호자에게</span><span><em>가장 먼저 보이는 자리</em></span></h1>
+      <p>마이오닥은 보호자가 근시관리 정보를 찾고, 치료법을 비교하고, 가까운 안과와 안경원을 찾는 소아 근시관리 포털입니다.</p>
+      <div class="facts">
+        <div class="fact"><b>월 구독</b>으로 부담 없이 시작</div>
+        <div class="fact"><b>연간 구독</b> 시 20% 할인</div>
+        <div class="fact warm"><b>광고 라벨</b>을 달아 신뢰도 유지</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pick" aria-labelledby="pick-h">
+    <div class="wrap">
+      <h2 id="pick-h">어떤 파트너이신가요?</h2>
+      <p class="lead">선택하시면 해당 업종의 상세 안내서와 요금표를 보내 드립니다.</p>
+
+      <div class="opts" role="radiogroup" aria-labelledby="pick-h">
+        <label class="opt">
+          <input type="radio" name="type" value="optical" data-org="매장명" data-label="안경원">
+          <div class="who">안경원<span class="radio"></span></div>
+          <ul>
+            <li>매장 반경 내 검색 상단 노출</li>
+            <li>근시관리 안경렌즈 취급 표시</li>
+            <li>블로그·예약 링크 연결</li>
+          </ul>
+          <div class="price">월 <b>1만 원</b>부터</div>
+        </label>
+        <label class="opt">
+          <input type="radio" name="type" value="eye" data-org="기관명" data-label="안과">
+          <div class="who">안과<span class="radio"></span></div>
+          <ul>
+            <li>지도 검색 상단 노출</li>
+            <li>치료 항목 표시와 치료 탭 노출</li>
+            <li>진료시간·의료진 정보 직접 편집</li>
+          </ul>
+          <div class="price">월 <b>10만 원</b>부터</div>
+        </label>
+        <label class="opt">
+          <input type="radio" name="type" value="company" data-org="회사명" data-label="제약·관련회사">
+          <div class="who">제약·관련회사<span class="radio"></span></div>
+          <ul>
+            <li>홈 메인 배너</li>
+            <li>칼럼·치료법 연계 콘텐츠 배너</li>
+            <li>월간 성과 리포트</li>
+          </ul>
+          <div class="price">월 <b>40만 원</b>부터</div>
+        </label>
+      </div>
+      <p class="note">요금은 플랫폼 월간 활성 사용자(MAU) 등급에 따라 정해지며, 부가가치세 별도입니다.</p>
+    </div>
+  </section>
+
+  <section class="form" aria-labelledby="form-h">
+    <div class="wrap formgrid">
+      <div class="side">
+        <h2 id="form-h">안내서 받기</h2>
+        <p>연락처를 남겨 주시면 담당자가 확인 후 연락드립니다.</p>
+        <ol class="steps">
+          <li>업종별 상세 안내서와 신청서를 이메일로 보내 드립니다.</li>
+          <li>신청서를 회신하시면 취급 품목과 광고 소재를 확인합니다.</li>
+          <li>계약과 결제 후 3영업일 안에 노출이 시작됩니다.</li>
+        </ol>
+      </div>
+
+      <div>
+        <form id="lead" novalidate>
+          <div class="field" id="f-type">
+            <label class="l">파트너 유형</label>
+            <div class="typeshow" id="type-show">위에서 유형을 선택해 주세요.</div>
+            <div class="msg">파트너 유형을 선택해 주세요.</div>
+          </div>
+          <div class="row">
+            <div class="field" id="f-org">
+              <label class="l" for="org"><span id="org-label">업체명</span></label>
+              <input type="text" id="org" autocomplete="organization" maxlength="100">
+              <div class="msg">업체명을 입력해 주세요.</div>
+            </div>
+            <div class="field" id="f-name">
+              <label class="l" for="name">담당자</label>
+              <input type="text" id="name" autocomplete="name" maxlength="50">
+              <div class="msg">담당자 성함을 입력해 주세요.</div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="field" id="f-tel">
+              <label class="l" for="tel">연락처</label>
+              <input type="tel" id="tel" autocomplete="tel" inputmode="tel" placeholder="010-0000-0000" maxlength="30">
+              <div class="msg">연락 가능한 번호를 입력해 주세요.</div>
+            </div>
+            <div class="field" id="f-email">
+              <label class="l" for="email">이메일</label>
+              <input type="email" id="email" autocomplete="email" placeholder="name@example.com" maxlength="120">
+              <div class="msg">안내서를 받을 이메일 주소를 확인해 주세요.</div>
+            </div>
+          </div>
+          <div class="field">
+            <label class="l" for="memo">문의 내용 <small>(선택)</small></label>
+            <textarea id="memo" maxlength="1000" placeholder="희망 지역, 관심 지면 등"></textarea>
+          </div>
+
+          <div class="hp" aria-hidden="true">
+            <label for="website">홈페이지</label>
+            <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+          </div>
+
+          <div class="agree" id="f-agree">
+            <input type="checkbox" id="agree">
+            <div>
+              <label for="agree">개인정보 수집·이용에 동의합니다 (필수)</label>
+              <details><summary>내용 보기</summary>
+                <div class="terms">
+                  수집 항목: 업체명, 담당자명, 연락처, 이메일<br>
+                  이용 목적: 광고 파트너 안내서 발송 및 상담<br>
+                  보유 기간: 문의 처리 후 1년, 이후 파기<br>
+                  동의를 거부하실 수 있으나, 거부 시 안내서를 받으실 수 없습니다.
+                </div>
+              </details>
+              <div class="msg" style="margin-top:6px">동의가 필요합니다.</div>
+            </div>
+          </div>
+          <button class="send" type="submit" id="send">안내서 받기</button>
+          <div class="status" id="status" role="alert"></div>
+        </form>
+
+        <div class="done" id="done" tabindex="-1">
+          <h3>접수되었습니다</h3>
+          <p>담당자가 확인 후 입력하신 이메일로 안내서를 보내 드립니다.</p>
+          <button class="again" type="button" id="again">다른 문의 남기기</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">마이오닥 · 주식회사 아이디엑스 · 문의 <a href="mailto:myodoc@idx.ai.kr">myodoc@idx.ai.kr</a></div>
+</footer>
+
+<script>
+const ENDPOINT = '/api/ad-inquiry';
+const $ = (id) => document.getElementById(id);
+let kind = null;
+
+document.querySelectorAll('input[name=type]').forEach((r) => {
+  r.addEventListener('change', () => {
+    kind = r.value;
+    $('type-show').textContent = r.dataset.label;
+    $('type-show').classList.add('on');
+    $('org-label').textContent = r.dataset.org;
+    $('f-org').querySelector('.msg').textContent = r.dataset.org + '을 입력해 주세요.';
+    $('f-type').classList.remove('bad');
+  });
+});
+
+const mark = (id, ok) => { $(id).classList.toggle('bad', !ok); return ok; };
+
+$('lead').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  $('status').textContent = '';
+  const body = {
+    kind,
+    org: $('org').value.trim(),
+    contactName: $('name').value.trim(),
+    phone: $('tel').value.trim(),
+    email: $('email').value.trim(),
+    memo: $('memo').value.trim() || undefined,
+    agreed: $('agree').checked,
+    website: $('website').value,
+  };
+  const ok = [
+    mark('f-type', !!kind),
+    mark('f-org', !!body.org),
+    mark('f-name', !!body.contactName),
+    mark('f-tel', body.phone.replace(/\D/g, '').length >= 9),
+    mark('f-email', /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)),
+    mark('f-agree', body.agreed),
+  ].every(Boolean);
+  if (!ok) {
+    if (!kind) document.querySelector('.opts').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    else document.querySelector('.field.bad input')?.focus();
+    return;
+  }
+
+  $('send').disabled = true;
+  try {
+    const res = await fetch(ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (res.status === 429) {
+      $('status').textContent = '문의가 너무 잦습니다. 잠시 후 다시 시도해 주세요.';
+      return;
+    }
+    if (!res.ok) throw new Error();
+    $('lead').style.display = 'none';
+    $('done').style.display = 'block';
+    $('done').focus();
+  } catch {
+    // 접수에 실패해도 문의를 잃지 않게 메일 주소를 안내한다.
+    $('status').textContent = '전송하지 못했습니다. 잠시 후 다시 시도하시거나 myodoc@idx.ai.kr 로 보내 주세요.';
+  } finally {
+    $('send').disabled = false;
+  }
+});
+
+$('again').addEventListener('click', () => {
+  $('lead').reset();
+  kind = null;
+  $('type-show').textContent = '위에서 유형을 선택해 주세요.';
+  $('type-show').classList.remove('on');
+  $('org-label').textContent = '업체명';
+  $('done').style.display = 'none';
+  $('lead').style.display = 'block';
+  document.querySelector('.pick').scrollIntoView({ behavior: 'smooth' });
+});
+</script>
+</body>
+</html>
