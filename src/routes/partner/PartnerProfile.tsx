@@ -224,7 +224,7 @@ export default function PartnerProfile() {
               label: "기본 정보",
               content: (
                 <>
-                  <Field label="병원 찾기 (카카오맵 검색)">
+                  <Field label="병원 찾기">
                     <PlacePicker
                       search={api.searchPlaces}
                       currentId={form.kakao_place_id}
