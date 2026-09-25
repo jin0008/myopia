@@ -59,6 +59,7 @@ const PatientDeleteRequest = lazy(
 
 const TOS = lazy(() => import("./routes/tos"));
 const MyodocPrivacy = lazy(() => import("./routes/myodoc/privacy"));
+const MyodocTos = lazy(() => import("./routes/myodoc/tos"));
 
 export const UserContext = createContext<{
   user: any | null;
@@ -149,6 +150,7 @@ const App = () => {
               {/* 마이오닥(앱) 법적 고지. 스토어 심사 제출용 공개 URL이자 앱에서
                   띄우는 화면이라, 의료진 플랫폼 헤더 밖에 독립으로 둔다. */}
               <Route path="/myodoc/privacy" element={<MyodocPrivacy />} />
+              <Route path="/myodoc/tos" element={<MyodocTos />} />
             </Routes>
             </Suspense>
           </GoogleOAuthProvider>
