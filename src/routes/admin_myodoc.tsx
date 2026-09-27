@@ -34,6 +34,9 @@ export default function AdminMyodoc() {
         <a href="/admin/promotions" style={linkRow}>
           찾기 탭 유료 노출 관리 →
         </a>
+        <a href="/admin/ad-inquiries" style={linkRow}>
+          광고 문의 →
+        </a>
         <a href="/admin/reports" style={linkRow}>
           신고 처리 →
         </a>
