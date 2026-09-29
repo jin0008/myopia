@@ -140,7 +140,7 @@ export default function LegalPage({
           <br />
           경기도 광명시 덕안로104번길 17 지하3층
           <br />
-          문의 myopiamanage@naver.com
+          문의 myodoc@idx.ai.kr
         </Foot>
       </Inner>
     </Page>
