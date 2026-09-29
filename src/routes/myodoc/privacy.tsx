@@ -294,7 +294,7 @@ export default function MyodocPrivacy() {
               </tr>
               <tr>
                 <th>이메일</th>
-                <td>myopiamanage@naver.com</td>
+                <td>myodoc@idx.ai.kr</td>
               </tr>
               <tr>
                 <th>주소</th>
