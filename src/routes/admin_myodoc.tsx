@@ -25,8 +25,13 @@ export default function AdminMyodoc() {
         <a href="/admin/hospital-profiles" style={linkRow}>
           병원 프로필 관리 →
         </a>
+        {/* 인증 심사가 계정 승인보다 먼저다 - 여기서 승인해야 업체가 묶이고,
+            그래야 프리미엄 신청이 열린다. */}
+        <a href="/admin/verifications" style={linkRow}>
+          업체 인증 심사 →
+        </a>
         <a href="/admin/partner-accounts" style={linkRow}>
-          병원 파트너 계정 승인 →
+          파트너 계정 관리 →
         </a>
         <a href="/admin/promotion-requests" style={linkRow}>
           프리미엄 신청 처리 →

@@ -220,10 +220,18 @@ export default function PartnerPromotions() {
           <div style={warnBox}>
             <b>아직 업체 확인이 되지 않았습니다.</b>
             <div style={{ marginTop: 4 }}>
-              프리미엄은 확인된 업체에만 걸 수 있습니다. 사업자등록증을 담당자
-              에게 보내 확인을 요청해 주세요. 확인이 끝나면 이 자리에 업체
-              이름이 표시되고 신청할 수 있습니다.
+              프리미엄은 확인된 업체에만 걸 수 있습니다. 아래에서 내 업체를
+              고르고 서류를 올리시면 확인 후 신청하실 수 있습니다.
             </div>
+            {/* 막힌 자리에서 나갈 길을 준다. 예전에는 "담당자에게 연락
+                하세요"로 끝나서, 파트너는 누구에게 무엇을 보내야 하는지
+                모른 채 이 화면을 떠났다. */}
+            <button
+              style={verifyBtn}
+              onClick={() => navigate("/partner/verification")}
+            >
+              업체 인증하러 가기
+            </button>
           </div>
         ) : (
           <div style={pickedBox}>
@@ -453,6 +461,17 @@ const pickedBox: CSSProperties = {
   padding: "10px 12px",
   marginBottom: 10,
   fontSize: 14,
+};
+const verifyBtn: CSSProperties = {
+  marginTop: 10,
+  border: "none",
+  borderRadius: 8,
+  background: "#0d47a1",
+  color: "#fff",
+  padding: "9px 16px",
+  fontSize: 14,
+  fontWeight: 700,
+  cursor: "pointer",
 };
 const warnBox: CSSProperties = {
   border: "1px solid #f0d9a8",

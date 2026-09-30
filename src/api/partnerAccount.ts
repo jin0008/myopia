@@ -207,3 +207,67 @@ export function setAccountFacility(
     false,
   );
 }
+
+/* ---- 업체 인증 심사 ----------------------------------------------------- */
+
+export interface AdminVerification {
+  id: string;
+  kind: "eye" | "optical";
+  key: string;
+  facilityName: string;
+  /** 제출 서류의 파일명. 열람은 관리자 인증이 걸린 별도 주소로 한다. */
+  docFiles: string[];
+  status: "pending" | "approved" | "rejected" | "cancelled";
+  note: string | null;
+  reviewNote: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  account: {
+    id: string;
+    hospitalName: string;
+    contactName: string;
+    email: string;
+    businessKind: "hospital" | "optical";
+  };
+}
+
+export function listVerifications(): Promise<AdminVerification[]> {
+  return jsonFetchWithSession(API_ROOT + "/partner/verifications");
+}
+
+export function reviewVerification(
+  id: string,
+  action: "approve" | "reject",
+  reviewNote?: string,
+): Promise<{ id: string; status: string }> {
+  return jsonFetchWithSession(
+    API_ROOT + `/partner/verifications/${id}/review`,
+    { method: "POST" },
+    { action, reviewNote },
+  );
+}
+
+/**
+ * 제출 서류를 받는다.
+ *
+ * <a href> 로 걸 수 없다 - 이 주소는 관리자 인증이 걸려 있고, 브라우저가
+ * 링크를 따라갈 때는 Authorization 헤더를 붙이지 않는다. 받아서 blob 으로
+ * 내려준다.
+ */
+export async function downloadVerificationDoc(id: string, name: string): Promise<void> {
+  const res = await fetch(
+    API_ROOT + `/partner/verifications/${id}/docs/${encodeURIComponent(name)}`,
+    { headers: { Authorization: `Bearer ${localStorage.getItem("session_key") ?? ""}` } },
+  );
+  if (!res.ok) {
+    alert("서류를 열지 못했습니다.");
+    return;
+  }
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.click();
+  // 바로 지우면 크롬이 받기 전에 사라진다.
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
