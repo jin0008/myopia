@@ -200,6 +200,22 @@ export default function PartnerProfile() {
         )}
       </div>
 
+      {/* 병원은 로그인하면 이 화면으로 온다. 인증 안내가 프리미엄 화면에만
+          있어서, 거기까지 찾아가지 않은 병원은 인증이라는 절차가 있는 줄도
+          몰랐다. 아직 안 묶였을 때만 띄운다. */}
+      {hasPartnerToken && me && me.facility == null && (
+        <div style={verifyBox}>
+          <b>업체 인증이 아직 안 되었습니다.</b>
+          <div style={{ marginTop: 4 }}>
+            프로필은 지금도 작성하실 수 있습니다. 다만 프리미엄 노출을
+            신청하시려면 먼저 업체 인증을 마쳐야 합니다.
+          </div>
+          <button style={verifyBtn} onClick={() => nav("/partner/verification")}>
+            업체 인증하러 가기
+          </button>
+        </div>
+      )}
+
       {me && (
         <div style={statusBox(me.status)}>
           {me.status === "approved"
@@ -422,6 +438,26 @@ function statusBox(status: string): CSSProperties {
   };
 }
 
+const verifyBox: CSSProperties = {
+  border: "1px solid #f0d9a8",
+  background: "#fdf6e3",
+  borderRadius: 8,
+  padding: "12px 14px",
+  marginTop: 14,
+  fontSize: 13.5,
+  color: "#6b5613",
+};
+const verifyBtn: CSSProperties = {
+  marginTop: 10,
+  border: "none",
+  borderRadius: 8,
+  background: "#0d47a1",
+  color: "#fff",
+  padding: "9px 16px",
+  fontSize: 14,
+  fontWeight: 700,
+  cursor: "pointer",
+};
 const card: CSSProperties = { border: "1px solid #ddd", borderRadius: 8, padding: 16, marginTop: 12 };
 const saveBtn: CSSProperties = {
   padding: "12px 24px",
