@@ -2,6 +2,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { useNavigate } from "react-router";
 
 import {
+  getPartnerToken,
   getVerification,
   searchMyFacilities,
   submitVerification,
@@ -35,8 +36,14 @@ export default function PartnerVerification() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    // 토큰이 없으면 불러와 봐야 401 이다. 그대로 두면 "불러오지 못했습니다"만
+    // 뜨고, 로그인하면 된다는 것을 알 길이 없다.
+    if (!getPartnerToken()) {
+      navigate("/partner/login", { replace: true });
+      return;
+    }
     getVerification().then(setState).catch(() => setError(true));
-  }, []);
+  }, [navigate]);
 
   async function search() {
     const term = q.trim();
