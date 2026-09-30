@@ -9,8 +9,8 @@ import { UserContext } from "../App";
  * 특히 파트너 쪽은 순서가 있는 일이다 - 인증해야 업체가 묶이고, 묶여야
  * 프리미엄을 신청하고, 승인해야 광고가 나간다. 그 순서대로 세운다.
  *
- * 파트너 줄에만 한 줄 설명을 붙인다. 나머지는 이름이 곧 하는 일이라
- * 설명이 붙으면 읽을 것만 늘어난다.
+ * 옆에 붙이는 말은 그 화면에서 할 수 있는 일만 적는다. 왜 그 순서인지는
+ * 순서 자체가 말한다 - 거기에 설명을 덧붙이면 읽을 것만 늘어난다.
  */
 const GROUPS: {
   title: string;
@@ -19,32 +19,31 @@ const GROUPS: {
 }[] = [
   {
     title: "파트너 · 광고",
-    hint: "업체가 들어와 광고가 나가기까지의 순서대로",
     items: [
       {
         href: "/admin/ad-inquiries",
         label: "광고 문의",
-        hint: "랜딩에서 문의를 남긴 곳. 여기서 시작한다",
+        hint: "문의 접수 목록",
       },
       {
         href: "/admin/verifications",
         label: "업체 인증 심사",
-        hint: "서류를 보고 승인. 업체가 묶이는 유일한 자리다",
+        hint: "제출 서류 확인 · 업체 연결",
       },
       {
         href: "/admin/partner-accounts",
         label: "파트너 계정",
-        hint: "병원·안경원 계정, 병원의 치료탭 노출",
+        hint: "계정 목록 · 치료탭 노출",
       },
       {
         href: "/admin/promotion-requests",
         label: "프리미엄 신청 처리",
-        hint: "승인하면 그 기간 동안 광고가 나간다",
+        hint: "신청 승인 · 반려",
       },
       {
         href: "/admin/promotions",
         label: "유료 노출 관리",
-        hint: "지금 나가고 있는 광고와 노출·클릭 성적",
+        hint: "게재 중인 광고 · 노출/클릭 수",
       },
     ],
   },
