@@ -29,8 +29,10 @@ export default function PartnerLogin() {
   return (
     <div style={wrap}>
       <div style={card}>
-        <h1 style={{ marginTop: 0 }}>병원 파트너 로그인</h1>
-        <p style={{ color: "#6b7280", marginTop: -6 }}>myodoc 병원 프로필 관리</p>
+        {/* 병원과 안경원이 같은 문으로 들어온다. "병원 파트너"라고 써 두면
+            안경원 사장은 자기 자리가 아니라고 읽고 돌아간다. */}
+        <h1 style={{ marginTop: 0 }}>파트너 로그인</h1>
+        <p style={{ color: "#6b7280", marginTop: -6 }}>마이오닥 병원·안경원 관리</p>
         <input
           style={inp}
           placeholder="이메일"
@@ -52,7 +54,7 @@ export default function PartnerLogin() {
         <p style={{ fontSize: 13, textAlign: "center", marginBottom: 0 }}>
           계정이 없으신가요?{" "}
           <a href="/partner/signup" style={{ color: "#0d47a1" }}>
-            병원 가입
+            파트너 가입
           </a>
         </p>
         {/* 비밀번호를 잊으면 되찾을 길이 이 링크뿐이다. 로그인이 안 될 때

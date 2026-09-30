@@ -185,13 +185,15 @@ export default function AdminPartnerAccounts() {
                   )}
                 </td>
                 <td style={{ ...td, whiteSpace: "nowrap" }}>
-                  <span style={badge(a.status)}>{STATUS_LABEL[a.status]}</span>
+                  <span style={badge(a.status)}>
+                    {(a.businessKind === "optical" ? OPTICAL_STATUS_LABEL : STATUS_LABEL)[a.status]}
+                  </span>
                   <div style={{ marginTop: 6 }}>
                     {a.status !== "approved" && (
                       <PrimaryButton
                         onClick={() => statusMutation.mutate({ id: a.id, status: "approved" })}
                       >
-                        노출
+                        {a.businessKind === "optical" ? "확인" : "노출"}
                       </PrimaryButton>
                     )}{" "}
                     {a.status !== "rejected" && (
@@ -231,11 +233,20 @@ const select: CSSProperties = {
 };
 
 /** 이 상태가 정하는 것은 치료탭에 프로필이 보이느냐 하나다. 광고와는
- *  무관한데 '승인됨'이라고만 쓰여 있으면 무엇이 승인된 것인지 알 수 없다. */
+ *  무관한데 '승인됨'이라고만 쓰여 있으면 무엇이 승인된 것인지 알 수 없다.
+ *
+ *  안경원에는 프로필이 없어서 '노출 중'이 거짓말이 된다 - 노출될 것이
+ *  없다. 안경원에게 이 칸은 "업체를 확인했다"는 표시일 뿐이므로 그렇게
+ *  부른다. 부르는 말이 다르면 운영자가 두 세계를 헷갈리지 않는다. */
 const STATUS_LABEL: Record<PartnerAccountStatus, string> = {
   pending: "대기",
   approved: "노출 중",
   rejected: "숨김",
+};
+const OPTICAL_STATUS_LABEL: Record<PartnerAccountStatus, string> = {
+  pending: "확인 전",
+  approved: "확인됨",
+  rejected: "거절",
 };
 
 /**
