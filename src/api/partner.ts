@@ -330,3 +330,74 @@ export function cancelPromotionRequest(id: string): Promise<void> {
 export function listMyPromotions(days = 30): Promise<MyPromotion[]> {
   return partnerFetch(`/partner/promotions/mine?days=${days}`);
 }
+
+/* ---- 업체 인증 ---------------------------------------------------------
+ *
+ * 가게는 파트너가 명부에서 직접 고른다. 25자 인허가번호를 운영자가
+ * 뒤지는 것보다 본인이 고르는 쪽이 정확하고, 서류로 검증하므로 남의
+ * 가게를 골라도 반려된다.
+ */
+
+export interface DirectoryFacility {
+  kind: "eye" | "optical";
+  key: string;
+  name: string;
+  address: string;
+}
+
+export type VerificationStatus = "pending" | "approved" | "rejected" | "cancelled";
+
+export interface VerificationRequest {
+  id: string;
+  kind: "eye" | "optical";
+  key: string;
+  facilityName: string;
+  docCount: number;
+  status: VerificationStatus;
+  note: string | null;
+  /** 반려 사유. 파트너에게 그대로 보인다. */
+  reviewNote: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+}
+
+export interface VerificationState {
+  businessKind: PartnerBusinessKind;
+  /** 업체가 묶였는지. 묶여야 프리미엄을 신청할 수 있다. */
+  verified: boolean;
+  request: VerificationRequest | null;
+}
+
+/** 내 업종의 명부만 돌려준다. */
+export function searchMyFacilities(q: string): Promise<DirectoryFacility[]> {
+  return partnerFetch(`/partner/my-facilities?q=${encodeURIComponent(q)}`);
+}
+
+export function getVerification(): Promise<VerificationState> {
+  return partnerFetch("/partner/verification");
+}
+
+/** 서류와 함께 신청한다. JSON 이 아니라 multipart 라 partnerFetch 를 쓰지
+ *  않는다 - Content-Type 을 직접 정하면 경계 문자열이 빠져 서버가 못 읽는다. */
+export async function submitVerification(
+  key: string,
+  docs: File[],
+  note?: string,
+): Promise<VerificationRequest> {
+  const token = getPartnerToken();
+  if (!token) throw new PartnerError(401, "not logged in");
+  const fd = new FormData();
+  fd.append("key", key);
+  if (note) fd.append("note", note);
+  for (const f of docs) fd.append("docs", f);
+  const res = await fetch(API_ROOT + "/partner/verification", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: fd,
+  });
+  if (!res.ok) {
+    const b = await res.json().catch(() => ({}));
+    throw new PartnerError(res.status, b?.message);
+  }
+  return res.json();
+}
