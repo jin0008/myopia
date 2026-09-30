@@ -1,4 +1,4 @@
-import { useContext, type CSSProperties } from "react";
+import { useContext, useState, type CSSProperties } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { UserContext } from "../App";
@@ -21,6 +21,10 @@ import {
  * 그 빈칸을 설명하느라 화면 위에 문단이 붙는다. 설명을 읽어야 쓸 수 있는
  * 화면은 실패한 화면이다.
  *
+ * 그 둘을 위아래로 쌓았더니 이번에는 아래 표가 위 표의 이어짐으로 읽혔다 -
+ * 병원 목록을 보다 스크롤하면 칸 이름이 달라지는데, 그것을 알아채기 전까지는
+ * 같은 표로 본다. 탭으로 나눠 한 번에 하나만 보인다.
+ *
  * 업체 연결은 여기서 하지 않는다. 인증 심사에서 서류를 보고 승인할 때만
  * 생긴다 - 서류 없이 손으로 묶는 길이 남아 있으면 인증 절차를 만든 뜻이
  * 절반 사라진다. 여기서는 결과를 보여 주고, 잘못된 것을 푸는 것만 한다.
@@ -28,6 +32,7 @@ import {
 export default function AdminPartnerAccounts() {
   const { user } = useContext(UserContext);
   const qc = useQueryClient();
+  const [tab, setTab] = useState<"hospital" | "optical">("hospital");
 
   const listQuery = useQuery({
     queryKey: ["admin", "partnerAccounts"],
@@ -89,8 +94,16 @@ export default function AdminPartnerAccounts() {
         <div>Loading…</div>
       ) : (
         <>
-          {/* ── 병원 ────────────────────────────────────────── */}
-          <h2 style={h2}>병원 {hospitals.length}</h2>
+          <div style={tabRow}>
+            <button style={tabBtn(tab === "hospital")} onClick={() => setTab("hospital")}>
+              병원 {hospitals.length}
+            </button>
+            <button style={tabBtn(tab === "optical")} onClick={() => setTab("optical")}>
+              안경원 {opticals.length}
+            </button>
+          </div>
+
+          <div style={{ display: tab === "hospital" ? "block" : "none" }}>
           <p style={desc}>
             <b>치료탭 노출</b>을 켜면 그 병원 프로필이 앱 치료탭에 보입니다.
             프로필의 카카오 장소는 병원이 직접 고르므로, 켜기 전에 상호와
@@ -191,8 +204,9 @@ export default function AdminPartnerAccounts() {
             </tbody>
           </table>
 
-          {/* ── 안경원 ──────────────────────────────────────── */}
-          <h2 style={h2}>안경원 {opticals.length}</h2>
+          </div>
+
+          <div style={{ display: tab === "optical" ? "block" : "none" }}>
           <p style={desc}>
             안경원에는 프로필도 치료탭 노출도 없습니다. 업체가 인증되면 바로
             프리미엄을 신청할 수 있습니다.
@@ -235,6 +249,7 @@ export default function AdminPartnerAccounts() {
               )}
             </tbody>
           </table>
+          </div>
         </>
       )}
     </div>
@@ -326,7 +341,27 @@ const desc: CSSProperties = {
   lineHeight: 1.7,
   margin: "4px 0 10px",
 };
-const h2: CSSProperties = { fontSize: 17, margin: "28px 0 0" };
+const tabRow: CSSProperties = {
+  display: "flex",
+  gap: 6,
+  margin: "16px 0 4px",
+  borderBottom: "1px solid #e5e7eb",
+};
+/** 고른 쪽만 밑줄로 끌어올린다. 배경색으로 나누면 아래 표의 머리글과 겹쳐
+ *  어디까지가 탭이고 어디부터가 표인지 흐려진다. */
+function tabBtn(on: boolean): CSSProperties {
+  return {
+    border: 0,
+    background: "none",
+    padding: "8px 14px",
+    marginBottom: -1,
+    borderBottom: `2px solid ${on ? "#0d47a1" : "transparent"}`,
+    color: on ? "#0d47a1" : "#6b7280",
+    fontSize: 15,
+    fontWeight: 700,
+    cursor: "pointer",
+  };
+}
 const table: CSSProperties = {
   width: "100%",
   borderCollapse: "collapse",
