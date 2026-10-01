@@ -212,6 +212,22 @@ export function setAccountFacility(
   );
 }
 
+/**
+ * 취급 브랜드를 고친다.
+ *
+ * 인증 심사에서 한 번 정하면 그만이었는데, 안경원이 나중에 다른 렌즈를
+ * 들여오거나 그만 취급할 수 있다. 파트너가 아니라 운영자가 고친다 -
+ * 상표라 스스로 켤 수 있으면 안 된다.
+ */
+export function setAccountBrands(id: string, brands: string[]) {
+  return jsonFetchWithSession(
+    API_ROOT + `/partner/accounts/${id}/brands`,
+    { method: "PATCH" },
+    { brands },
+    false,
+  );
+}
+
 /* ---- 업체 인증 심사 ----------------------------------------------------- */
 
 export interface AdminVerification {
