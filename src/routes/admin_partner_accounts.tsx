@@ -3,9 +3,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { UserContext } from "../App";
 import { PrimaryButton, PrimaryNagativeButton } from "../components/button";
+import { OPTICAL_BRANDS } from "../api/partner";
 import {
   claimProfileForAccount,
   deletePartnerAccount,
+  setAccountBrands,
   setAccountFacility,
   type PartnerAccount,
   listPartnerAccounts,
@@ -58,6 +60,13 @@ export default function AdminPartnerAccounts() {
     mutationFn: (accountId: string) => setAccountFacility(accountId, null),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "partnerAccounts"] }),
     onError: (e: any) => alert(e?.message ?? "해제하지 못했습니다."),
+  });
+
+  const brandsMutation = useMutation({
+    mutationFn: ({ accountId, brands }: { accountId: string; brands: string[] }) =>
+      setAccountBrands(accountId, brands),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "partnerAccounts"] }),
+    onError: (e: any) => alert(e?.message ?? "바꾸지 못했습니다."),
   });
 
   const deleteMutation = useMutation({
@@ -232,13 +241,14 @@ export default function AdminPartnerAccounts() {
               <tr>
                 <th style={th}>상호 · 담당자</th>
                 <th style={th}>인증된 업체</th>
+                <th style={th}>취급 브랜드</th>
                 <th style={th}>프리미엄 신청</th>
               </tr>
             </thead>
             <tbody>
               {opticals.length === 0 ? (
                 <tr>
-                  <td style={td} colSpan={3}>
+                  <td style={td} colSpan={4}>
                     아직 없습니다.
                   </td>
                 </tr>
@@ -255,6 +265,31 @@ export default function AdminPartnerAccounts() {
                       busy={unlinkMutation.isPending}
                       onUnlink={() => unlinkMutation.mutate(a.id)}
                     />
+                    {/* 인증 심사에서 정하지만, 나중에 들여오거나 그만
+                        취급할 수 있다. 여기서 고친다. */}
+                    <td style={td}>
+                      {OPTICAL_BRANDS.map((b) => (
+                        <label
+                          key={b.key}
+                          style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={a.brands.includes(b.key)}
+                            disabled={brandsMutation.isPending}
+                            onChange={(e) =>
+                              brandsMutation.mutate({
+                                accountId: a.id,
+                                brands: e.target.checked
+                                  ? [...a.brands, b.key]
+                                  : a.brands.filter((x) => x !== b.key),
+                              })
+                            }
+                          />
+                          {b.label}
+                        </label>
+                      ))}
+                    </td>
                     <td style={td}>
                       {a.facilityKey != null ? (
                         <span style={badge("approved")}>가능</span>
@@ -348,6 +383,9 @@ function Facility({
   return (
     <td style={td}>
       <b>{a.facilityName ?? "(명부에 없는 번호)"}</b>
+      {/* 주소 없이는 어느 가게인지 확정할 수 없다. "명안경원"만 해도 전국에
+          열두 곳이다. 서버가 이미 명부에서 끌어와 보내고 있다. */}
+      {a.facilityAddress ? <div style={sub}>{a.facilityAddress}</div> : null}
       <div style={{ ...sub, fontFamily: "monospace", wordBreak: "break-all" }}>
         {a.facilityKey}
       </div>

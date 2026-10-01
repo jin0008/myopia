@@ -2,6 +2,7 @@ import { useContext, useState, type CSSProperties } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { getHospitalList, type HospitalListItem } from "../api/hospital";
+import { OPTICAL_BRANDS } from "../api/partner";
 
 import {
   downloadVerificationDoc,
@@ -27,6 +28,8 @@ export default function AdminVerifications() {
   const [note, setNote] = useState<Record<string, string>>({});
   // 승인할 때 함께 정한다. 비워 두면 "아이로그 안 씀"이다.
   const [eyelog, setEyelog] = useState<Record<string, string>>({});
+  // 신청자가 고른 것을 그대로 두지 않는다. 운영자가 서류와 맞춰 본 것만 간다.
+  const [brands, setBrands] = useState<Record<string, string[]>>({});
 
   const hospitalsQuery = useQuery<HospitalListItem[]>({
     queryKey: ["hospitalList"],
@@ -44,12 +47,14 @@ export default function AdminVerifications() {
       action,
       reviewNote,
       eyelogHospitalId,
+      brands: picked,
     }: {
       id: string;
       action: "approve" | "reject";
       reviewNote?: string;
       eyelogHospitalId?: string | null;
-    }) => reviewVerification(id, action, reviewNote, eyelogHospitalId),
+      brands?: string[];
+    }) => reviewVerification(id, action, reviewNote, eyelogHospitalId, picked),
     onSuccess: () => {
       // 승인은 계정의 연결까지 바꾼다. 계정 목록도 같이 새로 받지 않으면
       // 옆 화면에는 아직 "연결 없음"으로 남는다.
@@ -100,6 +105,8 @@ export default function AdminVerifications() {
                 hospitals={hospitalsQuery.data ?? []}
                 eyelog={eyelog[v.id] ?? ""}
                 onEyelog={(t) => setEyelog((p) => ({ ...p, [v.id]: t }))}
+                brands={brands[v.id] ?? v.brands}
+                onBrands={(b) => setBrands((p) => ({ ...p, [v.id]: b }))}
                 busy={reviewMutation.isPending}
                 onReview={(action) =>
                   reviewMutation.mutate({
@@ -107,6 +114,7 @@ export default function AdminVerifications() {
                     action,
                     reviewNote: note[v.id],
                     eyelogHospitalId: eyelog[v.id] || null,
+                    brands: brands[v.id] ?? v.brands,
                   })
                 }
               />
@@ -161,6 +169,8 @@ function Card({
   hospitals,
   eyelog,
   onEyelog,
+  brands,
+  onBrands,
   busy,
   onReview,
 }: {
@@ -170,6 +180,8 @@ function Card({
   hospitals: HospitalListItem[];
   eyelog: string;
   onEyelog: (t: string) => void;
+  brands: string[];
+  onBrands: (b: string[]) => void;
   busy: boolean;
   onReview: (action: "approve" | "reject") => void;
 }) {
@@ -219,6 +231,43 @@ function Card({
           ))}
         </div>
       </div>
+
+      {/* 신청자가 고른 것을 기본값으로 두되 운영자가 고칠 수 있다. 상표라
+          취급하지 않는 곳에 붙으면 허위 표시가 된다 - 서류에서 확인되지
+          않으면 빼야 한다. */}
+      {v.kind === "optical" && (
+        <div style={{ marginTop: 12 }}>
+          <b style={{ fontSize: 13.5 }}>취급 브랜드</b>
+          <div style={{ color: "#6b7280", fontSize: 12.5, margin: "2px 0 6px" }}>
+            앱에서 안경원 이름 옆에 표시됩니다. 서류에서 확인되지 않으면 빼
+            주세요.
+          </div>
+          <div style={{ display: "flex", gap: 14 }}>
+            {OPTICAL_BRANDS.map((b) => (
+              <label
+                key={b.key}
+                style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13.5 }}
+              >
+                <input
+                  type="checkbox"
+                  checked={brands.includes(b.key)}
+                  onChange={(e) =>
+                    onBrands(
+                      e.target.checked
+                        ? [...brands, b.key]
+                        : brands.filter((x) => x !== b.key),
+                    )
+                  }
+                />
+                {b.label}
+                {v.brands.includes(b.key) ? (
+                  <span style={{ color: "#8a93a1", fontSize: 11.5 }}>(신청자가 고름)</span>
+                ) : null}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 아이로그 연동은 서류를 보는 이 자리에서 함께 정한다. 예전에는
           "병원 프로필 관리 → 관리자 설정"에 따로 있었는데, 떨어져 있어

@@ -19,6 +19,8 @@ export interface PartnerAccount {
   facilityKey: string | null;
   facilityName: string | null;
   facilityAddress: string | null;
+  /** 운영자가 확인한 취급 브랜드. */
+  brands: string[];
 }
 
 export function listPartnerAccounts(): Promise<PartnerAccount[]> {
@@ -81,6 +83,8 @@ export interface FacilityPromotion {
    *  번호를 잘못 넣은 광고는 여기가 비어 나온다. */
   facilityName: string | null;
   facilityAddress: string | null;
+  /** 운영자가 확인한 취급 브랜드. */
+  brands: string[];
   tier: "premium";
   startsOn: string;
   endsOn: string;
@@ -209,6 +213,22 @@ export function setAccountFacility(
 }
 
 /**
+ * 취급 브랜드를 고친다.
+ *
+ * 인증 심사에서 한 번 정하면 그만이었는데, 안경원이 나중에 다른 렌즈를
+ * 들여오거나 그만 취급할 수 있다. 파트너가 아니라 운영자가 고친다 -
+ * 상표라 스스로 켤 수 있으면 안 된다.
+ */
+export function setAccountBrands(id: string, brands: string[]) {
+  return jsonFetchWithSession(
+    API_ROOT + `/partner/accounts/${id}/brands`,
+    { method: "PATCH" },
+    { brands },
+    false,
+  );
+}
+
+/**
  * 계정을 지운다.
  *
  * 프로필은 지워지지 않는다 - 주인만 비워져 운영자가 다른 계정에 넘겨줄 수
@@ -234,6 +254,8 @@ export interface AdminVerification {
   docFiles: string[];
   /** 신청자가 적어 낸 임상 플랫폼 병원코드. 운영자가 맞춰 보는 값이다. */
   eyelogCode: string | null;
+  /** 신청자가 고른 취급 브랜드. 운영자가 서류와 맞춰 본다. */
+  brands: string[];
   status: "pending" | "approved" | "rejected" | "cancelled";
   note: string | null;
   reviewNote: string | null;
@@ -258,11 +280,13 @@ export function reviewVerification(
   reviewNote?: string,
   /** 승인할 때 함께 정한다. null 이면 "아이로그 안 씀". */
   eyelogHospitalId?: string | null,
+  /** 운영자가 확인한 취급 브랜드. */
+  brands?: string[],
 ): Promise<{ id: string; status: string }> {
   return jsonFetchWithSession(
     API_ROOT + `/partner/verifications/${id}/review`,
     { method: "POST" },
-    { action, reviewNote, eyelogHospitalId },
+    { action, reviewNote, eyelogHospitalId, brands },
   );
 }
 

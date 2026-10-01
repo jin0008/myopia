@@ -2,6 +2,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { useNavigate } from "react-router";
 
 import {
+  OPTICAL_BRANDS,
   getPartnerToken,
   getVerification,
   searchMyFacilities,
@@ -35,6 +36,7 @@ export default function PartnerVerification() {
   const [note, setNote] = useState("");
   const [usesEyelog, setUsesEyelog] = useState(false);
   const [eyelogCode, setEyelogCode] = useState("");
+  const [brands, setBrands] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -71,6 +73,7 @@ export default function PartnerVerification() {
         docs,
         note.trim() || undefined,
         usesEyelog ? eyelogCode.trim() : undefined,
+        brands,
       );
       setState(await getVerification());
       setPicked(null);
@@ -78,6 +81,7 @@ export default function PartnerVerification() {
       setNote("");
       setUsesEyelog(false);
       setEyelogCode("");
+      setBrands([]);
       setResults(null);
       setQ("");
     } catch (e) {
@@ -228,6 +232,36 @@ export default function PartnerVerification() {
             </p>
           </div>
 
+          {/* 근시조절 렌즈는 안경원이 파는 것이다. 병원에는 물어볼 이유가 없다. */}
+          {isOptical && (
+            <div style={card}>
+              <h3 style={h3}>3. 취급 브랜드 (선택)</h3>
+              <p style={hint}>
+                취급하시는 근시조절 렌즈를 골라 주세요. 앱에서 안경원 이름 옆에
+                표시됩니다. 서류 확인 과정에서 함께 확인합니다.
+              </p>
+              {OPTICAL_BRANDS.map((b) => (
+                <label
+                  key={b.key}
+                  style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 14, padding: "4px 0" }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={brands.includes(b.key)}
+                    onChange={(e) =>
+                      setBrands((prev) =>
+                        e.target.checked
+                          ? [...prev, b.key]
+                          : prev.filter((x) => x !== b.key),
+                      )
+                    }
+                  />
+                  {b.label}
+                </label>
+              ))}
+            </div>
+          )}
+
           {/* 안경원에는 임상 플랫폼이라는 것이 없다. 물어볼 이유가 없는
               질문을 보여 주면 "내가 뭘 모르나" 하고 멈춘다. */}
           {!isOptical && (
@@ -259,7 +293,7 @@ export default function PartnerVerification() {
           )}
 
           <div style={card}>
-            <h3 style={h3}>{isOptical ? "3" : "4"}. 남길 말 (선택)</h3>
+            <h3 style={h3}>4. 남길 말 (선택)</h3>
             <textarea
               style={{ ...input, width: "100%", minHeight: 70, boxSizing: "border-box" }}
               placeholder="상호가 명부와 다른 이유 등 전할 말이 있으면 적어 주세요."
