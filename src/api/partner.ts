@@ -345,6 +345,14 @@ export interface DirectoryFacility {
   address: string;
 }
 
+/** 받아 주는 브랜드. 자유 입력이 아니다 - 상표라 표기가 흔들리면 같은
+ *  브랜드가 여러 개로 갈린다. */
+export const OPTICAL_BRANDS = [
+  { key: "miyosmart", label: "MiYOSMART" },
+  { key: "stellest", label: "Stellest" },
+] as const;
+export type OpticalBrand = (typeof OPTICAL_BRANDS)[number]["key"];
+
 export type VerificationStatus = "pending" | "approved" | "rejected" | "cancelled";
 
 export interface VerificationRequest {
@@ -355,6 +363,8 @@ export interface VerificationRequest {
   docCount: number;
   /** 신청자가 적어 낸 임상 플랫폼 병원코드. 아이로그를 쓰는 병원만 적는다. */
   eyelogCode: string | null;
+  /** 신청자가 고른 취급 브랜드. */
+  brands: string[];
   status: VerificationStatus;
   note: string | null;
   /** 반려 사유. 파트너에게 그대로 보인다. */
@@ -386,6 +396,7 @@ export async function submitVerification(
   docs: File[],
   note?: string,
   eyelogCode?: string,
+  brands?: string[],
 ): Promise<VerificationRequest> {
   const token = getPartnerToken();
   if (!token) throw new PartnerError(401, "not logged in");
@@ -393,6 +404,8 @@ export async function submitVerification(
   fd.append("key", key);
   if (note) fd.append("note", note);
   if (eyelogCode) fd.append("eyelogCode", eyelogCode);
+  // FormData 에는 배열이 없다. 같은 이름으로 여러 번 붙이면 서버가 배열로 받는다.
+  for (const b of brands ?? []) fd.append("brands", b);
   for (const f of docs) fd.append("docs", f);
   const res = await fetch(API_ROOT + "/partner/verification", {
     method: "POST",
