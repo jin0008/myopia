@@ -217,6 +217,8 @@ export interface AdminVerification {
   facilityName: string;
   /** 제출 서류의 파일명. 열람은 관리자 인증이 걸린 별도 주소로 한다. */
   docFiles: string[];
+  /** 신청자가 적어 낸 임상 플랫폼 병원코드. 운영자가 맞춰 보는 값이다. */
+  eyelogCode: string | null;
   status: "pending" | "approved" | "rejected" | "cancelled";
   note: string | null;
   reviewNote: string | null;
@@ -239,11 +241,13 @@ export function reviewVerification(
   id: string,
   action: "approve" | "reject",
   reviewNote?: string,
+  /** 승인할 때 함께 정한다. null 이면 "아이로그 안 씀". */
+  eyelogHospitalId?: string | null,
 ): Promise<{ id: string; status: string }> {
   return jsonFetchWithSession(
     API_ROOT + `/partner/verifications/${id}/review`,
     { method: "POST" },
-    { action, reviewNote },
+    { action, reviewNote, eyelogHospitalId },
   );
 }
 

@@ -33,6 +33,8 @@ export default function PartnerVerification() {
   const [picked, setPicked] = useState<DirectoryFacility | null>(null);
   const [docs, setDocs] = useState<File[]>([]);
   const [note, setNote] = useState("");
+  const [usesEyelog, setUsesEyelog] = useState(false);
+  const [eyelogCode, setEyelogCode] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -62,11 +64,18 @@ export default function PartnerVerification() {
     if (picked == null || docs.length === 0) return;
     setSaving(true);
     try {
-      await submitVerification(picked.key, docs, note.trim() || undefined);
+      await submitVerification(
+        picked.key,
+        docs,
+        note.trim() || undefined,
+        usesEyelog ? eyelogCode.trim() || undefined : undefined,
+      );
       setState(await getVerification());
       setPicked(null);
       setDocs([]);
       setNote("");
+      setUsesEyelog(false);
+      setEyelogCode("");
       setResults(null);
       setQ("");
     } catch (e) {
@@ -217,8 +226,38 @@ export default function PartnerVerification() {
             </p>
           </div>
 
+          {/* 안경원에는 임상 플랫폼이라는 것이 없다. 물어볼 이유가 없는
+              질문을 보여 주면 "내가 뭘 모르나" 하고 멈춘다. */}
+          {!isOptical && (
+            <div style={card}>
+              <h3 style={h3}>3. 마이오피아 사용 여부</h3>
+              <p style={hint}>
+                마이오피아(안축장 관리 시스템)를 쓰고 계시면 알려 주세요. 앱에서
+                병원 이름 옆에 체크 표시가 붙고, 이 병원에서 진료받은 보호자가
+                후기를 남길 수 있게 됩니다.
+              </p>
+              <label style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 14 }}>
+                <input
+                  type="checkbox"
+                  checked={usesEyelog}
+                  onChange={(e) => setUsesEyelog(e.target.checked)}
+                />
+                마이오피아를 사용하고 있습니다
+              </label>
+              {usesEyelog && (
+                <input
+                  style={{ ...input, width: "100%", boxSizing: "border-box", marginTop: 10 }}
+                  placeholder="병원 코드 (마이오피아에서 쓰시는 코드)"
+                  value={eyelogCode}
+                  onChange={(e) => setEyelogCode(e.target.value)}
+                  maxLength={50}
+                />
+              )}
+            </div>
+          )}
+
           <div style={card}>
-            <h3 style={h3}>3. 남길 말 (선택)</h3>
+            <h3 style={h3}>{isOptical ? "3" : "4"}. 남길 말 (선택)</h3>
             <textarea
               style={{ ...input, width: "100%", minHeight: 70, boxSizing: "border-box" }}
               placeholder="상호가 명부와 다른 이유 등 전할 말이 있으면 적어 주세요."
