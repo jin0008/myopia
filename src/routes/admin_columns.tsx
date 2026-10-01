@@ -29,6 +29,7 @@ const CATEGORIES: { key: string; label: string; emoji: string }[] = [
 
 const EMPTY: ColumnInput = {
   title: "",
+  short_title: "",
   body: "",
   category: "",
   author: "마이오닥 의료진",
@@ -68,6 +69,7 @@ export default function AdminColumns() {
     setEditingId(c.id);
     setForm({
       title: c.title,
+      short_title: c.short_title ?? "",
       body: c.body,
       category: c.category,
       author: c.author,
@@ -94,6 +96,17 @@ export default function AdminColumns() {
         <h2>{editingId ? "칼럼 수정" : "새 칼럼"}</h2>
         <Field label="제목">
           <input value={form.title} onChange={set("title")} style={inp} />
+        </Field>
+        {/* 앱 목록 카드는 두 줄이다. 본문에서 친절한 긴 제목이 거기서는
+            따옴표와 기호만 빽빽해 무슨 글인지 안 읽힌다. */}
+        <Field label="짧은 제목 (앱 목록용, 비우면 제목 그대로)">
+          <input
+            value={form.short_title ?? ""}
+            onChange={set("short_title")}
+            style={inp}
+            maxLength={40}
+            placeholder="예: 드림렌즈, 끼고 자도 괜찮을까"
+          />
         </Field>
         <Field label="카테고리">
           <select

@@ -5,6 +5,8 @@ export interface ExpertColumn {
   id: string;
   slug: string;
   title: string;
+  /** 앱 목록 카드용. 비우면 title 을 쓴다. */
+  short_title: string | null;
   body: string;
   category: string;
   author: string;
@@ -18,6 +20,7 @@ export interface ExpertColumn {
 
 export interface ColumnInput {
   title: string;
+  short_title?: string | null;
   body: string;
   category: string;
   author?: string;
