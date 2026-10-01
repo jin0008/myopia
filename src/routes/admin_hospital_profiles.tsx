@@ -317,7 +317,12 @@ export default function AdminHospitalProfiles() {
               label: "관리자 설정",
               content: (
                 <>
-                  <Field label="내부 병원 연결 (리뷰 자격 · eyelog 연동 배지)">
+                  {/* 앱에서 이 병원 이름 옆에 파란 체크가 붙는 기준이다.
+                      예전에는 "인증 배지" 체크박스가 따로 있었는데, 무엇을
+                      인증하는지 어디에도 정해져 있지 않았고 결국 이 연결을
+                      확인했다는 뜻이었다. 두 개가 같은 말을 하고 있어 하나로
+                      줄였다. */}
+                  <Field label="내부 병원 연결 (앱의 파란 체크 · 검사결과 자동연동)">
                     <select
                       value={form.hospital_id ?? ""}
                       onChange={(e) => setForm((f) => ({ ...f, hospital_id: e.target.value || null }))}
@@ -330,16 +335,6 @@ export default function AdminHospitalProfiles() {
                         </option>
                       ))}
                     </select>
-                  </Field>
-                  <Field label="인증 배지">
-                    <label style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 0" }}>
-                      <input
-                        type="checkbox"
-                        checked={!!form.verified}
-                        onChange={(e) => setForm((f) => ({ ...f, verified: e.target.checked }))}
-                      />
-                      인증됨 표시
-                    </label>
                   </Field>
                   <Field label="상태">
                     <select value={form.status} onChange={set("status")} style={inp}>
