@@ -6,6 +6,7 @@ import { PrimaryButton, PrimaryNagativeButton } from "../components/button";
 import { OPTICAL_BRANDS } from "../api/partner";
 import {
   claimProfileForAccount,
+  deletePartnerAccount,
   setAccountBrands,
   setAccountFacility,
   type PartnerAccount,
@@ -66,6 +67,17 @@ export default function AdminPartnerAccounts() {
       setAccountBrands(accountId, brands),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "partnerAccounts"] }),
     onError: (e: any) => alert(e?.message ?? "바꾸지 못했습니다."),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (accountId: string) => deletePartnerAccount(accountId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin", "partnerAccounts"] });
+      // 프로필은 남고 주인만 비워진다 - 넘겨줄 수 있는 목록이 늘어난다.
+      qc.invalidateQueries({ queryKey: ["admin", "unclaimedProfiles"] });
+      qc.invalidateQueries({ queryKey: ["admin", "verifications"] });
+    },
+    onError: (e: any) => alert(e?.message ?? "지우지 못했습니다."),
   });
 
   const claimMutation = useMutation({
@@ -137,7 +149,11 @@ export default function AdminPartnerAccounts() {
               ) : (
                 hospitals.map((a) => (
                   <tr key={a.id}>
-                    <Who a={a} />
+                    <Who
+                      a={a}
+                      busy={deleteMutation.isPending}
+                      onDelete={() => deleteMutation.mutate(a.id)}
+                    />
                     <td style={td}>
                       {a.claimedName ? (
                         <>
@@ -239,7 +255,11 @@ export default function AdminPartnerAccounts() {
               ) : (
                 opticals.map((a) => (
                   <tr key={a.id}>
-                    <Who a={a} />
+                    <Who
+                      a={a}
+                      busy={deleteMutation.isPending}
+                      onDelete={() => deleteMutation.mutate(a.id)}
+                    />
                     <Facility
                       a={a}
                       busy={unlinkMutation.isPending}
@@ -292,7 +312,15 @@ export default function AdminPartnerAccounts() {
 }
 
 /** 누구인지. 두 표가 같은 모양이어야 훑을 때 눈이 안 튄다. */
-function Who({ a }: { a: PartnerAccount }) {
+function Who({
+  a,
+  busy,
+  onDelete,
+}: {
+  a: PartnerAccount;
+  busy: boolean;
+  onDelete: () => void;
+}) {
   return (
     <td style={td}>
       <b>{a.hospitalName}</b>
@@ -300,6 +328,29 @@ function Who({ a }: { a: PartnerAccount }) {
         {a.contactName} · {a.email}
       </div>
       <div style={sub}>{a.createdAt.slice(0, 10)} 가입</div>
+      {/* 한 업체에 계정 하나다. 잘못 가입한 계정이 업체를 쥐고 있으면 그
+          병원은 다시 가입할 수 없다 - 지우는 길이 있어야 한다. */}
+      <button
+        type="button"
+        style={dangerBtn}
+        disabled={busy}
+        onClick={() => {
+          if (
+            confirm(
+              `${a.hospitalName} 계정을 지울까요?\n\n` +
+                "· 업체 연결이 풀려 그 업체로 다시 가입할 수 있습니다\n" +
+                "· 인증 신청과 제출 서류가 함께 지워집니다\n" +
+                "· 프로필은 남습니다(주인만 비워져 다른 계정에 넘길 수 있습니다)\n" +
+                "· 진행 중인 광고는 기간이 끝날 때까지 그대로 나갑니다\n\n" +
+                "되돌릴 수 없습니다.",
+            )
+          ) {
+            onDelete();
+          }
+        }}
+      >
+        계정 삭제
+      </button>
     </td>
   );
 }
@@ -426,6 +477,16 @@ const select: CSSProperties = {
   borderRadius: 6,
   fontSize: 12,
   maxWidth: 260,
+};
+const dangerBtn: CSSProperties = {
+  marginTop: 6,
+  border: "1px solid #e6b4ae",
+  background: "#fff",
+  color: "#b3261e",
+  borderRadius: 6,
+  padding: "3px 9px",
+  fontSize: 12,
+  cursor: "pointer",
 };
 const linkBtn: CSSProperties = {
   border: 0,

@@ -228,6 +228,21 @@ export function setAccountBrands(id: string, brands: string[]) {
   );
 }
 
+/**
+ * 계정을 지운다.
+ *
+ * 프로필은 지워지지 않는다 - 주인만 비워져 운영자가 다른 계정에 넘겨줄 수
+ * 있게 된다. 진행 중인 광고도 기간이 끝날 때까지 그대로 나간다.
+ */
+export function deletePartnerAccount(id: string) {
+  return jsonFetchWithSession(
+    API_ROOT + `/partner/accounts/${id}`,
+    { method: "DELETE" },
+    undefined,
+    false,
+  );
+}
+
 /* ---- 업체 인증 심사 ----------------------------------------------------- */
 
 export interface AdminVerification {
