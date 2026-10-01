@@ -332,6 +332,9 @@ function Facility({
   return (
     <td style={td}>
       <b>{a.facilityName ?? "(명부에 없는 번호)"}</b>
+      {/* 주소 없이는 어느 가게인지 확정할 수 없다. "명안경원"만 해도 전국에
+          열두 곳이다. 서버가 이미 명부에서 끌어와 보내고 있다. */}
+      {a.facilityAddress ? <div style={sub}>{a.facilityAddress}</div> : null}
       <div style={{ ...sub, fontFamily: "monospace", wordBreak: "break-all" }}>
         {a.facilityKey}
       </div>
