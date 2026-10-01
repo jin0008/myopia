@@ -60,15 +60,17 @@ export default function PartnerVerification() {
     }
   }
 
+  const eyelogIncomplete = usesEyelog && eyelogCode.trim() === "";
+
   async function submit() {
-    if (picked == null || docs.length === 0) return;
+    if (picked == null || docs.length === 0 || eyelogIncomplete) return;
     setSaving(true);
     try {
       await submitVerification(
         picked.key,
         docs,
         note.trim() || undefined,
-        usesEyelog ? eyelogCode.trim() || undefined : undefined,
+        usesEyelog ? eyelogCode.trim() : undefined,
       );
       setState(await getVerification());
       setPicked(null);
@@ -271,16 +273,20 @@ export default function PartnerVerification() {
             style={{
               ...primaryBtn,
               marginTop: 16,
-              opacity: picked == null || docs.length === 0 ? 0.5 : 1,
+              opacity: picked == null || docs.length === 0 || eyelogIncomplete ? 0.5 : 1,
             }}
-            disabled={picked == null || docs.length === 0 || saving}
+            disabled={picked == null || docs.length === 0 || eyelogIncomplete || saving}
             onClick={submit}
           >
             {saving ? "보내는 중…" : "인증 신청"}
           </button>
-          {(picked == null || docs.length === 0) && (
+          {(picked == null || docs.length === 0 || eyelogIncomplete) && (
             <p style={hint}>
-              {picked == null ? "업체를 골라 주세요." : "서류를 한 장 이상 올려 주세요."}
+              {picked == null
+                ? "업체를 골라 주세요."
+                : docs.length === 0
+                  ? "서류를 한 장 이상 올려 주세요."
+                  : "마이오피아 병원 코드를 적어 주세요."}
             </p>
           )}
         </>
