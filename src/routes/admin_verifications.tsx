@@ -1,6 +1,8 @@
 import { useContext, useState, type CSSProperties } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { getHospitalList, type HospitalListItem } from "../api/hospital";
+
 import {
   downloadVerificationDoc,
   listVerifications,
@@ -23,6 +25,13 @@ export default function AdminVerifications() {
   const { user } = useContext(UserContext);
   const qc = useQueryClient();
   const [note, setNote] = useState<Record<string, string>>({});
+  // 승인할 때 함께 정한다. 비워 두면 "아이로그 안 씀"이다.
+  const [eyelog, setEyelog] = useState<Record<string, string>>({});
+
+  const hospitalsQuery = useQuery<HospitalListItem[]>({
+    queryKey: ["hospitalList"],
+    queryFn: getHospitalList,
+  });
 
   const listQuery = useQuery({
     queryKey: ["admin", "verifications"],
@@ -34,16 +43,19 @@ export default function AdminVerifications() {
       id,
       action,
       reviewNote,
+      eyelogHospitalId,
     }: {
       id: string;
       action: "approve" | "reject";
       reviewNote?: string;
-    }) => reviewVerification(id, action, reviewNote),
+      eyelogHospitalId?: string | null;
+    }) => reviewVerification(id, action, reviewNote, eyelogHospitalId),
     onSuccess: () => {
       // 승인은 계정의 연결까지 바꾼다. 계정 목록도 같이 새로 받지 않으면
       // 옆 화면에는 아직 "연결 없음"으로 남는다.
       qc.invalidateQueries({ queryKey: ["admin", "verifications"] });
       qc.invalidateQueries({ queryKey: ["admin", "partnerAccounts"] });
+      qc.invalidateQueries({ queryKey: ["admin", "hospitalProfiles"] });
     },
     onError: (e: any) => alert(e?.message ?? "처리하지 못했습니다."),
   });
@@ -85,9 +97,17 @@ export default function AdminVerifications() {
                 v={v}
                 note={note[v.id] ?? ""}
                 onNote={(t) => setNote((p) => ({ ...p, [v.id]: t }))}
+                hospitals={hospitalsQuery.data ?? []}
+                eyelog={eyelog[v.id] ?? ""}
+                onEyelog={(t) => setEyelog((p) => ({ ...p, [v.id]: t }))}
                 busy={reviewMutation.isPending}
                 onReview={(action) =>
-                  reviewMutation.mutate({ id: v.id, action, reviewNote: note[v.id] })
+                  reviewMutation.mutate({
+                    id: v.id,
+                    action,
+                    reviewNote: note[v.id],
+                    eyelogHospitalId: eyelog[v.id] || null,
+                  })
                 }
               />
             ))
@@ -138,12 +158,18 @@ function Card({
   v,
   note,
   onNote,
+  hospitals,
+  eyelog,
+  onEyelog,
   busy,
   onReview,
 }: {
   v: AdminVerification;
   note: string;
   onNote: (t: string) => void;
+  hospitals: HospitalListItem[];
+  eyelog: string;
+  onEyelog: (t: string) => void;
   busy: boolean;
   onReview: (action: "approve" | "reject") => void;
 }) {
@@ -193,6 +219,40 @@ function Card({
           ))}
         </div>
       </div>
+
+      {/* 아이로그 연동은 서류를 보는 이 자리에서 함께 정한다. 예전에는
+          "병원 프로필 관리 → 관리자 설정"에 따로 있었는데, 떨어져 있어
+          운영자가 빼먹었고 병원은 후기가 왜 안 되는지 알 수 없었다.
+          안경원에는 임상 병원이라는 것이 없다. */}
+      {v.kind === "eye" && (
+        <div style={{ marginTop: 12 }}>
+          <b style={{ fontSize: 13.5 }}>마이오피아 연동</b>
+          <div style={{ color: "#6b7280", fontSize: 12.5, margin: "2px 0 6px" }}>
+            고르면 앱에서 병원 이름 옆에 체크가 붙고, 이 병원 환자의 보호자가
+            후기를 쓸 수 있습니다.
+            {v.eyelogCode ? (
+              <>
+                {" "}
+                신청자가 적은 병원 코드: <b>{v.eyelogCode}</b>
+              </>
+            ) : (
+              " 신청자는 사용한다고 적지 않았습니다."
+            )}
+          </div>
+          <select
+            value={eyelog}
+            onChange={(e) => onEyelog(e.target.value)}
+            style={{ ...docBtn, padding: "7px 10px", minWidth: 260 }}
+          >
+            <option value="">연동 안 함</option>
+            {hospitals.map((h) => (
+              <option key={h.id} value={h.id}>
+                {h.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <textarea
         style={noteInput}

@@ -353,6 +353,8 @@ export interface VerificationRequest {
   key: string;
   facilityName: string;
   docCount: number;
+  /** 신청자가 적어 낸 임상 플랫폼 병원코드. 아이로그를 쓰는 병원만 적는다. */
+  eyelogCode: string | null;
   status: VerificationStatus;
   note: string | null;
   /** 반려 사유. 파트너에게 그대로 보인다. */
@@ -383,12 +385,14 @@ export async function submitVerification(
   key: string,
   docs: File[],
   note?: string,
+  eyelogCode?: string,
 ): Promise<VerificationRequest> {
   const token = getPartnerToken();
   if (!token) throw new PartnerError(401, "not logged in");
   const fd = new FormData();
   fd.append("key", key);
   if (note) fd.append("note", note);
+  if (eyelogCode) fd.append("eyelogCode", eyelogCode);
   for (const f of docs) fd.append("docs", f);
   const res = await fetch(API_ROOT + "/partner/verification", {
     method: "POST",
