@@ -15,7 +15,7 @@ import {
   type HospitalProfile,
   type HospitalProfileInput,
 } from "../api/hospitalProfile";
-import { getHospitalList } from "../api/hospital";
+import { getHospitalList, type HospitalListItem } from "../api/hospital";
 import {
   KeywordsEditor,
   TreatmentCategoryPicker,
@@ -28,11 +28,6 @@ import { PlacePicker } from "../components/PlacePicker";
 import { HospitalNoticesEditor } from "../components/HospitalNoticesEditor";
 import { DoctorsEditor, cleanDoctors } from "../components/DoctorsEditor";
 import { describeFieldErrors } from "../constants/profileFields";
-
-interface HospitalListItem {
-  id: string;
-  name: string;
-}
 
 const MYODOC_WEB = "https://myodoc.co.kr";
 
