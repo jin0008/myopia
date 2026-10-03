@@ -36,6 +36,12 @@ const EMPTY: BannerInput = {
   active: true,
 };
 
+/** 모르는 값이 오면 그대로 쓴다 - 예전에 자유 입력으로 넣은 것이 있을 수 있다. */
+const PLACEMENT_LABEL: Record<string, string> = {
+  home: "홈",
+  community: "커뮤니티",
+};
+
 export default function AdminBanners() {
   const { user } = useContext(UserContext);
   const qc = useQueryClient();
@@ -150,13 +156,13 @@ export default function AdminBanners() {
           <input value={form.link_url} onChange={setText("link_url")} style={inp} />
         </Field>
         <div style={{ display: "flex", gap: 12 }}>
+          {/* 자유 입력이었다. 오타 하나면("comunity") 아무 데도 안 뜨는
+              배너가 되는데, 등록은 성공한 것처럼 보인다. */}
           <Field label="노출 위치">
-            <input
-              value={form.placement}
-              onChange={setText("placement")}
-              style={inp}
-              placeholder="home"
-            />
+            <select value={form.placement} onChange={setText("placement")} style={inp}>
+              <option value="home">홈 — 배너 캐러셀</option>
+              <option value="community">커뮤니티 — 글 사이에 끼움</option>
+            </select>
           </Field>
           <Field label="정렬 순서 (낮을수록 먼저)">
             <input
@@ -223,6 +229,8 @@ export default function AdminBanners() {
             <tr>
               <th style={th}>제목</th>
               <th style={th}>위치</th>
+              <th style={th}>30일 노출</th>
+              <th style={th}>클릭</th>
               <th style={th}>순서</th>
               <th style={th}>활성</th>
               <th style={th} />
@@ -232,7 +240,9 @@ export default function AdminBanners() {
             {listQuery.data?.map((b) => (
               <tr key={b.id}>
                 <td style={td}>{b.title}</td>
-                <td style={td}>{b.placement}</td>
+                <td style={td}>{PLACEMENT_LABEL[b.placement] ?? b.placement}</td>
+                <td style={td}>{(b.impressions30d ?? 0).toLocaleString("ko-KR")}</td>
+                <td style={td}>{(b.clicks30d ?? 0).toLocaleString("ko-KR")}</td>
                 <td style={td}>{b.sort_order}</td>
                 <td style={td}>{b.active ? "O" : "-"}</td>
                 <td style={{ ...td, whiteSpace: "nowrap" }}>
