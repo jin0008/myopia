@@ -418,3 +418,49 @@ export async function submitVerification(
   }
   return res.json();
 }
+
+/* ---- 결제 -------------------------------------------------------------
+ *
+ * 금액은 서버가 정한다. 화면은 몇 달치인지만 말한다 - 금액을 보내면
+ * 개발자 도구로 100원이라 적어 보내는 것을 막을 수 없다.
+ */
+
+export interface Checkout {
+  clientId: string;
+  orderId: string;
+  amount: number;
+  goodsName: string;
+  returnUrl: string;
+}
+
+export function startCheckout(months: number): Promise<Checkout> {
+  return partnerFetch("/payment/checkout", { method: "POST" }, { months });
+}
+
+export interface MySubscription {
+  plan: string;
+  status: string;
+  currentPeriodEnd: string;
+  amount: number;
+  canceledAt: string | null;
+}
+export interface MyPayment {
+  id: string;
+  orderId: string;
+  amount: number;
+  status: string;
+  payMethod: string | null;
+  paidAt: string | null;
+  failedReason: string | null;
+  createdAt: string;
+}
+export interface PaymentState {
+  /** 결제 설정이 서버에 되어 있나. 아니면 버튼을 눌러도 아무 일이 없다. */
+  available: boolean;
+  subscription: MySubscription | null;
+  payments: MyPayment[];
+}
+
+export function getPaymentState(): Promise<PaymentState> {
+  return partnerFetch("/payment/me");
+}
