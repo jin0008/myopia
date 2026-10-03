@@ -9,6 +9,9 @@ export interface AdBanner {
   image_url: string;
   link_url: string;
   placement: string;
+  /** 지난 30일 성적. 목록에서만 온다. */
+  impressions30d?: number;
+  clicks30d?: number;
   sort_order: number;
   active: boolean;
   start_at: string | null;
