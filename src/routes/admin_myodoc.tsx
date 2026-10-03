@@ -45,6 +45,11 @@ const GROUPS: {
         label: "유료 노출 관리",
         hint: "게재 중인 광고 · 노출/클릭 수",
       },
+      {
+        href: "/admin/payments",
+        label: "결제 내역",
+        hint: "구독 결제 · 승인 취소",
+      },
     ],
   },
   {

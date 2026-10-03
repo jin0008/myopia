@@ -314,3 +314,49 @@ export async function downloadVerificationDoc(id: string, name: string): Promise
   // 바로 지우면 크롬이 받기 전에 사라진다.
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
+
+/* ---- 결제 내역 (운영자) ------------------------------------------------ */
+
+export interface AdminPayment {
+  id: string;
+  orderId: string;
+  tid: string | null;
+  amount: number;
+  /** "pending" | "paid" | "failed" | "canceled" */
+  status: string;
+  payMethod: string | null;
+  paidAt: string | null;
+  failedReason: string | null;
+  createdAt: string;
+  account: { id: string; hospitalName: string; email: string };
+}
+
+export function listPayments(): Promise<AdminPayment[]> {
+  return jsonFetchWithSession(API_ROOT + "/payment");
+}
+
+/**
+ * 승인을 취소한다.
+ *
+ * 당일 취소면 카드사가 매입을 올리지 않아 실제로 청구되지 않는다.
+ * 구독은 자동으로 되돌리지 않는다 - 어느 달 몫을 빼야 하는지는 사람이
+ * 보고 정할 일이다.
+ */
+export function cancelPayment(id: string, reason: string) {
+  return jsonFetchWithSession(
+    API_ROOT + `/payment/${id}/cancel`,
+    { method: "POST" },
+    { reason },
+    false,
+  );
+}
+
+/** 웹훅을 놓쳤을 때 거래번호로 다시 맞춘다. */
+export function syncPayment(tid: string) {
+  return jsonFetchWithSession(
+    API_ROOT + "/payment/sync",
+    { method: "POST" },
+    { tid },
+    false,
+  );
+}
