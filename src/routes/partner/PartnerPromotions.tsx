@@ -91,7 +91,7 @@ export default function PartnerPromotions() {
     if (result != null) {
       alert(
         result === "ok"
-          ? "결제가 완료되었습니다. 광고가 곧 노출됩니다."
+          ? "결제가 완료되었습니다. 광고가 지금부터 노출됩니다."
           : `결제하지 못했습니다. ${q.get("reason") ?? ""}`.trim(),
       );
       window.history.replaceState({}, "", window.location.pathname);
@@ -338,15 +338,19 @@ export default function PartnerPromotions() {
         )}
 
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <label style={label}>
-            시작일
-            <input
-              type="date"
-              value={startsOn}
-              onChange={(e) => setStartsOn(e.target.value)}
-              style={input}
-            />
-          </label>
+          {/* 결제로 거는 광고는 오늘부터 시작한다. 날짜를 고르게 해 두면
+              11월 1일을 골라도 오늘 시작되어, 화면이 거짓말을 한다. */}
+          {pay?.available ? null : (
+            <label style={label}>
+              시작일
+              <input
+                type="date"
+                value={startsOn}
+                onChange={(e) => setStartsOn(e.target.value)}
+                style={input}
+              />
+            </label>
+          )}
           <label style={label}>
             기간
             <select
@@ -362,19 +366,22 @@ export default function PartnerPromotions() {
             </select>
           </label>
         </div>
-        <label style={label}>
-          남길 말 (선택)
-          <input
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="문의나 요청 사항"
-            style={input}
-          />
-        </label>
+        {/* 결제 경로는 신청서를 거치지 않으니 남길 말을 받을 곳이 없다. */}
+        {pay?.available ? null : (
+          <label style={label}>
+            남길 말 (선택)
+            <input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="문의나 요청 사항"
+              style={input}
+            />
+          </label>
+        )}
 
         <p style={hint}>
           {pay?.available
-            ? "결제가 끝나면 광고가 바로 노출됩니다."
+            ? "결제가 끝나면 오늘부터 바로 노출됩니다. 이미 노출 중이면 남은 기간에 이어 붙습니다."
             : "신청하시면 운영자가 확인 후 노출을 시작합니다."}
         </p>
         {/* 결제가 켜져 있으면 결제로, 아니면 예전처럼 신청으로. 켜지지 않은
@@ -386,7 +393,7 @@ export default function PartnerPromotions() {
             disabled={facility == null || paying}
             onClick={() => void payAndSubmit()}
           >
-            {paying ? "결제창을 여는 중…" : "결제하고 신청하기"}
+            {paying ? "결제창을 여는 중…" : "결제하고 바로 시작"}
           </button>
         ) : (
           <button
