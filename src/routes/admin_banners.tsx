@@ -57,6 +57,9 @@ export default function AdminBanners() {
       qc.invalidateQueries({ queryKey: ["admin", "banners"] });
       reset();
     },
+    // 실패해도 아무 일이 없었다. 눌러도 폼이 그대로 있으니 저장된 줄 알고
+    // 나가거나, 같은 버튼을 계속 누른다.
+    onError: (e: any) => alert(e?.message ?? "저장하지 못했습니다."),
   });
 
   const delMutation = useMutation({
