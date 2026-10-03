@@ -5,6 +5,9 @@ import {
   clearPartnerToken,
   cancelPromotionRequest,
   createPromotionRequest,
+  getPaymentState,
+  startCheckout,
+  type PaymentState,
   getPartnerToken,
   listMyPromotionRequests,
   listMyPromotions,
@@ -24,6 +27,37 @@ import {
  * 성적이 먼저 온다. 이미 돈을 낸 사람에게는 그것이 이 화면에 오는
  * 이유고, 아직 안 낸 사람에게는 빈 자리가 신청서로 가는 안내가 된다.
  */
+/**
+ * 나이스 결제창 SDK.
+ *
+ * index.html 에 넣지 않는다. 결제 화면에서만 쓰는데 모든 페이지가 받아
+ * 가면, 결제와 상관없는 사람까지 결제사 스크립트를 내려받는다.
+ */
+const NICE_SDK = "https://pay.nicepay.co.kr/v1/js/";
+
+declare global {
+  interface Window {
+    AUTHNICE?: { requestPay: (o: Record<string, unknown>) => void };
+  }
+}
+
+function loadNiceSdk(): Promise<void> {
+  if (window.AUTHNICE != null) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>(`script[src="${NICE_SDK}"]`);
+    if (existing != null) {
+      existing.addEventListener("load", () => resolve());
+      existing.addEventListener("error", () => reject(new Error("sdk")));
+      return;
+    }
+    const el = document.createElement("script");
+    el.src = NICE_SDK;
+    el.onload = () => resolve();
+    el.onerror = () => reject(new Error("sdk"));
+    document.head.appendChild(el);
+  });
+}
+
 export default function PartnerPromotions() {
   const navigate = useNavigate();
   const [promotions, setPromotions] = useState<MyPromotion[] | null>(null);
@@ -35,6 +69,8 @@ export default function PartnerPromotions() {
   // 업체당 하나뿐이라 남의 신청을 막아 버릴 수도 있다.
   const [facility, setFacility] = useState<LinkedFacility | null>(null);
   const [businessKind, setBusinessKind] = useState<PartnerBusinessKind>("hospital");
+  const [pay, setPay] = useState<PaymentState | null>(null);
+  const [paying, setPaying] = useState(false);
   const [startsOn, setStartsOn] = useState(today());
   const [months, setMonths] = useState(1);
   const [note, setNote] = useState("");
@@ -46,6 +82,20 @@ export default function PartnerPromotions() {
       return;
     }
     void reload();
+    void getPaymentState().then(setPay).catch(() => setPay(null));
+
+    // 결제창에서 돌아오면 서버가 ?pay=ok|fail 을 붙여 보낸다. 알려 주고
+    // 주소는 지운다 - 남겨 두면 새로고침할 때마다 같은 알림이 뜬다.
+    const q = new URLSearchParams(window.location.search);
+    const result = q.get("pay");
+    if (result != null) {
+      alert(
+        result === "ok"
+          ? "결제가 완료되었습니다. 광고가 곧 노출됩니다."
+          : `결제하지 못했습니다. ${q.get("reason") ?? ""}`.trim(),
+      );
+      window.history.replaceState({}, "", window.location.pathname);
+    }
   }, [navigate]);
 
   async function reload() {
@@ -61,6 +111,47 @@ export default function PartnerPromotions() {
       setBusinessKind(me.businessKind);
     } catch {
       setError(true);
+    }
+  }
+
+  /**
+   * 결제하고 신청한다.
+   *
+   * 금액은 서버가 정한다. 여기서는 몇 달치인지만 말한다.
+   *
+   * 결제창은 나이스가 띄우고, 끝나면 나이스가 우리 서버로 결과를 보낸다.
+   * 서버가 승인까지 끝내고 이 화면으로 돌려보낸다 - 브라우저가 중간에
+   * 꺼져도 승인은 서버에서 끝난다.
+   */
+  async function payAndSubmit() {
+    if (facility == null || paying) return;
+    setPaying(true);
+    try {
+      await loadNiceSdk();
+      const c = await startCheckout(months);
+      window.AUTHNICE?.requestPay({
+        clientId: c.clientId,
+        method: "card",
+        orderId: c.orderId,
+        amount: c.amount,
+        goodsName: c.goodsName,
+        returnUrl: c.returnUrl,
+        fnError: (r: { errorMsg?: string }) => {
+          alert(r?.errorMsg ?? "결제창을 열지 못했습니다.");
+          setPaying(false);
+        },
+      });
+      // 여기서 끝이 아니다. 결제창이 뜨고, 결과는 서버가 받는다.
+    } catch (e) {
+      const code = (e as { code?: number })?.code;
+      alert(
+        code === 403
+          ? "업체 인증을 먼저 마쳐 주세요."
+          : code === 503
+            ? "결제 준비가 아직 되지 않았습니다. 담당자에게 알려 주세요."
+            : "결제를 시작하지 못했습니다.",
+      );
+      setPaying(false);
     }
   }
 
@@ -282,17 +373,31 @@ export default function PartnerPromotions() {
         </label>
 
         <p style={hint}>
-          신청하시면 운영자가 확인 후 노출을 시작합니다. 결제는 확인 단계에서
-          따로 안내드립니다.
+          {pay?.available
+            ? "결제가 끝나면 광고가 바로 노출됩니다."
+            : "신청하시면 운영자가 확인 후 노출을 시작합니다."}
         </p>
-        <button
-          type="button"
-          style={{ ...btn, ...btnPrimary }}
-          disabled={facility == null || saving}
-          onClick={() => void submit()}
-        >
-          {saving ? "보내는 중…" : "신청하기"}
-        </button>
+        {/* 결제가 켜져 있으면 결제로, 아니면 예전처럼 신청으로. 켜지지 않은
+            곳에서 결제 버튼을 보이면 눌러도 아무 일이 없다. */}
+        {pay?.available ? (
+          <button
+            type="button"
+            style={{ ...btn, ...btnPrimary }}
+            disabled={facility == null || paying}
+            onClick={() => void payAndSubmit()}
+          >
+            {paying ? "결제창을 여는 중…" : "결제하고 신청하기"}
+          </button>
+        ) : (
+          <button
+            type="button"
+            style={{ ...btn, ...btnPrimary }}
+            disabled={facility == null || saving}
+            onClick={() => void submit()}
+          >
+            {saving ? "보내는 중…" : "신청하기"}
+          </button>
+        )}
       </div>
 
       {/* 신청 내역 */}
