@@ -17,7 +17,6 @@ import {
 } from "../api/hospitalProfile";
 import { getHospitalList, type HospitalListItem } from "../api/hospital";
 import {
-  KeywordsEditor,
   TreatmentCategoryPicker,
   OpeningHoursEditor,
   TreatmentItemsEditor,
@@ -211,21 +210,6 @@ export default function AdminHospitalProfiles() {
                   </Field>
                   <Field label="병원명">
                     <input value={form.name} onChange={set("name")} style={inp} />
-                  </Field>
-                  <Field label="한 줄 소개 (리스트 카드·상세 상단)">
-                    <input
-                      value={form.tagline ?? ""}
-                      onChange={set("tagline")}
-                      style={inp}
-                      placeholder="예: 드림렌즈·아트로핀 전문 소아근시 클리닉"
-                      maxLength={120}
-                    />
-                  </Field>
-                  <Field label="키워드 태그 (리스트 카드에 노출)">
-                    <KeywordsEditor
-                      value={form.keywords ?? []}
-                      onChange={(keywords) => setForm((f) => ({ ...f, keywords }))}
-                    />
                   </Field>
                   <div style={{ display: "flex", gap: 12 }}>
                     <Field label="전화">
