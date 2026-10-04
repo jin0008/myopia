@@ -5,9 +5,7 @@ import {
   clearPartnerToken,
   cancelPromotionRequest,
   createPromotionRequest,
-  cancelSubscription,
   getPaymentState,
-  startCardRegistration,
   startCheckout,
   type PaymentState,
   getPartnerToken,
@@ -73,7 +71,6 @@ export default function PartnerPromotions() {
   const [businessKind, setBusinessKind] = useState<PartnerBusinessKind>("hospital");
   const [pay, setPay] = useState<PaymentState | null>(null);
   const [paying, setPaying] = useState(false);
-  const [carding, setCarding] = useState(false);
   const [startsOn, setStartsOn] = useState(today());
   const [months, setMonths] = useState(1);
   const [note, setNote] = useState("");
@@ -100,65 +97,7 @@ export default function PartnerPromotions() {
       window.history.replaceState({}, "", window.location.pathname);
     }
 
-    // 카드 등록도 같은 방식으로 돌아온다.
-    const card = q.get("card");
-    if (card != null) {
-      alert(
-        card === "ok"
-          ? "카드가 등록되었습니다. 기간이 끝나면 자동으로 결제됩니다."
-          : `카드를 등록하지 못했습니다. ${q.get("reason") ?? ""}`.trim(),
-      );
-      window.history.replaceState({}, "", window.location.pathname);
-    }
   }, [navigate]);
-
-  /** 카드를 등록한다. 돈은 빠지지 않는다. */
-  async function registerCard() {
-    if (carding) return;
-    setCarding(true);
-    try {
-      await loadNiceSdk();
-      const c = await startCardRegistration();
-      window.AUTHNICE?.requestPay({
-        clientId: c.clientId,
-        method: "billing",
-        orderId: c.orderId,
-        mallUserId: c.mallUserId,
-        amount: 0,
-        goodsName: c.goodsName,
-        returnUrl: c.returnUrl,
-        fnError: (r: { errorMsg?: string }) => {
-          alert(r?.errorMsg ?? "카드 등록창을 열지 못했습니다.");
-          setCarding(false);
-        },
-      });
-    } catch (e) {
-      const code = (e as { code?: number })?.code;
-      alert(
-        code === 403
-          ? "업체 인증을 먼저 마쳐 주세요."
-          : "카드 등록을 시작하지 못했습니다.",
-      );
-      setCarding(false);
-    }
-  }
-
-  async function stopAutoRenew() {
-    if (
-      !window.confirm(
-        "자동 결제를 해지할까요?\n\n이미 결제한 기간까지는 그대로 노출됩니다.",
-      )
-    ) {
-      return;
-    }
-    try {
-      const r = await cancelSubscription();
-      alert(`해지했습니다. ${r.until.slice(0, 10)} 까지는 그대로 노출됩니다.`);
-      setPay(await getPaymentState());
-    } catch {
-      alert("해지하지 못했습니다.");
-    }
-  }
 
   async function reload() {
     try {
@@ -441,46 +380,9 @@ export default function PartnerPromotions() {
           </label>
         )}
 
-        {/* 자동 갱신.
-            카드 등록과 "매달 빼 가도 된다"는 다른 허락이라, 등록했는지와
-            켜져 있는지를 따로 보여 준다. 해지 수단이 화면에 보여야 하는
-            것은 전자상거래법이 정한 것이기도 하다. */}
-        {pay?.available ? (
-          <div style={autoBox}>
-            {pay.subscription?.autoRenew ? (
-              <>
-                <b style={{ fontSize: 13.5 }}>자동 결제 켜짐</b>
-                <div style={{ color: "#4b5563", fontSize: 12.5, margin: "2px 0 8px" }}>
-                  {pay.subscription.currentPeriodEnd.slice(0, 10)} 에 등록하신 카드로
-                  결제됩니다. 7일 전에 메일로 알려 드립니다.
-                </div>
-                <button type="button" style={btn} onClick={() => void stopAutoRenew()}>
-                  자동 결제 해지
-                </button>
-              </>
-            ) : (
-              <>
-                <b style={{ fontSize: 13.5 }}>자동 결제 꺼짐</b>
-                <div style={{ color: "#4b5563", fontSize: 12.5, margin: "2px 0 8px" }}>
-                  카드를 등록해 두면 기간이 끝날 때 자동으로 연장됩니다.
-                  등록만으로는 돈이 빠지지 않습니다.
-                </div>
-                <button
-                  type="button"
-                  style={btn}
-                  disabled={facility == null || carding}
-                  onClick={() => void registerCard()}
-                >
-                  {carding ? "여는 중…" : "카드 등록"}
-                </button>
-              </>
-            )}
-          </div>
-        ) : null}
-
         <p style={hint}>
           {pay?.available
-            ? "결제가 끝나면 오늘부터 바로 노출됩니다. 이미 노출 중이면 남은 기간에 이어 붙습니다."
+            ? "결제가 끝나면 오늘부터 바로 노출됩니다. 이미 노출 중이면 남은 기간에 이어 붙습니다. 자동 결제는 없으며, 기간이 끝나기 7일 전에 메일로 알려 드립니다."
             : "신청하시면 운영자가 확인 후 노출을 시작합니다."}
         </p>
         {/* 결제가 켜져 있으면 결제로, 아니면 예전처럼 신청으로. 켜지지 않은
@@ -604,13 +506,6 @@ const card: CSSProperties = {
   background: "#fff",
 };
 const h3: CSSProperties = { margin: "0 0 12px", fontSize: 15 };
-const autoBox: CSSProperties = {
-  border: "1px solid #e5e7eb",
-  borderRadius: 10,
-  padding: 12,
-  background: "#fafafa",
-  margin: "4px 0 12px",
-};
 const hint: CSSProperties = { color: "#666", fontSize: 13, margin: "6px 0" };
 const label: CSSProperties = {
   display: "flex",
