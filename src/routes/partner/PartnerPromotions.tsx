@@ -123,6 +123,7 @@ export default function PartnerPromotions() {
         clientId: c.clientId,
         method: "billing",
         orderId: c.orderId,
+        mallUserId: c.mallUserId,
         amount: 0,
         goodsName: c.goodsName,
         returnUrl: c.returnUrl,

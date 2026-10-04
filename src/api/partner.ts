@@ -479,6 +479,8 @@ export interface CardRegistration {
   orderId: string;
   goodsName: string;
   returnUrl: string;
+  /** 빌링 모드가 요구한다. 없으면 결제창이 P012 를 낸다. */
+  mallUserId: string;
 }
 
 export function startCardRegistration(): Promise<CardRegistration> {
