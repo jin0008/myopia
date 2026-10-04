@@ -88,7 +88,10 @@ export default function AdminPromotions() {
       <h2 style={{ marginBottom: 4 }}>유료 노출 관리</h2>
       <p style={hint}>
         찾기 탭에서 상단 광고 자리에 올릴 업체를 지정합니다. 자리는 최대 3개이며,
-        사용자 위치에서 5km 안에 있을 때만 노출됩니다.
+        사용자 위치에서 5km 안에 있을 때만 노출됩니다. 자리가 모자라면 <b>가까운
+        순</b>으로 올라갑니다. 안과·안경원은 사용자가
+        고른 칩에 따라 따로 나갑니다. 노출/클릭은 최근 30일 합계이며, 하루에
+        사용자당 한 번만 셉니다.
       </p>
 
       <div style={card}>
@@ -223,14 +226,33 @@ export default function AdminPromotions() {
       </div>
 
       <h3 style={{ fontSize: 15, marginTop: 28 }}>등록된 광고 ({rows.length})</h3>
-      <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8 }}>
+      {/* 요양기호는 80자가 넘는 한 덩어리라 칸 너비를 제멋대로 벌린다.
+          auto 로 두면 그 한 줄이 표 전체를 밀어내므로 고정 배치로 짠다. */}
+      <table
+        style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          marginTop: 8,
+          tableLayout: "fixed",
+        }}
+      >
+        <colgroup>
+          <col style={{ width: 86 }} />
+          <col style={{ width: 64 }} />
+          <col />
+          <col style={{ width: 108 }} />
+          <col style={{ width: 92 }} />
+          <col style={{ width: 120 }} />
+          <col style={{ width: 120 }} />
+          <col style={{ width: 72 }} />
+        </colgroup>
         <thead>
           <tr>
             <th style={th}>상태</th>
             <th style={th}>구분</th>
             <th style={th}>업체</th>
             <th style={th}>기간</th>
-            <th style={th}>30일 노출/클릭</th>
+            <th style={th}>노출/클릭</th>
             <th style={th}>파트너</th>
             <th style={th}>메모</th>
             <th style={th} />
@@ -242,7 +264,7 @@ export default function AdminPromotions() {
               <td style={td}>
                 <span style={badge(r.active)}>{r.active ? "노출 중" : "기간 아님"}</span>
               </td>
-              <td style={td}>{r.kind === "eye" ? "안과" : "안경원"}</td>
+              <td style={tdTight}>{r.kind === "eye" ? "안과" : "안경원"}</td>
               <td style={td}>
                 {r.facilityName ? (
                   <>
@@ -255,16 +277,26 @@ export default function AdminPromotions() {
                     번호에 맞는 업체 없음
                   </div>
                 )}
-                <div style={{ fontFamily: "monospace", fontSize: 11.5, color: "#8a93a1" }}>
+                <div
+                  style={{
+                    fontFamily: "monospace",
+                    fontSize: 11.5,
+                    color: "#8a93a1",
+                    wordBreak: "break-all",
+                  }}
+                >
                   {r.key}
                 </div>
               </td>
-              <td style={td}>
-                {r.startsOn} ~ {r.endsOn}
+              {/* 날짜 두 개를 한 줄에 욱여넣으면 칸이 좁을 때 쪼개진다.
+                  위아래로 둔다. */}
+              <td style={tdTight}>
+                {r.startsOn}
+                <div style={{ color: "#8a93a1" }}>~ {r.endsOn}</div>
               </td>
               {/* 파트너가 자기 화면에서 보는 것과 같은 숫자다. 문의가 왔을
                   때 서로 다른 것을 보고 있으면 이야기가 안 된다. */}
-              <td style={{ ...td, fontVariantNumeric: "tabular-nums" }}>
+              <td style={{ ...tdTight, fontVariantNumeric: "tabular-nums" }}>
                 {r.impressions30d.toLocaleString()} / {r.clicks30d.toLocaleString()}
               </td>
               <td style={td}>{r.accountName ?? "-"}</td>
@@ -402,5 +434,14 @@ const input: CSSProperties = {
 
 const hint: CSSProperties = { color: "#666", fontSize: 12.5, margin: "8px 0 12px" };
 
-const th: CSSProperties = { textAlign: "left", borderBottom: "2px solid #eee", padding: 8 };
+// 머리글은 줄바꿈하지 않는다. 요양기호가 한 칸을 넓게 벌리면 나머지 칸이
+// 눌려 "구 분", "메 모" 처럼 한 글자씩 세로로 쪼개진다.
+const th: CSSProperties = {
+  textAlign: "left",
+  borderBottom: "2px solid #eee",
+  padding: 8,
+  whiteSpace: "nowrap",
+};
 const td: CSSProperties = { borderBottom: "1px solid #eee", padding: 8 };
+/** 날짜·구분처럼 쪼개지면 안 되는 칸. */
+const tdTight: CSSProperties = { ...td, whiteSpace: "nowrap" };
