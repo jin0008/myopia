@@ -443,6 +443,9 @@ export interface MySubscription {
   currentPeriodEnd: string;
   amount: number;
   canceledAt: string | null;
+  /** 카드가 걸려 있나. 자동 갱신 스위치와는 다른 값이다. */
+  cardRegistered: boolean;
+  autoRenew: boolean;
 }
 export interface MyPayment {
   id: string;
@@ -463,4 +466,26 @@ export interface PaymentState {
 
 export function getPaymentState(): Promise<PaymentState> {
   return partnerFetch("/payment/me");
+}
+
+/* ---- 자동 갱신 --------------------------------------------------------
+ *
+ * 카드를 한 번 등록해 두고 매달 그것으로 청구한다. 카드번호는 결제창이
+ * 받고 우리는 빌링키만 받는다.
+ */
+
+export interface CardRegistration {
+  clientId: string;
+  orderId: string;
+  goodsName: string;
+  returnUrl: string;
+}
+
+export function startCardRegistration(): Promise<CardRegistration> {
+  return partnerFetch("/payment/billing/register", { method: "POST" });
+}
+
+/** 다음 청구를 막는다. 이번 주기까지는 그대로 노출된다. */
+export function cancelSubscription(): Promise<{ ok: true; until: string }> {
+  return partnerFetch("/payment/subscription/cancel", { method: "POST" });
 }
