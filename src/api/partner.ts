@@ -464,3 +464,21 @@ export interface PaymentState {
 export function getPaymentState(): Promise<PaymentState> {
   return partnerFetch("/payment/me");
 }
+
+/**
+ * 내 가게 둘레에 광고 자리가 남았나.
+ *
+ * 자리는 지역별로 파는 것이 아니라 검색하는 사람 둘레에서 고르는 것이라,
+ * "찼다"는 가늠이지 사실이 아니다. 막지 않고 알리기만 한다.
+ */
+export interface PromotionAvailability {
+  slots: number;
+  nearby: number;
+  full: boolean;
+  /** 찼을 때, 가장 먼저 끝나는 광고가 끝나는 날. */
+  nextFreeOn: string | null;
+}
+
+export function getPromotionAvailability(): Promise<PromotionAvailability> {
+  return partnerFetch("/partner/promotions/availability");
+}
