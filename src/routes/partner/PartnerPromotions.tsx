@@ -388,19 +388,28 @@ export default function PartnerPromotions() {
             그래도 걸지는 업체가 정할 일이다. 다만 모르고 사게 두지 않는다. */}
         {avail?.full ? (
           <div style={fullBox}>
-            <b style={{ fontSize: 13.5 }}>지금은 주변 자리가 모두 찼습니다</b>
-            <div style={{ color: "#4b5563", fontSize: 12.5, marginTop: 4, lineHeight: 1.7 }}>
-              반경 {AD_RADIUS_KM}km 안에 이미 {avail.nearby}곳이 노출 중입니다. 상단 자리는
-              {" "}{avail.slots}개여서, 가까운 곳에서 찾는 분들께는 밀릴 수 있습니다.
+            <b style={{ fontSize: 13.5 }}>주변 프리미엄 노출 안내</b>
+            <div style={{ color: "#4b5563", fontSize: 12.5, marginTop: 6, lineHeight: 1.8 }}>
+              {facility != null ? `${facility.name} 님, ` : ""}현재 주변 프리미엄 노출
+              자리는 모두 이용 중입니다.
+              <br />
+              <br />
+              반경 {AD_RADIUS_KM}km 안에 이미 <b>{avail.nearby}곳이 노출 중</b>이며, 상단
+              노출 자리가 {avail.slots}개로 제한되어 있어 가까운 곳을 찾는 분들에게는
+              노출이 어려울 수 있습니다.
               {avail.nextFreeOn ? (
                 <>
                   <br />
-                  가장 먼저 끝나는 자리는 <b>{avail.nextFreeOn}</b>입니다. 그 뒤에
-                  시작하시면 자리를 받으실 수 있습니다.
+                  <br />
+                  현재 노출 중인 자리 중 가장 먼저 종료되는 날짜는{" "}
+                  <b>{korean(avail.nextFreeOn)}</b>입니다. 이후 자리가 비면 순차적으로
+                  상단 노출이 가능합니다.
                 </>
               ) : null}
               <br />
-              지금 결제하셔도 노출은 시작되며, 멀리서 찾는 분들께는 그대로 보입니다.
+              <br />
+              다만 지금 신청하셔도 노출 자체는 바로 시작되며,{" "}
+              <b>{AD_RADIUS_KM}km 밖에서 찾는 분들에게는 정상적으로 노출됩니다.</b>
             </div>
           </div>
         ) : null}
@@ -531,6 +540,12 @@ const card: CSSProperties = {
   background: "#fff",
 };
 const h3: CSSProperties = { margin: "0 0 12px", fontSize: 15 };
+/** "2026-11-03" → "2026년 11월 3일". 업체가 읽을 글이라 숫자만 늘어놓지 않는다. */
+function korean(iso: string): string {
+  const [y, m, d] = iso.split("-");
+  return `${y}년 ${Number(m)}월 ${Number(d)}일`;
+}
+
 /** 광고 반경. 서버의 lib/adSlots.ts 와 같은 값이다. */
 const AD_RADIUS_KM = 5;
 const fullBox: CSSProperties = {
