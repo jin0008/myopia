@@ -6,8 +6,10 @@ import {
   cancelPromotionRequest,
   createPromotionRequest,
   getPaymentState,
+  getPromotionAvailability,
   startCheckout,
   type PaymentState,
+  type PromotionAvailability,
   getPartnerToken,
   listMyPromotionRequests,
   listMyPromotions,
@@ -70,6 +72,7 @@ export default function PartnerPromotions() {
   const [facility, setFacility] = useState<LinkedFacility | null>(null);
   const [businessKind, setBusinessKind] = useState<PartnerBusinessKind>("hospital");
   const [pay, setPay] = useState<PaymentState | null>(null);
+  const [avail, setAvail] = useState<PromotionAvailability | null>(null);
   const [paying, setPaying] = useState(false);
   const [startsOn, setStartsOn] = useState(today());
   const [months, setMonths] = useState(1);
@@ -83,6 +86,7 @@ export default function PartnerPromotions() {
     }
     void reload();
     void getPaymentState().then(setPay).catch(() => setPay(null));
+    void getPromotionAvailability().then(setAvail).catch(() => setAvail(null));
 
     // 결제창에서 돌아오면 서버가 ?pay=ok|fail 을 붙여 보낸다. 알려 주고
     // 주소는 지운다 - 남겨 두면 새로고침할 때마다 같은 알림이 뜬다.
@@ -380,6 +384,36 @@ export default function PartnerPromotions() {
           </label>
         )}
 
+        {/* 자리가 찼다고 막지는 않는다. 멀리서 찾는 사람에겐 뜨고, 기다릴지
+            그래도 걸지는 업체가 정할 일이다. 다만 모르고 사게 두지 않는다. */}
+        {avail?.full ? (
+          <div style={fullBox}>
+            <b style={{ fontSize: 13.5 }}>주변 프리미엄 노출 안내</b>
+            <div style={{ color: "#4b5563", fontSize: 12.5, marginTop: 6, lineHeight: 1.8 }}>
+              {facility != null ? `${facility.name} 님, ` : ""}현재 주변 프리미엄 노출
+              자리는 모두 이용 중입니다.
+              <br />
+              <br />
+              반경 {AD_RADIUS_KM}km 안에 이미 <b>{avail.nearby}곳이 노출 중</b>이며, 상단
+              노출 자리가 {avail.slots}개로 제한되어 있어 가까운 곳을 찾는 분들에게는
+              노출이 어려울 수 있습니다.
+              {avail.nextFreeOn ? (
+                <>
+                  <br />
+                  <br />
+                  현재 노출 중인 자리 중 가장 먼저 종료되는 날짜는{" "}
+                  <b>{korean(avail.nextFreeOn)}</b>입니다. 이후 자리가 비면 순차적으로
+                  상단 노출이 가능합니다.
+                </>
+              ) : null}
+              <br />
+              <br />
+              다만 지금 신청하셔도 노출 자체는 바로 시작되며,{" "}
+              <b>{AD_RADIUS_KM}km 밖에서 찾는 분들에게는 정상적으로 노출됩니다.</b>
+            </div>
+          </div>
+        ) : null}
+
         <p style={hint}>
           {pay?.available
             ? "결제가 끝나면 오늘부터 바로 노출됩니다. 이미 노출 중이면 남은 기간에 이어 붙습니다. 자동 결제는 없으며, 기간이 끝나기 7일 전에 메일로 알려 드립니다."
@@ -506,6 +540,21 @@ const card: CSSProperties = {
   background: "#fff",
 };
 const h3: CSSProperties = { margin: "0 0 12px", fontSize: 15 };
+/** "2026-11-03" → "2026년 11월 3일". 업체가 읽을 글이라 숫자만 늘어놓지 않는다. */
+function korean(iso: string): string {
+  const [y, m, d] = iso.split("-");
+  return `${y}년 ${Number(m)}월 ${Number(d)}일`;
+}
+
+/** 광고 반경. 서버의 lib/adSlots.ts 와 같은 값이다. */
+const AD_RADIUS_KM = 5;
+const fullBox: CSSProperties = {
+  border: "1px solid #f0d8a8",
+  background: "#fdf8ec",
+  borderRadius: 10,
+  padding: 12,
+  margin: "4px 0 12px",
+};
 const hint: CSSProperties = { color: "#666", fontSize: 13, margin: "6px 0" };
 const label: CSSProperties = {
   display: "flex",
