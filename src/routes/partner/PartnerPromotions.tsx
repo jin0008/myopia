@@ -411,8 +411,8 @@ export default function PartnerPromotions() {
           <div style={fullBox}>
             <b style={{ fontSize: 13.5 }}>지금은 신청할 수 없습니다</b>
             <div style={{ color: "#4b5563", fontSize: 12.5, marginTop: 6, lineHeight: 1.8 }}>
-              {avail.regionName ?? "같은 동"}에 이미 <b>노출 중인 곳</b>이 있습니다. 노출은 동
-              하나에 한 곳만 걸립니다.
+              {avail.regionName ?? "같은 동"}에 이미 <b>노출 중인 업체</b>가 있습니다. 한 동에
+              한 업체만 노출됩니다.
               {avail.nextFreeOn ? (
                 <>
                   <br />
