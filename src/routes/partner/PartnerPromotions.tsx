@@ -86,7 +86,6 @@ export default function PartnerPromotions() {
     }
     void reload();
     void getPaymentState().then(setPay).catch(() => setPay(null));
-    void getPromotionAvailability().then(setAvail).catch(() => setAvail(null));
 
     // 결제창에서 돌아오면 서버가 ?pay=ok|fail 을 붙여 보낸다. 알려 주고
     // 주소는 지운다 - 남겨 두면 새로고침할 때마다 같은 알림이 뜬다.
@@ -102,6 +101,18 @@ export default function PartnerPromotions() {
     }
 
   }, [navigate]);
+
+  // 내 동이 비었는지. 막는 자리는 결제지만, 모르고 결제까지 가게 두지는
+  // 않는다.
+  useEffect(() => {
+    let live = true;
+    void getPromotionAvailability()
+      .then((a) => live && setAvail(a))
+      .catch(() => live && setAvail(null));
+    return () => {
+      live = false;
+    };
+  }, []);
 
   async function reload() {
     try {
@@ -152,9 +163,11 @@ export default function PartnerPromotions() {
       alert(
         code === 403
           ? "업체 인증을 먼저 마쳐 주세요."
-          : code === 503
-            ? "결제 준비가 아직 되지 않았습니다. 담당자에게 알려 주세요."
-            : "결제를 시작하지 못했습니다.",
+          : code === 409
+            ? "같은 동에 이미 노출 중인 곳이 있어 신청할 수 없습니다. 자리가 비는 날 이후로 알려 드릴 수 있습니다."
+            : code === 503
+              ? "결제 준비가 아직 되지 않았습니다. 담당자에게 알려 주세요."
+              : "결제를 시작하지 못했습니다.",
       );
       setPaying(false);
     }
@@ -371,45 +384,32 @@ export default function PartnerPromotions() {
             </select>
           </label>
         </div>
-        {/* 결제 경로는 신청서를 거치지 않으니 남길 말을 받을 곳이 없다. */}
-        {pay?.available ? null : (
-          <label style={label}>
-            남길 말 (선택)
-            <input
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="문의나 요청 사항"
-              style={input}
-            />
-          </label>
+        {avail != null && pay?.available && (
+          <p style={{ ...hint, marginTop: -2 }}>
+            <b>{avail.regionName ?? "내 동"}</b>에는 다른 업체를 걸지 않습니다. 가까이에서
+            찾는 분들에게 지도와 목록 맨 위에 크게 뜨고, 나머지는 지금처럼 작은 점으로
+            보입니다. 다만 노출 자리는 검색하는 분 둘레 5km 에서 가장 가까운 한 곳이
+            가져가므로, 옆 동 업체가 그분께 더 가까우면 그쪽이 보일 수 있습니다. 월{" "}
+            {avail.monthly.toLocaleString()}원 · {months}개월{" "}
+            <b>{(avail.monthly * months).toLocaleString()}원</b>
+          </p>
         )}
 
-        {/* 자리가 찼다고 막지는 않는다. 멀리서 찾는 사람에겐 뜨고, 기다릴지
-            그래도 걸지는 업체가 정할 일이다. 다만 모르고 사게 두지 않는다. */}
+        {/* 모르고 결제까지 가게 두지 않는다. 막는 자리는 결제다. */}
         {avail?.full ? (
           <div style={fullBox}>
-            <b style={{ fontSize: 13.5 }}>주변 프리미엄 노출 안내</b>
+            <b style={{ fontSize: 13.5 }}>지금은 신청할 수 없습니다</b>
             <div style={{ color: "#4b5563", fontSize: 12.5, marginTop: 6, lineHeight: 1.8 }}>
-              {facility != null ? `${facility.name} 님, ` : ""}현재 주변 프리미엄 노출
-              자리는 모두 이용 중입니다.
-              <br />
-              <br />
-              반경 {AD_RADIUS_KM}km 안에 이미 <b>{avail.nearby}곳이 노출 중</b>이며, 상단
-              노출 자리가 {avail.slots}개로 제한되어 있어 가까운 곳을 찾는 분들에게는
-              노출이 어려울 수 있습니다.
+              {avail.regionName ?? "같은 동"}에 이미 <b>노출 중인 곳</b>이 있습니다. 노출은 동
+              하나에 한 곳만 걸립니다.
               {avail.nextFreeOn ? (
                 <>
                   <br />
                   <br />
-                  현재 노출 중인 자리 중 가장 먼저 종료되는 날짜는{" "}
-                  <b>{korean(avail.nextFreeOn)}</b>입니다. 이후 자리가 비면 순차적으로
-                  상단 노출이 가능합니다.
+                  그 노출이 끝나는 날짜는 <b>{korean(avail.nextFreeOn)}</b>입니다. 그 뒤로는
+                  신청하실 수 있습니다.
                 </>
               ) : null}
-              <br />
-              <br />
-              다만 지금 신청하셔도 노출 자체는 바로 시작되며,{" "}
-              <b>{AD_RADIUS_KM}km 밖에서 찾는 분들에게는 정상적으로 노출됩니다.</b>
             </div>
           </div>
         ) : null}
@@ -425,7 +425,7 @@ export default function PartnerPromotions() {
           <button
             type="button"
             style={{ ...btn, ...btnPrimary }}
-            disabled={facility == null || paying}
+            disabled={facility == null || paying || avail?.full === true}
             onClick={() => void payAndSubmit()}
           >
             {paying ? "결제창을 여는 중…" : "결제하고 바로 시작"}
@@ -546,8 +546,6 @@ function korean(iso: string): string {
   return `${y}년 ${Number(m)}월 ${Number(d)}일`;
 }
 
-/** 광고 반경. 서버의 lib/adSlots.ts 와 같은 값이다. */
-const AD_RADIUS_KM = 5;
 const fullBox: CSSProperties = {
   border: "1px solid #f0d8a8",
   background: "#fdf8ec",

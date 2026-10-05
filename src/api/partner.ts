@@ -468,11 +468,14 @@ export function getPaymentState(): Promise<PaymentState> {
 /**
  * 내 가게 둘레에 광고 자리가 남았나.
  *
- * 자리는 지역별로 파는 것이 아니라 검색하는 사람 둘레에서 고르는 것이라,
- * "찼다"는 가늠이지 사실이 아니다. 막지 않고 알리기만 한다.
+ * 광고는 행정동 하나에 한 곳만 판다. "찼다"는 가늠이 아니라 곧 살 수
+ * 없다는 뜻이다.
  */
 export interface PromotionAvailability {
-  slots: number;
+  /** 한 달 값(원). 서버가 보낸다 - 화면이 들고 있으면 결제창과 어긋난다. */
+  monthly: number;
+  /** 내 가게가 속한 행정동("신월2동"). 업체가 안 묶였으면 null. */
+  regionName: string | null;
   nearby: number;
   full: boolean;
   /** 찼을 때, 가장 먼저 끝나는 광고가 끝나는 날. */
