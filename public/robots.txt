@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+# 로그인해야 보이는 화면들. 공개 내용이 없어 색인할 것이 없다.
+Disallow: /chart
+Disallow: /profile
+Disallow: /admin
+Disallow: /partner
+Disallow: /study-visit
+Disallow: /patient_delete_request
+Disallow: /choose_profile
+
+Sitemap: https://myopiamanage.org/sitemap.xml
