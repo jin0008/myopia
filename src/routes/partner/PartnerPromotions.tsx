@@ -226,7 +226,11 @@ export default function PartnerPromotions() {
       {/* 안경원은 이 화면이 파트너 포털의 전부다. 여기에 로그아웃이 없으면
           나갈 길이 없다. 병원은 프로필 편집기에서 왔으니 돌아갈 길을 준다. */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h2 style={{ margin: "0 0 4px", fontSize: 20 }}>프리미엄 노출</h2>
+        {/* 동 이름을 제목에 둔다. 이 상품이 파는 것이 그 동이고, 업체가
+            계약서에서 찾는 말도 "우리 동"이다. */}
+        <h2 style={{ margin: "0 0 4px", fontSize: 20 }}>
+          {avail?.regionName ? `${avail.regionName} ` : ""}프리미엄 노출
+        </h2>
         <div style={{ display: "flex", gap: 8 }}>
           {businessKind === "hospital" && (
             <button type="button" style={headBtn} onClick={() => navigate("/partner/profile")}>
@@ -246,7 +250,8 @@ export default function PartnerPromotions() {
         </div>
       </div>
       <p style={hint}>
-        찾기 탭에서 내 주변 안과·안경원을 볼 때 목록 맨 위에 광고로 보입니다.
+        {avail?.regionName ? <b>{avail.regionName}에는 다른 업체를 노출하지 않습니다. </b> : null}
+        프리미엄 업체는 찾기 탭 지도와 목록 상단에 크게 노출됩니다.
       </p>
 
       {/* 성적 */}
@@ -386,12 +391,18 @@ export default function PartnerPromotions() {
         </div>
         {avail != null && pay?.available && (
           <p style={{ ...hint, marginTop: -2 }}>
-            <b>{avail.regionName ?? "내 동"}</b>에는 다른 업체를 걸지 않습니다. 가까이에서
-            찾는 분들에게 지도와 목록 맨 위에 크게 뜨고, 나머지는 지금처럼 작은 점으로
-            보입니다. 다만 노출 자리는 검색하는 분 둘레 5km 에서 가장 가까운 한 곳이
-            가져가므로, 옆 동 업체가 그분께 더 가까우면 그쪽이 보일 수 있습니다. 월{" "}
-            {avail.monthly.toLocaleString()}원 · {months}개월{" "}
-            <b>{(avail.monthly * months).toLocaleString()}원</b>
+            <b>{avail.regionName ?? "내 동"}</b>에는 다른 업체를 노출하지 않습니다. 지도와
+            목록 상단에 크게 노출되고, 나머지는 작은 점으로 보입니다.
+            <br />
+            {/* 파는 말과 실제 동작이 다르면 나중에 광고주가 묻는다. 자리는
+                동이 아니라 검색하는 사람과의 거리로 정해진다. */}
+            단, 검색하는 분의 위치를 기준으로 5km 이내에서 가장 가까운 업체가 우선
+            노출됩니다.
+            <br />
+            <b>
+              월 {avail.monthly.toLocaleString()}원 · {months}개월{" "}
+              {(avail.monthly * months).toLocaleString()}원
+            </b>
           </p>
         )}
 
@@ -416,7 +427,7 @@ export default function PartnerPromotions() {
 
         <p style={hint}>
           {pay?.available
-            ? "결제가 끝나면 오늘부터 바로 노출됩니다. 이미 노출 중이면 남은 기간에 이어 붙습니다. 자동 결제는 없으며, 기간이 끝나기 7일 전에 메일로 알려 드립니다."
+            ? "결제 후 바로 노출되며, 이미 노출 중이면 남은 기간에 이어 붙습니다. 자동 결제는 없고, 종료 7일 전에 메일로 안내드립니다."
             : "신청하시면 운영자가 확인 후 노출을 시작합니다."}
         </p>
         {/* 결제가 켜져 있으면 결제로, 아니면 예전처럼 신청으로. 켜지지 않은

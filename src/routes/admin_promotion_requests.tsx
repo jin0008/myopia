@@ -58,7 +58,7 @@ export default function AdminPromotionRequests() {
 
   return (
     <div style={{ padding: 24, maxWidth: 1100 }}>
-      <h2 style={{ margin: "0 0 4px", fontSize: 20 }}>프리미엄 신청</h2>
+      <h2 style={{ margin: "0 0 4px", fontSize: 20 }}>프리미엄 노출 신청</h2>
       <p style={hint}>
         승인하면 그 자리에서 광고가 걸립니다. 이미 나가고 있는 곳이면 기간이
         이어 붙습니다.
