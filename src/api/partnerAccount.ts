@@ -172,7 +172,7 @@ export function listPromotionRequests(
   );
 }
 
-/** 허락한다. 여기서 광고가 걸린다. 결제가 붙으면 이 자리가 입금 확인이 된다. */
+/** 허락한다. 여기서 광고가 걸리고, 그 동은 이 가게 것이 된다. */
 export function approvePromotionRequest(id: string, note?: string) {
   // 네 번째 인자가 false 여야 한다. 서버가 204 로 답하는데 기본값(true)은
   // 빈 본문에 대고 json() 을 불러 터진다 - 승인은 됐는데 화면에는 실패로

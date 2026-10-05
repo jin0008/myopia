@@ -35,7 +35,14 @@ export default function AdminPromotionRequests() {
   const approve = useMutation({
     mutationFn: (id: string) => approvePromotionRequest(id),
     onSuccess: done,
-    onError: () => alert("승인하지 못했습니다. 이미 처리된 신청일 수 있습니다."),
+    onError: (e: unknown) =>
+      alert(
+        (e as { code?: number })?.code === 409
+          ? "같은 동에 이미 노출 중인 곳이 있어 승인할 수 없습니다. 그 노출이 끝난 뒤에 거십시오."
+          : (e as { code?: number })?.code === 503
+            ? "행정동을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요."
+            : "승인하지 못했습니다. 이미 처리된 신청일 수 있습니다.",
+      ),
   });
   const reject = useMutation({
     mutationFn: ({ id, note }: { id: string; note: string }) =>
@@ -145,7 +152,12 @@ function Row({
               style={{ ...btn, ...btnPrimary }}
               disabled={busy}
               onClick={() => {
-                if (confirm(`${r.facilityName} — ${r.months}개월 승인할까요?`)) onApprove();
+                if (
+                  confirm(
+                    `${r.facilityName} — ${r.months}개월 승인할까요?\n이 동에는 다른 업체를 걸 수 없게 됩니다.`,
+                  )
+                )
+                  onApprove();
               }}
             >
               승인
