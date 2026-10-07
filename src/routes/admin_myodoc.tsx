@@ -1,13 +1,20 @@
 import { useContext, type CSSProperties } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import { UserContext } from "../App";
+import { listAdInquiries } from "../api/adInquiry";
+import { listReports } from "../api/moderation";
+import { listVerifications } from "../api/partnerAccount";
 
 /**
  * 마이오닥 관리.
  *
  * 아홉 개를 평평하게 늘어놓으면 어느 것이 어느 것의 앞뒤인지 알 수 없다.
- * 특히 파트너 쪽은 순서가 있는 일이다 - 인증해야 업체가 묶이고, 묶여야
- * 프리미엄을 신청하고, 승인해야 광고가 나간다. 그 순서대로 세운다.
+ * 파트너 쪽은 순서가 있는 일이라(인증해야 업체가 묶이고, 결제하면 광고가
+ * 나간다) 그 순서대로 세운다.
+ *
+ * 처리할 것이 쌓이는 메뉴(광고 문의·업체 인증·신고)에는 건수를 붙인다.
+ * 운영자는 숫자가 있는 줄만 들어가면 된다.
  *
  * 옆에 붙이는 말은 그 화면에서 할 수 있는 일만 적는다. 왜 그 순서인지는
  * 순서 자체가 말한다 - 거기에 설명을 덧붙이면 읽을 것만 늘어난다.
@@ -15,7 +22,7 @@ import { UserContext } from "../App";
 const GROUPS: {
   title: string;
   hint?: string;
-  items: { href: string; label: string; hint?: string }[];
+  items: { href: string; label: string; hint?: string; badge?: BadgeKey }[];
 }[] = [
   {
     title: "파트너 · 광고",
@@ -24,21 +31,18 @@ const GROUPS: {
         href: "/admin/ad-inquiries",
         label: "광고 문의",
         hint: "문의 접수 목록",
+        badge: "inquiries",
       },
       {
         href: "/admin/verifications",
         label: "업체 인증 심사",
-        hint: "제출 서류 확인 · 업체 연결",
+        hint: "제출 서류 확인 · 승인하면 결제·치료탭 노출이 열림",
+        badge: "verifications",
       },
       {
         href: "/admin/partner-accounts",
         label: "파트너 계정",
-        hint: "계정 목록 · 치료탭 노출",
-      },
-      {
-        href: "/admin/promotion-requests",
-        label: "프리미엄 신청 처리",
-        hint: "신청 승인 · 반려",
+        hint: "계정 목록 · 프로필 내리기 · 계정 삭제",
       },
       {
         href: "/admin/promotions",
@@ -62,14 +66,43 @@ const GROUPS: {
   },
   {
     title: "운영",
-    items: [{ href: "/admin/reports", label: "신고 처리" }],
+    items: [{ href: "/admin/reports", label: "신고 처리", badge: "reports" }],
   },
 ];
 
+type BadgeKey = "inquiries" | "verifications" | "reports";
+
 export default function AdminMyodoc() {
   const { user } = useContext(UserContext);
+  const admin = user?.is_site_admin === true;
+  // 각 화면이 쓰는 목록을 같은 키로 불러 센다. 캐시를 같이 써서, 그 화면에서
+  // 처리하고 돌아오면 숫자가 바로 준다. 하나가 실패해도 메뉴는 뜬다 - 배지만
+  // 안 보인다.
+  const inquiries = useQuery({
+    queryKey: ["admin", "ad-inquiries", "new"],
+    queryFn: () => listAdInquiries("new"),
+    enabled: admin,
+  });
+  const verifications = useQuery({
+    queryKey: ["admin", "verifications"],
+    queryFn: listVerifications,
+    enabled: admin,
+  });
+  const reports = useQuery({
+    queryKey: ["admin", "reports", "pending"],
+    queryFn: () => listReports("pending"),
+    enabled: admin,
+  });
+  const counts: Record<BadgeKey, { n: number; label: string }> = {
+    inquiries: { n: inquiries.data?.inquiries.length ?? 0, label: "새 문의" },
+    verifications: {
+      n: verifications.data?.filter((v) => v.status === "pending").length ?? 0,
+      label: "대기",
+    },
+    reports: { n: reports.data?.length ?? 0, label: "미처리" },
+  };
 
-  if (!user?.is_site_admin) {
+  if (!admin) {
     return <div style={{ padding: 24 }}>Not authorized</div>;
   }
 
@@ -87,7 +120,14 @@ export default function AdminMyodoc() {
           <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
             {g.items.map((it) => (
               <a key={it.href} href={it.href} style={linkRow}>
-                <span style={{ fontWeight: 600 }}>{it.label}</span>
+                <span style={{ fontWeight: 600 }}>
+                  {it.label}
+                  {it.badge && counts[it.badge].n > 0 && (
+                    <span style={badgeStyle}>
+                      {counts[it.badge].label} {counts[it.badge].n}
+                    </span>
+                  )}
+                </span>
                 {it.hint && <span style={itemHint}>{it.hint}</span>}
                 <span style={arrow}>→</span>
               </a>
@@ -126,3 +166,13 @@ const linkRow: CSSProperties = {
 };
 const itemHint: CSSProperties = { color: "#9ca3af", fontSize: 12.5, fontWeight: 400 };
 const arrow: CSSProperties = { color: "#9ca3af" };
+const badgeStyle: CSSProperties = {
+  marginLeft: 8,
+  fontSize: 12,
+  fontWeight: 700,
+  color: "#fff",
+  background: "#e5484d",
+  borderRadius: 999,
+  padding: "2px 8px",
+  verticalAlign: "1px",
+};
