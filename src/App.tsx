@@ -11,6 +11,7 @@ import { GOOGLE_CLIENT_ID } from "./lib/google_client_id";
 import type { UserRole } from "./types/user";
 import ConsentGate from "./components/consent_gate";
 import ScrollToTop from "./components/scroll_to_top";
+import { WithBusinessFooter } from "./components/business_footer";
 
 const Home = lazy(() => import("./routes/home"));
 const HeaderRoute = lazy(() => import("./routes/header_footer"));
@@ -148,15 +149,18 @@ const App = () => {
               </Route>
               {/* Partner portal — its own login/layout, separate from the
                   doctor/admin app (no shared header). */}
-              <Route path="/partner/login" element={<PartnerLogin />} />
-              <Route path="/partner/signup" element={<PartnerSignup />} />
-              <Route path="/partner/verification" element={<PartnerVerification />} />
-              <Route path="/partner/profile" element={<PartnerProfile />} />
-              <Route path="/partner/promotions" element={<PartnerPromotions />} />
-              <Route
-                path="/partner/forgot-password"
-                element={<PartnerForgotPassword />}
-              />
+              {/* 결제가 일어나는 곳이라 하단에 사업자 정보를 붙인다. */}
+              <Route element={<WithBusinessFooter />}>
+                <Route path="/partner/login" element={<PartnerLogin />} />
+                <Route path="/partner/signup" element={<PartnerSignup />} />
+                <Route path="/partner/verification" element={<PartnerVerification />} />
+                <Route path="/partner/profile" element={<PartnerProfile />} />
+                <Route path="/partner/promotions" element={<PartnerPromotions />} />
+                <Route
+                  path="/partner/forgot-password"
+                  element={<PartnerForgotPassword />}
+                />
+              </Route>
               {/* 마이오닥(앱) 법적 고지. 스토어 심사 제출용 공개 URL이자 앱에서
                   띄우는 화면이라, 의료진 플랫폼 헤더 밖에 독립으로 둔다. */}
               <Route path="/myodoc/privacy" element={<MyodocPrivacy />} />

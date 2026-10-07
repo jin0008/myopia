@@ -76,6 +76,9 @@ export default function PartnerPromotions() {
   const [paying, setPaying] = useState(false);
   const [startsOn, setStartsOn] = useState(today());
   const [months, setMonths] = useState(1);
+  // 결제 단계: 상품 목록 → 상품 상세 → 주문·결제. 나이스페이 결제 경로
+  // 심사가 이 세 화면을 따로 본다.
+  const [step, setStep] = useState<PayStep>("list");
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -374,6 +377,7 @@ export default function PartnerPromotions() {
               />
             </label>
           )}
+          {pay?.available ? null : (
           <label style={label}>
             기간
             <select
@@ -388,8 +392,9 @@ export default function PartnerPromotions() {
               ))}
             </select>
           </label>
+          )}
         </div>
-        {avail != null && pay?.available && (
+        {avail != null && pay?.available && step === "list" && (
           <p style={{ ...hint, marginTop: -2 }}>
             <b>{avail.regionName ?? "내 동"}</b>에는 다른 업체를 노출하지 않습니다. 지도와
             목록 상단에 크게 노출되고, 나머지는 작은 점으로 보입니다.
@@ -398,11 +403,6 @@ export default function PartnerPromotions() {
                 동이 아니라 검색하는 사람과의 거리로 정해진다. */}
             단, 검색하는 분의 위치를 기준으로 5km 이내에서 가장 가까운 업체가 우선
             노출됩니다.
-            <br />
-            <b>
-              월 {avail.monthly.toLocaleString()}원 · {months}개월{" "}
-              {(avail.monthly * months).toLocaleString()}원
-            </b>
           </p>
         )}
 
@@ -425,23 +425,34 @@ export default function PartnerPromotions() {
           </div>
         ) : null}
 
-        <p style={hint}>
-          {pay?.available
-            ? "결제 후 바로 노출되며, 이미 노출 중이면 남은 기간에 이어 붙습니다. 자동 결제는 없고, 종료 7일 전에 메일로 안내드립니다."
-            : "신청하시면 운영자가 확인 후 노출을 시작합니다."}
-        </p>
         {/* 결제가 켜져 있으면 결제로, 아니면 예전처럼 신청으로. 켜지지 않은
             곳에서 결제 버튼을 보이면 눌러도 아무 일이 없다. */}
         {pay?.available ? (
-          <button
-            type="button"
-            style={{ ...btn, ...btnPrimary }}
-            disabled={facility == null || paying || avail?.full === true}
-            onClick={() => void payAndSubmit()}
-          >
-            {paying ? "결제창을 여는 중…" : "결제하고 바로 시작"}
-          </button>
+          // 자리 정보를 못 받으면(동을 모름 503, 네트워크) 가격도 동도 모르니
+          // 상품을 그릴 수 없다. 그래도 말없이 비워 두면 왜 결제가 안 되는지
+          // 알 길이 없어 이유와 갈 곳을 적는다.
+          avail == null ? (
+            <p style={hint}>
+              노출 지역 정보를 불러오지 못했습니다. 잠시 후 새로고침해 주시고, 계속
+              보이지 않으면 myodoc@idx.ai.kr 로 업체명과 함께 알려 주세요.
+            </p>
+          ) : (
+            <PaySteps
+              step={step}
+              setStep={setStep}
+              months={months}
+              setMonths={setMonths}
+              monthly={avail.monthly}
+              regionName={avail.regionName}
+              facilityName={facility?.name ?? null}
+              blocked={facility == null || avail.full === true}
+              paying={paying}
+              onPay={() => void payAndSubmit()}
+            />
+          )
         ) : (
+          <>
+          <p style={hint}>신청하시면 운영자가 확인 후 노출을 시작합니다.</p>
           <button
             type="button"
             style={{ ...btn, ...btnPrimary }}
@@ -450,6 +461,7 @@ export default function PartnerPromotions() {
           >
             {saving ? "보내는 중…" : "신청하기"}
           </button>
+          </>
         )}
       </div>
 
@@ -682,4 +694,201 @@ const tdNum: CSSProperties = {
   ...td,
   textAlign: "right",
   fontVariantNumeric: "tabular-nums",
+};
+
+type PayStep = "list" | "detail" | "order";
+
+const PRODUCT_MONTHS = [1, 3, 6, 12];
+
+/**
+ * 결제 흐름: 상품 목록 → 상품 상세 → 주문·결제.
+ *
+ * 나이스페이 결제 경로 심사가 요구하는 모양이다(상품 2~3개 이상, 상세에서
+ * 구매로 이어지는 길, 결제수단 '신용카드'). 상품은 기간만 다른 같은
+ * 노출이고, 금액은 서버가 정한다 - 여기 보이는 값은 안내일 뿐이다.
+ */
+function PaySteps({
+  step,
+  setStep,
+  months,
+  setMonths,
+  monthly,
+  regionName,
+  facilityName,
+  blocked,
+  paying,
+  onPay,
+}: {
+  step: PayStep;
+  setStep: (s: PayStep) => void;
+  months: number;
+  setMonths: (m: number) => void;
+  monthly: number;
+  regionName: string | null;
+  facilityName: string | null;
+  blocked: boolean;
+  paying: boolean;
+  onPay: () => void;
+}) {
+  const [agree, setAgree] = useState(false);
+  const name = (m: number) => `마이오닥 독점 노출 ${m}개월`;
+  const total = monthly * months;
+  const won = (n: number) => `${n.toLocaleString()}원`;
+
+  if (step === "list") {
+    return (
+      <>
+        <h4 style={stepTitle}>상품 목록</h4>
+        <div style={productGrid}>
+          {PRODUCT_MONTHS.map((m) => (
+            <button
+              key={m}
+              type="button"
+              style={productCard}
+              onClick={() => {
+                setMonths(m);
+                setStep("detail");
+              }}
+            >
+              <b style={{ fontSize: 14.5 }}>{name(m)}</b>
+              <span style={{ color: "#666", fontSize: 12.5 }}>
+                월 {won(monthly)} × {m}개월
+              </span>
+              <b style={{ color: "#1a73e8", fontSize: 16 }}>{won(monthly * m)}</b>
+              <span style={{ color: "#1a73e8", fontSize: 12.5 }}>자세히 보기 →</span>
+            </button>
+          ))}
+        </div>
+      </>
+    );
+  }
+
+  if (step === "detail") {
+    return (
+      <>
+        <h4 style={stepTitle}>상품 상세</h4>
+        <div style={summaryBox}>
+          <b style={{ fontSize: 16 }}>{name(months)}</b>
+          <table style={{ ...table, marginTop: 10 }}>
+            <tbody>
+              <SummaryRow k="노출 지역" v={regionName ?? "내 업체가 있는 동"} />
+              <SummaryRow
+                k="노출 방식"
+                v="마이오닥 앱·웹 찾기 탭의 지도에 큰 핀과 상호로, 목록 맨 위에 한 곳만 노출"
+              />
+              <SummaryRow k="독점" v="같은 동의 같은 업종은 노출 기간 동안 신청할 수 없음" />
+              <SummaryRow k="기간" v={`결제일부터 ${months}개월`} />
+              <SummaryRow k="금액" v={`${won(monthly * months)} (월 ${won(monthly)})`} />
+            </tbody>
+          </table>
+          <p style={hint}>
+            이미 노출 중이면 남은 기간 뒤에 이어 붙습니다. 단, 검색하는 분의 위치를
+            기준으로 5km 이내에서 가장 가까운 업체가 우선 노출됩니다.
+          </p>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button type="button" style={btn} onClick={() => setStep("list")}>
+            목록으로
+          </button>
+          <button
+            type="button"
+            style={{ ...btn, ...btnPrimary, opacity: blocked ? 0.45 : 1 }}
+            disabled={blocked}
+            onClick={() => {
+              setAgree(false);
+              setStep("order");
+            }}
+          >
+            구매하기
+          </button>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <h4 style={stepTitle}>주문·결제</h4>
+      <div style={summaryBox}>
+        <table style={table}>
+          <tbody>
+            <SummaryRow k="상품" v={name(months)} />
+            <SummaryRow k="업체" v={facilityName ?? "—"} />
+            <SummaryRow k="노출 지역" v={regionName ?? "—"} />
+            <SummaryRow k="결제 금액" v={won(total)} />
+          </tbody>
+        </table>
+      </div>
+      <p style={{ ...label, marginBottom: 6 }}>결제수단</p>
+      <label style={payMethod}>
+        <input type="radio" name="payMethod" checked readOnly /> 신용카드
+      </label>
+      <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 13, margin: "12px 0" }}>
+        <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
+        주문 내용과 결제 조건을 확인했으며 결제에 동의합니다.
+      </label>
+      <p style={hint}>
+        1회 결제 상품입니다. 기간이 끝나기 7일 전에 메일로 안내드립니다.
+      </p>
+      <div style={{ display: "flex", gap: 8 }}>
+        <button type="button" style={btn} onClick={() => setStep("detail")}>
+          이전
+        </button>
+        <button
+          type="button"
+          style={{ ...btn, ...btnPrimary, opacity: blocked || !agree || paying ? 0.45 : 1 }}
+          disabled={blocked || !agree || paying}
+          onClick={onPay}
+        >
+          {paying ? "결제창을 여는 중…" : `${won(total)} 결제하기`}
+        </button>
+      </div>
+    </>
+  );
+}
+
+function SummaryRow({ k, v }: { k: string; v: string }) {
+  return (
+    <tr>
+      <th style={{ ...th, width: 96, fontWeight: 600 }}>{k}</th>
+      <td style={td}>{v}</td>
+    </tr>
+  );
+}
+
+const stepTitle: CSSProperties = { margin: "4px 0 10px", fontSize: 14, color: "#333" };
+const productGrid: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+  gap: 10,
+  marginBottom: 12,
+};
+const productCard: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 6,
+  alignItems: "flex-start",
+  textAlign: "left",
+  border: "1px solid #e3e7ee",
+  borderRadius: 10,
+  background: "#fff",
+  padding: 14,
+  cursor: "pointer",
+};
+const summaryBox: CSSProperties = {
+  border: "1px solid #eef1f6",
+  borderRadius: 10,
+  padding: 14,
+  marginBottom: 12,
+  background: "#fafbfd",
+};
+const payMethod: CSSProperties = {
+  display: "inline-flex",
+  gap: 6,
+  alignItems: "center",
+  border: "1px solid #1a73e8",
+  borderRadius: 8,
+  padding: "8px 14px",
+  fontSize: 13.5,
+  fontWeight: 700,
 };
