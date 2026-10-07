@@ -8,7 +8,7 @@ import { Outlet } from "react-router";
  * 심사도 이 줄을 본다. 값은 사업자등록증(2026-09-15 발급)에서 옮겼다.
  * public/myodoc/partners.html 하단에도 같은 값이 있으니 함께 고친다.
  *
- * 전화번호와 통신판매신고번호는 아직 받지 못했다. 지어내서 채우면 공개
+ * 통신판매신고번호는 아직 받지 못했다. 지어내서 채우면 공개
  * 화면에 거짓 정보가 나가므로 비워 두고, 채워지면 그 줄이 나타난다.
  */
 const BUSINESS = {
@@ -16,7 +16,7 @@ const BUSINESS = {
   ceo: "김응수",
   registrationNo: "668-86-03923",
   address: "경기도 광명시 덕안로104번길 17, 비323호(일직동)",
-  phone: "",
+  phone: "010-9893-6877",
   email: "myodoc@idx.ai.kr",
   mailOrderNo: "",
 };
