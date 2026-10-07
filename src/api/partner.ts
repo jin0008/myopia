@@ -443,6 +443,8 @@ export interface MySubscription {
   currentPeriodEnd: string;
   amount: number;
   canceledAt: string | null;
+  /** 카드가 등록되어 매달 빠져나가는 중인가. */
+  autoRenew: boolean;
 }
 export interface MyPayment {
   id: string;
@@ -457,12 +459,38 @@ export interface MyPayment {
 export interface PaymentState {
   /** 결제 설정이 서버에 되어 있나. 아니면 버튼을 눌러도 아무 일이 없다. */
   available: boolean;
+  /** 정기결제(카드 등록)를 열었나. 나이스 심사 전에는 꺼져 있다. */
+  billingAvailable: boolean;
   subscription: MySubscription | null;
   payments: MyPayment[];
 }
 
 export function getPaymentState(): Promise<PaymentState> {
   return partnerFetch("/payment/me");
+}
+
+/** 정기결제 카드 정보. 서버로 한 번 보내고 화면에서도 바로 지운다. */
+export interface CardForm {
+  cardNo: string;
+  expYear: string;
+  expMonth: string;
+  /** 개인카드 생년월일 6자리 / 법인카드 사업자등록번호 10자리. */
+  idNo: string;
+  cardPw: string;
+  agree: true;
+}
+
+/** 카드를 등록하고 첫 달을 결제한다. 금액은 서버가 정한다. */
+/** code 'unsettled' 면 돈이 빠졌는지 서버도 아직 모른다(202). 성공으로 보지 않는다. */
+export function registerBillingCard(
+  card: CardForm,
+): Promise<{ ok?: true; code?: string; message?: string }> {
+  return partnerFetch("/payment/billing", { method: "POST" }, card);
+}
+
+/** 자동결제를 끊는다. 이번 기간이 끝날 때까지 노출은 그대로다. */
+export function cancelBilling(): Promise<{ ok: true; currentPeriodEnd: string }> {
+  return partnerFetch("/payment/billing/cancel", { method: "POST" });
 }
 
 /**

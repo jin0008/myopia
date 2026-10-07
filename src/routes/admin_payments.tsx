@@ -107,7 +107,7 @@ export default function AdminPayments() {
                   <span style={badge(p.status)}>{STATUS[p.status] ?? p.status}</span>
                   {p.failedReason ? <div style={sub}>{p.failedReason}</div> : null}
                 </td>
-                <td style={td}>{p.payMethod ?? "—"}</td>
+                <td style={td}>{p.payMethod === "billing" ? "자동결제" : (p.payMethod ?? "—")}</td>
                 <td style={{ ...td, whiteSpace: "nowrap", color: "#6b7280" }}>
                   {(p.paidAt ?? p.createdAt).slice(0, 16).replace("T", " ")}
                 </td>

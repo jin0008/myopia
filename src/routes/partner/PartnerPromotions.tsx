@@ -18,6 +18,8 @@ import {
   type PartnerBusinessKind,
   type MyPromotion,
   type PromotionRequest,
+  cancelBilling,
+  registerBillingCard,
 } from "../../api/partner";
 
 /**
@@ -448,6 +450,13 @@ export default function PartnerPromotions() {
               blocked={facility == null || avail.full === true}
               paying={paying}
               onPay={() => void payAndSubmit()}
+              billingAvailable={pay.billingAvailable}
+              autoRenew={pay.subscription?.autoRenew === true}
+              periodEnd={pay.subscription?.currentPeriodEnd ?? null}
+              onBillingChanged={() => {
+                void reload();
+                void getPaymentState().then(setPay).catch(() => setPay(null));
+              }}
             />
           )
         ) : (
@@ -696,7 +705,8 @@ const tdNum: CSSProperties = {
   fontVariantNumeric: "tabular-nums",
 };
 
-type PayStep = "list" | "detail" | "order";
+/** 단건: list → detail → order. 정기결제: list → billingDetail → card. */
+type PayStep = "list" | "detail" | "order" | "billingDetail" | "card";
 
 const PRODUCT_MONTHS = [1, 3, 6, 12];
 
@@ -718,6 +728,10 @@ function PaySteps({
   blocked,
   paying,
   onPay,
+  billingAvailable,
+  autoRenew,
+  periodEnd,
+  onBillingChanged,
 }: {
   step: PayStep;
   setStep: (s: PayStep) => void;
@@ -729,8 +743,13 @@ function PaySteps({
   blocked: boolean;
   paying: boolean;
   onPay: () => void;
+  billingAvailable: boolean;
+  autoRenew: boolean;
+  periodEnd: string | null;
+  onBillingChanged: () => void;
 }) {
   const [agree, setAgree] = useState(false);
+  const billingName = "마이오닥 독점 노출 월 자동결제";
   const name = (m: number) => `마이오닥 독점 노출 ${m}개월`;
   const total = monthly * months;
   const won = (n: number) => `${n.toLocaleString()}원`;
@@ -738,8 +757,22 @@ function PaySteps({
   if (step === "list") {
     return (
       <>
+        {autoRenew && (
+          <BillingStatus monthly={monthly} periodEnd={periodEnd} onChanged={onBillingChanged} />
+        )}
         <h4 style={stepTitle}>상품 목록</h4>
         <div style={productGrid}>
+          {/* 정기결제는 나이스가 열어 준 뒤에만 판다. 이미 쓰는 중이면 또
+              팔지 않는다 - 위의 상태 칸에서 해지하고 다시 등록한다. */}
+          {billingAvailable && !autoRenew && (
+            <button type="button" style={{ ...productCard, borderColor: "#1a73e8" }} onClick={() => setStep("billingDetail")}>
+              <span style={billingTag}>정기결제</span>
+              <b style={{ fontSize: 14.5 }}>{billingName}</b>
+              <span style={{ color: "#666", fontSize: 12.5 }}>매월 자동 결제 · 언제든 해지</span>
+              <b style={{ color: "#1a73e8", fontSize: 16 }}>월 {won(monthly)}</b>
+              <span style={{ color: "#1a73e8", fontSize: 12.5 }}>자세히 보기 →</span>
+            </button>
+          )}
           {PRODUCT_MONTHS.map((m) => (
             <button
               key={m}
@@ -803,6 +836,57 @@ function PaySteps({
           </button>
         </div>
       </>
+    );
+  }
+
+  if (step === "billingDetail") {
+    return (
+      <>
+        <h4 style={stepTitle}>상품 상세</h4>
+        <div style={summaryBox}>
+          <b style={{ fontSize: 16 }}>{billingName}</b>
+          <table style={{ ...table, marginTop: 10 }}>
+            <tbody>
+              <SummaryRow k="노출 지역" v={regionName ?? "내 업체가 있는 동"} />
+              <SummaryRow
+                k="노출 방식"
+                v="마이오닥 앱·웹 찾기 탭의 지도에 큰 핀과 상호로, 목록 맨 위에 한 곳만 노출"
+              />
+              <SummaryRow k="독점" v="같은 동의 같은 업종은 노출 기간 동안 신청할 수 없음" />
+              <SummaryRow k="결제" v={`매월 ${won(monthly)}, 등록한 카드로 자동 결제`} />
+              <SummaryRow k="해지" v="언제든 해지 가능. 해지해도 이미 결제한 기간까지는 노출" />
+            </tbody>
+          </table>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button type="button" style={btn} onClick={() => setStep("list")}>
+            목록으로
+          </button>
+          <button
+            type="button"
+            style={{ ...btn, ...btnPrimary, opacity: blocked ? 0.45 : 1 }}
+            disabled={blocked}
+            onClick={() => setStep("card")}
+          >
+            구매하기
+          </button>
+        </div>
+      </>
+    );
+  }
+
+  if (step === "card") {
+    return (
+      <BillingCardForm
+        monthly={monthly}
+        productName={billingName}
+        blocked={blocked}
+        onBack={() => setStep("billingDetail")}
+        onDone={() => {
+          setStep("list");
+          onBillingChanged();
+        }}
+      />
     );
   }
 
@@ -891,4 +975,262 @@ const payMethod: CSSProperties = {
   padding: "8px 14px",
   fontSize: 13.5,
   fontWeight: 700,
+};
+
+/**
+ * 정기결제 카드 정보 입력.
+ *
+ * 나이스 빌키 발급이 받는 네 칸(카드번호, 유효기간, 생년월일/사업자번호,
+ * 비밀번호 앞 2자리)이다. 값은 서버로 한 번 보내고 끝나면 칸을 비운다 -
+ * 화면 상태에도 남겨 두지 않는다.
+ */
+function BillingCardForm({
+  monthly,
+  productName,
+  blocked,
+  onBack,
+  onDone,
+}: {
+  monthly: number;
+  productName: string;
+  blocked: boolean;
+  onBack: () => void;
+  onDone: () => void;
+}) {
+  const [corp, setCorp] = useState(false);
+  const [cardNo, setCardNo] = useState("");
+  const [expMonth, setExpMonth] = useState("");
+  const [expYear, setExpYear] = useState("");
+  const [idNo, setIdNo] = useState("");
+  const [cardPw, setCardPw] = useState("");
+  const [agree, setAgree] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const digits = (v: string, n: number) => v.replace(/\D/g, "").slice(0, n);
+
+  const valid =
+    /^\d{14,16}$/.test(cardNo) &&
+    /^(0[1-9]|1[0-2])$/.test(expMonth) &&
+    /^\d{2}$/.test(expYear) &&
+    (corp ? /^\d{10}$/.test(idNo) : /^\d{6}$/.test(idNo)) &&
+    /^\d{2}$/.test(cardPw);
+
+  const clear = () => {
+    setCardNo("");
+    setExpMonth("");
+    setExpYear("");
+    setIdNo("");
+    setCardPw("");
+  };
+
+  async function submit() {
+    if (!valid || !agree || busy) return;
+    setBusy(true);
+    try {
+      const r = await registerBillingCard({ cardNo, expYear, expMonth, idNo, cardPw, agree: true });
+      clear();
+      // 결과를 모를 때 '완료'라고 하면 파트너가 확인 없이 넘어가고, 실패라고
+      // 하면 다시 결제해 두 번 빠진다. 서버 말을 그대로 보인다.
+      alert(
+        r.code === "unsettled"
+          ? (r.message ?? "결제 결과를 확인하고 있습니다. 다시 결제하지 마세요.")
+          : "자동결제가 등록되었고 첫 달 결제가 완료되었습니다. 광고가 지금부터 노출됩니다.",
+      );
+      onDone();
+    } catch (e) {
+      // 카드 정보는 남기지 않는다. 틀린 칸만 다시 넣게 비밀번호만 지운다.
+      setCardPw("");
+      alert((e as { message?: string })?.message || "카드를 등록하지 못했습니다.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <h4 style={stepTitle}>신용카드 정보 입력</h4>
+      <div style={summaryBox}>
+        <table style={table}>
+          <tbody>
+            <SummaryRow k="상품" v={productName} />
+            <SummaryRow k="결제 금액" v={`매월 ${monthly.toLocaleString()}원`} />
+          </tbody>
+        </table>
+      </div>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+        <label style={payMethod}>
+          <input type="radio" checked={!corp} onChange={() => { setCorp(false); setIdNo(""); }} /> 개인카드
+        </label>
+        <label style={payMethod}>
+          <input type="radio" checked={corp} onChange={() => { setCorp(true); setIdNo(""); }} /> 법인카드
+        </label>
+      </div>
+
+      <div style={cardGrid}>
+        <label style={label}>
+          카드번호
+          <input
+            style={input}
+            inputMode="numeric"
+            autoComplete="cc-number"
+            placeholder="숫자만 입력"
+            value={cardNo}
+            onChange={(e) => setCardNo(digits(e.target.value, 16))}
+          />
+        </label>
+        <label style={label}>
+          유효기간
+          <div style={{ display: "flex", gap: 6 }}>
+            <input
+              style={{ ...input, width: 70 }}
+              inputMode="numeric"
+              autoComplete="cc-exp-month"
+              placeholder="MM"
+              value={expMonth}
+              onChange={(e) => setExpMonth(digits(e.target.value, 2))}
+            />
+            <input
+              style={{ ...input, width: 70 }}
+              inputMode="numeric"
+              autoComplete="cc-exp-year"
+              placeholder="YY"
+              value={expYear}
+              onChange={(e) => setExpYear(digits(e.target.value, 2))}
+            />
+          </div>
+        </label>
+        <label style={label}>
+          {corp ? "사업자등록번호 (10자리)" : "생년월일 (6자리)"}
+          <input
+            style={input}
+            inputMode="numeric"
+            placeholder={corp ? "숫자 10자리" : "YYMMDD"}
+            value={idNo}
+            onChange={(e) => setIdNo(digits(e.target.value, corp ? 10 : 6))}
+          />
+        </label>
+        <label style={label}>
+          카드 비밀번호 앞 2자리
+          <input
+            style={{ ...input, width: 90 }}
+            type="password"
+            inputMode="numeric"
+            autoComplete="off"
+            placeholder="••"
+            value={cardPw}
+            onChange={(e) => setCardPw(digits(e.target.value, 2))}
+          />
+        </label>
+      </div>
+
+      <div style={termsBox}>
+        <b style={{ fontSize: 13 }}>결제 조건</b>
+        <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+          {/* 서버 동작 그대로 적는다(extendSubscription, 갱신은 끝나기 하루
+              안쪽). "매월 같은 날"이라 쓰면 남은 기간이 있는 업체에게 틀린 말이다. */}
+          <li>
+            오늘 첫 달 {monthly.toLocaleString()}원이 결제됩니다. 이미 이용 중인 기간이 있으면
+            그 기간이 끝난 뒤에 한 달이 이어 붙습니다.
+          </li>
+          <li>이후 이용 기간이 끝나기 전날 같은 금액이 자동 결제됩니다.</li>
+          <li>결제 7일 전에 메일로 미리 알려 드립니다.</li>
+          <li>언제든 이 화면에서 해지할 수 있으며, 해지해도 이미 결제한 기간까지는 노출됩니다.</li>
+          <li>카드 정보는 저장하지 않고 결제대행사(나이스페이먼츠)에 암호화해 전달합니다.</li>
+        </ul>
+      </div>
+      <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 13, margin: "12px 0" }}>
+        <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
+        위 결제 조건을 확인했으며 매월 자동 결제에 동의합니다.
+      </label>
+      <div style={{ display: "flex", gap: 8 }}>
+        <button type="button" style={btn} onClick={() => { clear(); onBack(); }}>
+          이전
+        </button>
+        <button
+          type="button"
+          style={{ ...btn, ...btnPrimary, opacity: blocked || !valid || !agree || busy ? 0.45 : 1 }}
+          disabled={blocked || !valid || !agree || busy}
+          onClick={() => void submit()}
+        >
+          {busy ? "등록 중…" : `매월 ${monthly.toLocaleString()}원 자동결제 시작`}
+        </button>
+      </div>
+    </>
+  );
+}
+
+/** 자동결제 중일 때 목록 위에 두는 상태 칸. 해지는 여기서 한다. */
+function BillingStatus({
+  monthly,
+  periodEnd,
+  onChanged,
+}: {
+  monthly: number;
+  periodEnd: string | null;
+  onChanged: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  // 갱신은 기간이 끝나기 하루 안쪽에 돈다. 끝나는 날이 아니라 그 전날을 적는다.
+  const end = periodEnd ? new Date(periodEnd) : null;
+  const next = end
+    ? korean(new Date(end.getTime() + 9 * 3600 * 1000 - 24 * 3600 * 1000).toISOString().slice(0, 10))
+    : null;
+  const endsOn = end
+    ? korean(new Date(end.getTime() + 9 * 3600 * 1000).toISOString().slice(0, 10))
+    : null;
+
+  async function cancel() {
+    if (
+      !confirm(
+        `자동결제를 해지할까요?${endsOn ? `\n${endsOn}까지는 그대로 노출되고, 그 뒤로는 결제되지 않습니다.` : ""}`,
+      )
+    )
+      return;
+    setBusy(true);
+    try {
+      await cancelBilling();
+      onChanged();
+    } catch {
+      alert("해지하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div style={{ ...summaryBox, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+      <div>
+        <span style={billingTag}>자동결제 이용 중</span>
+        <div style={{ fontSize: 13.5, marginTop: 6 }}>
+          매월 {monthly.toLocaleString()}원{next ? ` · 다음 결제 예정 ${next}` : ""}
+        </div>
+      </div>
+      <button type="button" style={btn} disabled={busy} onClick={() => void cancel()}>
+        {busy ? "해지 중…" : "자동결제 해지"}
+      </button>
+    </div>
+  );
+}
+
+const billingTag: CSSProperties = {
+  fontSize: 11.5,
+  fontWeight: 700,
+  color: "#1a73e8",
+  background: "#e8f0fe",
+  borderRadius: 4,
+  padding: "2px 7px",
+};
+const cardGrid: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+  gap: "0 12px",
+};
+const termsBox: CSSProperties = {
+  border: "1px solid #eef1f6",
+  borderRadius: 10,
+  padding: 12,
+  fontSize: 12.5,
+  color: "#4b5563",
+  lineHeight: 1.7,
+  background: "#fafbfd",
 };
