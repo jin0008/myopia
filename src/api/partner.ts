@@ -513,3 +513,12 @@ export interface PromotionAvailability {
 export function getPromotionAvailability(): Promise<PromotionAvailability> {
   return partnerFetch("/partner/promotions/availability");
 }
+
+/** 가입한 파트너의 광고 문의. 업체명·담당자·이메일은 서버가 계정에서 채운다. */
+export function sendPartnerInquiry(body: {
+  product: "banner" | "premium" | "other";
+  phone: string;
+  memo: string;
+}): Promise<{ ok: true }> {
+  return partnerFetch("/partner/inquiry", { method: "POST" }, body);
+}
