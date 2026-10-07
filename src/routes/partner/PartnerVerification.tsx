@@ -161,7 +161,7 @@ export default function PartnerVerification() {
             <div style={{ display: "flex", gap: 8 }}>
               <input
                 style={{ ...input, flex: 1 }}
-                placeholder="상호 또는 주소 (두 글자 이상)"
+                placeholder="상호와 동네를 함께 (예: 연세안과 신정동)"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && search()}
