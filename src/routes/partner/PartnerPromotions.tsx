@@ -450,6 +450,7 @@ export default function PartnerPromotions() {
               blocked={facility == null || avail.full === true}
               paying={paying}
               onPay={() => void payAndSubmit()}
+              liveEndsAt={promotions.find((p) => p.live)?.endsAt ?? null}
               billingAvailable={pay.billingAvailable}
               autoRenew={pay.subscription?.autoRenew === true}
               periodEnd={pay.subscription?.currentPeriodEnd ?? null}
@@ -728,6 +729,7 @@ function PaySteps({
   blocked,
   paying,
   onPay,
+  liveEndsAt,
   billingAvailable,
   autoRenew,
   periodEnd,
@@ -743,6 +745,8 @@ function PaySteps({
   blocked: boolean;
   paying: boolean;
   onPay: () => void;
+  /** 지금 노출 중인 광고의 끝(ISO). 없으면 null. 또 사면 이 뒤에 붙는다. */
+  liveEndsAt: string | null;
   billingAvailable: boolean;
   autoRenew: boolean;
   periodEnd: string | null;
@@ -878,6 +882,7 @@ function PaySteps({
   if (step === "card") {
     return (
       <BillingCardForm
+        liveEndsAt={liveEndsAt}
         monthly={monthly}
         productName={billingName}
         blocked={blocked}
@@ -922,7 +927,9 @@ function PaySteps({
           type="button"
           style={{ ...btn, ...btnPrimary, opacity: blocked || !agree || paying ? 0.45 : 1 }}
           disabled={blocked || !agree || paying}
-          onClick={onPay}
+          onClick={() => {
+            if (confirmExtension(liveEndsAt, months)) onPay();
+          }}
         >
           {paying ? "결제창을 여는 중…" : `${won(total)} 결제하기`}
         </button>
@@ -985,12 +992,14 @@ const payMethod: CSSProperties = {
  * 화면 상태에도 남겨 두지 않는다.
  */
 function BillingCardForm({
+  liveEndsAt,
   monthly,
   productName,
   blocked,
   onBack,
   onDone,
 }: {
+  liveEndsAt: string | null;
   monthly: number;
   productName: string;
   blocked: boolean;
@@ -1024,6 +1033,7 @@ function BillingCardForm({
 
   async function submit() {
     if (!valid || !agree || busy) return;
+    if (!confirmExtension(liveEndsAt, 1)) return;
     setBusy(true);
     try {
       const r = await registerBillingCard({ cardNo, expYear, expMonth, idNo, cardPw, agree: true });
@@ -1234,3 +1244,36 @@ const termsBox: CSSProperties = {
   lineHeight: 1.7,
   background: "#fafbfd",
 };
+
+/**
+ * 노출 중인데 또 사면, 결제 전에 언제까지로 늘어나는지 알린다.
+ *
+ * 서버는 지금 기간이 끝난 다음 날부터 N개월을 붙인다(promotionTerm.extendTerm).
+ * 오늘부터 새로 세는 줄 알고 산 업체가 "왜 겹쳐 샀냐"고 묻지 않게, 같은 식으로
+ * 계산해 보여 준다. 노출 중이 아니면 묻지 않는다. 취소하면 false.
+ */
+function confirmExtension(liveEndsAt: string | null, months: number): boolean {
+  if (liveEndsAt == null) return true;
+  const end = liveEndsAt.slice(0, 10);
+  return confirm(
+    `지금 ${korean(end)}까지 노출 중입니다.\n` +
+      `결제하시면 그 다음 날부터 ${months}개월이 이어 붙어 ` +
+      `${korean(extendedEnd(end, months))}까지 노출됩니다.\n\n계속 결제할까요?`,
+  );
+}
+
+/** 끝나는 날(YYYY-MM-DD) 다음 날부터 N개월 뒤의 마지막 날. 서버 extendTerm 과 같은 식. */
+function extendedEnd(endDay: string, months: number): string {
+  const [y, m, d] = endDay.split("-").map(Number);
+  const start = new Date(Date.UTC(y, m - 1, d + 1));
+  const sy = start.getUTCFullYear();
+  const sm = start.getUTCMonth();
+  const sd = start.getUTCDate();
+  const tm = sm + months;
+  const ty = sy + Math.floor(tm / 12);
+  const tm0 = ((tm % 12) + 12) % 12;
+  const dim = new Date(Date.UTC(ty, tm0 + 1, 0)).getUTCDate();
+  // 같은 날짜가 있으면 그 전날까지, 없으면 그 달 말일까지(9/1 시작 → 9/30, 1/31 시작 → 2/28).
+  const last = sd > dim ? new Date(Date.UTC(ty, tm0, dim)) : new Date(Date.UTC(ty, tm0, sd - 1));
+  return last.toISOString().slice(0, 10);
+}
