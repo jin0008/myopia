@@ -41,6 +41,8 @@ a{color:var(--blue)}
 
 header{border-bottom:1px solid var(--line);background:var(--surface)}
 header .wrap{display:flex;align-items:center;justify-content:space-between;min-height:62px;gap:12px;flex-wrap:wrap}
+.hlinks{display:flex;align-items:center;gap:14px}
+.hlogin{font-size:13.5px;font-weight:700;color:#fff;background:#1a73e8;border-radius:8px;padding:7px 12px;text-decoration:none}
 .brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:18px;letter-spacing:-.3px}
 .mark{width:30px;height:30px;border-radius:var(--r-sm);background:var(--blue);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .dot{position:relative;top:-6px;margin-left:-3px;width:5px;height:5px;border-radius:50%;background:var(--coral)}
@@ -137,7 +139,11 @@ footer{border-top:1px solid var(--line);padding:26px 0;font-size:13px;color:var(
       </span>
       마이오닥 파트너스<span class="dot"></span>
     </div>
-    <a class="hmail" href="mailto:myodoc@idx.ai.kr">myodoc@idx.ai.kr</a>
+    <!-- 이미 가입한 업체가 들어갈 문. 이 페이지가 결제 경로의 첫 화면이다. -->
+    <div class="hlinks">
+      <a class="hmail" href="mailto:myodoc@idx.ai.kr">myodoc@idx.ai.kr</a>
+      <a class="hlogin" href="/partner/login">파트너 로그인</a>
+    </div>
   </div>
 </header>
 
@@ -275,7 +281,13 @@ footer{border-top:1px solid var(--line);padding:26px 0;font-size:13px;color:var(
 </main>
 
 <footer>
-  <div class="wrap">마이오닥 · 주식회사 아이디엑스 · 문의 <a href="mailto:myodoc@idx.ai.kr">myodoc@idx.ai.kr</a></div>
+  <!-- 사업자 정보. src/components/business_footer.tsx 와 같은 값이다(함께 고친다).
+       전화번호·통신판매업신고번호는 받으면 추가한다. -->
+  <div class="wrap">
+    <a href="/myodoc/tos">이용약관</a> · <a href="/myodoc/privacy"><b>개인정보처리방침</b></a><br>
+    상호 주식회사 아이디엑스 · 대표자 김응수 · 사업자등록번호 668-86-03923<br>
+    주소 경기도 광명시 덕안로104번길 17, 비323호(일직동) · 이메일 <a href="mailto:myodoc@idx.ai.kr">myodoc@idx.ai.kr</a>
+  </div>
 </footer>
 
 <script>
