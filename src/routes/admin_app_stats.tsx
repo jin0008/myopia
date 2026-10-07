@@ -2,13 +2,13 @@ import { useContext, useState, type CSSProperties } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { UserContext } from "../App";
-import { getAppStats, type AppStats } from "../api/appStats";
+import { getAppStats, listGuardians, type AppStats } from "../api/appStats";
 
 /**
  * 마이오닥 앱 보호자 가입 현황.
  *
- * 숫자 몇 개와 최근 30일 막대 하나, 가입 방법 막대 하나. 보호자 이름·이메일은
- * 받지도 보여 주지도 않는다 - 현황을 보는 화면이지 회원을 찾는 화면이 아니다.
+ * 위는 숫자(현황), 아래는 보호자 목록(문의 응대용 - "로그인이 안 돼요"를
+ * 이메일·아이디로 찾는다). 목록은 볼 때마다 서버가 감사 기록을 남긴다.
  */
 export default function AdminAppStats() {
   const { user } = useContext(UserContext);
@@ -32,6 +32,8 @@ export default function AdminAppStats() {
       ) : (
         <Body s={q.data} />
       )}
+
+      <GuardianList />
     </div>
   );
 }
@@ -170,6 +172,106 @@ function MethodBars({ rows }: { rows: [string, number][] }) {
   );
 }
 
+const METHOD_NAME: Record<string, string> = {
+  email: "이메일",
+  kakao: "카카오",
+  naver: "네이버",
+  google: "구글",
+  apple: "애플",
+};
+
+/** 보호자 목록. 최신 가입순 50명씩, 이메일·아이디로 찾는다. */
+function GuardianList() {
+  const [input, setInput] = useState("");
+  const [q, setQ] = useState("");
+  const [page, setPage] = useState(1);
+  const list = useQuery({
+    queryKey: ["admin", "guardians", q, page],
+    queryFn: () => listGuardians(q, page),
+  });
+  const total = list.data?.total ?? 0;
+  const pages = Math.max(1, Math.ceil(total / (list.data?.pageSize ?? 50)));
+  const search = () => {
+    setQ(input.trim());
+    setPage(1);
+  };
+
+  return (
+    <section style={card}>
+      <h2 style={h2}>보호자 목록</h2>
+      <p style={{ ...muted, margin: "0 0 10px" }}>
+        개인정보입니다. 조회할 때마다 누가 언제 봤는지 기록이 남습니다.
+      </p>
+      <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+        <input
+          style={{ flex: 1, border: "1px solid #d1d5db", borderRadius: 8, padding: "8px 10px", fontSize: 14 }}
+          placeholder="이메일 또는 아이디로 찾기"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && search()}
+        />
+        <button type="button" style={btnStyle} onClick={search}>
+          찾기
+        </button>
+      </div>
+
+      {list.isLoading ? (
+        <p style={muted}>불러오는 중…</p>
+      ) : list.isError ? (
+        <p style={muted}>불러오지 못했습니다.</p>
+      ) : (list.data?.guardians.length ?? 0) === 0 ? (
+        <p style={muted}>{q ? "찾는 보호자가 없습니다." : "보호자가 없습니다."}</p>
+      ) : (
+        <>
+          <p style={{ ...muted, margin: "0 0 6px" }}>
+            {q ? `"${q}" ` : ""}
+            {total.toLocaleString()}명
+          </p>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
+              <thead>
+                <tr>
+                  {["가입일", "이메일", "아이디", "가입 방법", "자녀", "병원 연동", "최근 접속"].map((h) => (
+                    <th key={h} style={th}>
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {list.data!.guardians.map((g) => (
+                  <tr key={g.id}>
+                    <td style={td}>{g.joined.slice(0, 10)}</td>
+                    <td style={td}>{g.email ?? "—"}</td>
+                    <td style={td}>{g.username ?? "—"}</td>
+                    <td style={td}>{g.methods.map((m) => METHOD_NAME[m] ?? m).join(" · ") || "—"}</td>
+                    <td style={{ ...td, textAlign: "right" }}>{g.children}</td>
+                    <td style={{ ...td, textAlign: "right" }}>{g.linkedChildren}</td>
+                    <td style={td}>{g.lastSeen ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {pages > 1 && (
+            <div style={{ display: "flex", gap: 8, alignItems: "center", justifyContent: "center", marginTop: 10 }}>
+              <button type="button" style={btnStyle} disabled={page <= 1} onClick={() => setPage(page - 1)}>
+                이전
+              </button>
+              <span style={muted}>
+                {page} / {pages}
+              </span>
+              <button type="button" style={btnStyle} disabled={page >= pages} onClick={() => setPage(page + 1)}>
+                다음
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
 // 글자는 잉크 색, 막대만 파랑. 값과 이름표를 막대 색으로 칠하지 않는다.
 const INK = "#111827";
 const INK2 = "#374151";
@@ -196,4 +298,23 @@ const card: CSSProperties = {
   padding: 16,
   background: "#fff",
   marginBottom: 12,
+};
+const th: CSSProperties = {
+  textAlign: "left",
+  fontWeight: 600,
+  color: MUTED,
+  fontSize: 12.5,
+  padding: "6px 8px",
+  borderBottom: `1px solid ${AXIS}`,
+  whiteSpace: "nowrap",
+};
+const td: CSSProperties = { padding: "7px 8px", borderBottom: `1px solid ${GRID}`, color: INK, whiteSpace: "nowrap" };
+const btnStyle: CSSProperties = {
+  border: "1px solid #d1d5db",
+  background: "#fff",
+  borderRadius: 8,
+  padding: "7px 14px",
+  fontSize: 13.5,
+  fontWeight: 600,
+  cursor: "pointer",
 };
