@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 
 import {
@@ -761,64 +761,65 @@ function PaySteps({
   const won = (n: number) => `${n.toLocaleString()}원`;
 
   if (step === "list") {
-    // 정기와 단건을 나란히 두 칸으로 가른다. 한 줄에 섞어 두면 '월 자동결제'와
-    // '1개월'이 같은 종류로 읽혀, 한 달만 사려던 업체가 자동결제에 들어간다.
+    // 두 상품을 같은 모양으로 나란히 둔다. 색이나 버튼으로 한쪽을 밀면 한 달만
+    // 사려던 업체가 자동결제로 들어간다. 다른 것은 내용뿐이다.
     const showBilling = billingAvailable || autoRenew;
     return (
       <>
-        <h4 style={stepTitle}>상품 목록</h4>
-        <div style={showBilling ? sectionGrid : undefined}>
+        <h4 style={stepTitle}>상품 선택</h4>
+        <div style={showBilling ? planGrid : { ...planGrid, gridTemplateColumns: "minmax(0, 420px)" }}>
           {showBilling && (
-            <section style={{ ...sectionBox, borderColor: "#1a73e8", background: "#f5f9ff" }}>
-              <span style={billingTag}>정기결제</span>
-              <b style={{ fontSize: 15.5 }}>{billingName}</b>
-              <span style={{ color: "#4b5563", fontSize: 13 }}>
-                카드를 한 번 등록하면 매월 자동으로 결제됩니다. 언제든 해지할 수 있습니다.
-              </span>
-              <b style={{ color: "#1a73e8", fontSize: 18 }}>월 {won(monthly)}</b>
+            <PlanCard
+              title="정기결제"
+              lead="카드를 한 번 등록하면 매달 자동으로 결제됩니다."
+              price={won(monthly)}
+              period={<span style={planPeriod}>매달</span>}
+              points={[
+                "매달 자동으로 연장되어 노출이 끊기지 않습니다",
+                "결제 7일 전에 메일로 미리 알려 드립니다",
+                "언제든 해지할 수 있습니다",
+                "해지해도 결제한 기간까지는 노출됩니다",
+              ]}
+            >
               {/* 이미 쓰는 중이면 또 팔지 않는다 - 여기서 해지하고 다시 등록한다. */}
               {autoRenew ? (
                 <BillingStatus monthly={monthly} periodEnd={periodEnd} onChanged={onBillingChanged} />
               ) : (
-                <button
-                  type="button"
-                  style={{ ...btn, ...btnPrimary, alignSelf: "flex-start", marginBottom: 0 }}
-                  onClick={() => setStep("billingDetail")}
-                >
-                  자세히 보기
+                <button type="button" style={planBtn} onClick={() => setStep("billingDetail")}>
+                  선택하기
                 </button>
               )}
-            </section>
+            </PlanCard>
           )}
-          <section style={sectionBox}>
-            <span style={singleTag}>단건결제</span>
-            <b style={{ fontSize: 15.5 }}>{GOODS_TITLE}</b>
-            <span style={{ color: "#4b5563", fontSize: 13 }}>
-              원하는 기간만큼 한 번 결제합니다. 자동으로 다시 결제되지 않습니다.
-            </span>
-            <label style={{ ...label, marginBottom: 0, minWidth: 0 }}>
-              기간
+          <PlanCard
+            title="단건결제"
+            lead="원하는 기간만큼 한 번 결제합니다."
+            price={won(monthly * months)}
+            period={
               <select
+                aria-label="기간"
                 value={months}
                 onChange={(e) => setMonths(Number(e.target.value))}
-                style={input}
+                style={planSelect}
               >
                 {PRODUCT_MONTHS.map((m) => (
                   <option key={m} value={m}>
-                    {m}개월 · {won(monthly * m)}
+                    {m}개월
                   </option>
                 ))}
               </select>
-            </label>
-            <b style={{ color: "#1a73e8", fontSize: 18 }}>{won(monthly * months)}</b>
-            <button
-              type="button"
-              style={{ ...btn, alignSelf: "flex-start", marginBottom: 0 }}
-              onClick={() => setStep("detail")}
-            >
-              다음
+            }
+            points={[
+              "1·3·6·12개월 중 원하는 기간을 고릅니다",
+              "자동으로 다시 결제되지 않습니다",
+              "기간이 끝나기 7일 전에 메일로 알려 드립니다",
+              "노출 중에 또 사면 남은 기간 뒤에 이어 붙습니다",
+            ]}
+          >
+            <button type="button" style={planBtn} onClick={() => setStep("detail")}>
+              선택하기
             </button>
-          </section>
+          </PlanCard>
         </div>
       </>
     );
@@ -1290,28 +1291,85 @@ function extendedEnd(endDay: string, months: number): string {
   return last.toISOString().slice(0, 10);
 }
 
-const sectionGrid: CSSProperties = {
+/** 상품 카드 한 장. 두 상품이 같은 틀을 쓰게 해서 모양으로 한쪽을 밀지 않는다. */
+function PlanCard({
+  title,
+  lead,
+  price,
+  period,
+  points,
+  children,
+}: {
+  title: string;
+  lead: string;
+  price: string;
+  period: ReactNode;
+  points: string[];
+  children: ReactNode;
+}) {
+  return (
+    <section style={planCard}>
+      <h5 style={{ margin: 0, fontSize: 17, fontWeight: 800 }}>{title}</h5>
+      <p style={{ margin: "4px 0 0", color: "#4b5563", fontSize: 13 }}>{lead}</p>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 10, margin: "14px 0 4px" }}>
+        <b style={{ fontSize: 26, color: "#111827" }}>{price}</b>
+        {period}
+      </div>
+      <ul style={planList}>
+        {points.map((p) => (
+          <li key={p} style={planItem}>
+            <span aria-hidden style={planCheck}>
+              ✓
+            </span>
+            {p}
+          </li>
+        ))}
+      </ul>
+      <div style={{ marginTop: "auto" }}>{children}</div>
+    </section>
+  );
+}
+
+const planGrid: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
   gap: 12,
   marginBottom: 12,
 };
-const sectionBox: CSSProperties = {
+const planCard: CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: 10,
   border: "1px solid #e3e7ee",
-  borderRadius: 12,
-  padding: 16,
+  borderRadius: 14,
+  padding: 18,
   background: "#fff",
-  marginBottom: 12,
 };
-const singleTag: CSSProperties = {
-  alignSelf: "flex-start",
-  fontSize: 11.5,
+const planPeriod: CSSProperties = { color: "#6b7280", fontSize: 13.5 };
+const planSelect: CSSProperties = {
+  border: "1px solid #d1d5db",
+  borderRadius: 8,
+  padding: "4px 8px",
+  fontSize: 13.5,
+  background: "#fff",
+};
+const planList: CSSProperties = { listStyle: "none", padding: 0, margin: "10px 0 16px" };
+const planItem: CSSProperties = {
+  display: "flex",
+  gap: 8,
+  fontSize: 13.5,
+  color: "#374151",
+  lineHeight: 1.5,
+  padding: "4px 0",
+};
+const planCheck: CSSProperties = { color: "#1a73e8", fontWeight: 800 };
+const planBtn: CSSProperties = {
+  width: "100%",
+  border: 0,
+  borderRadius: 10,
+  background: "#1a73e8",
+  color: "#fff",
+  fontSize: 14.5,
   fontWeight: 700,
-  color: "#4b5563",
-  background: "#eef1f6",
-  borderRadius: 4,
-  padding: "2px 7px",
+  padding: "11px 0",
+  cursor: "pointer",
 };
