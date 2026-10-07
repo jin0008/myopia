@@ -1026,9 +1026,15 @@ function BillingCardForm({
     if (!valid || !agree || busy) return;
     setBusy(true);
     try {
-      await registerBillingCard({ cardNo, expYear, expMonth, idNo, cardPw, agree: true });
+      const r = await registerBillingCard({ cardNo, expYear, expMonth, idNo, cardPw, agree: true });
       clear();
-      alert("자동결제가 등록되었고 첫 달 결제가 완료되었습니다. 광고가 지금부터 노출됩니다.");
+      // 결과를 모를 때 '완료'라고 하면 파트너가 확인 없이 넘어가고, 실패라고
+      // 하면 다시 결제해 두 번 빠진다. 서버 말을 그대로 보인다.
+      alert(
+        r.code === "unsettled"
+          ? (r.message ?? "결제 결과를 확인하고 있습니다. 다시 결제하지 마세요.")
+          : "자동결제가 등록되었고 첫 달 결제가 완료되었습니다. 광고가 지금부터 노출됩니다.",
+      );
       onDone();
     } catch (e) {
       // 카드 정보는 남기지 않는다. 틀린 칸만 다시 넣게 비밀번호만 지운다.

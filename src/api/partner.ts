@@ -481,7 +481,10 @@ export interface CardForm {
 }
 
 /** 카드를 등록하고 첫 달을 결제한다. 금액은 서버가 정한다. */
-export function registerBillingCard(card: CardForm): Promise<{ ok: true }> {
+/** code 'unsettled' 면 돈이 빠졌는지 서버도 아직 모른다(202). 성공으로 보지 않는다. */
+export function registerBillingCard(
+  card: CardForm,
+): Promise<{ ok?: true; code?: string; message?: string }> {
   return partnerFetch("/payment/billing", { method: "POST" }, card);
 }
 
