@@ -20,6 +20,7 @@ import {
   type PromotionRequest,
   cancelBilling,
   registerBillingCard,
+  sendPartnerInquiry,
 } from "../../api/partner";
 
 /**
@@ -520,6 +521,102 @@ export default function PartnerPromotions() {
           </table>
         )}
       </div>
+
+      {/* 상단 노출 말고 다른 광고(배너 등)를 원하는 파트너가 물을 곳. 로그인 없는
+          안내 페이지의 문의와 같은 곳(관리자 → 광고 문의)에 쌓이고 메일로도 간다. */}
+      <PartnerInquiry />
+    </div>
+  );
+}
+
+/** 다른 광고 문의. 업체명·담당자·이메일은 서버가 계정에서 채운다. */
+function PartnerInquiry() {
+  const [product, setProduct] = useState<"banner" | "premium" | "other">("banner");
+  const [phone, setPhone] = useState("");
+  const [memo, setMemo] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
+  const ok = phone.replace(/\D/g, "").length >= 9 && memo.trim() !== "";
+
+  async function send() {
+    if (!ok || busy) return;
+    setBusy(true);
+    try {
+      await sendPartnerInquiry({ product, phone: phone.trim(), memo: memo.trim() });
+      setSent(true);
+      setMemo("");
+    } catch (e) {
+      const code = (e as { code?: number })?.code;
+      alert(
+        code === 429
+          ? "문의가 너무 잦습니다. 잠시 후 다시 시도해 주세요."
+          : "보내지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div style={card}>
+      <h3 style={h3}>다른 광고 문의</h3>
+      <p style={hint}>
+        앱 배너 광고 등 다른 광고 상품이 궁금하시면 남겨 주세요. 담당자가 계정 이메일이나
+        연락처로 답변드립니다.
+      </p>
+      {sent ? (
+        <p style={{ ...hint, color: "#1c7c4a" }}>
+          문의를 받았습니다. 확인 후 연락드리겠습니다.{" "}
+          <button type="button" style={linkBtn} onClick={() => setSent(false)}>
+            하나 더 보내기
+          </button>
+        </p>
+      ) : (
+        <>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <label style={label}>
+              문의 종류
+              <select
+                value={product}
+                onChange={(e) => setProduct(e.target.value as typeof product)}
+                style={input}
+              >
+                <option value="banner">앱 배너 광고</option>
+                <option value="premium">치료 탭·찾기 상단 노출</option>
+                <option value="other">기타</option>
+              </select>
+            </label>
+            <label style={label}>
+              연락처
+              <input
+                style={input}
+                inputMode="tel"
+                placeholder="010-0000-0000"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+            </label>
+          </div>
+          <label style={{ ...label, minWidth: 0 }}>
+            문의 내용
+            <textarea
+              style={{ ...input, minHeight: 90, resize: "vertical", fontFamily: "inherit" }}
+              placeholder="원하시는 광고 위치, 기간, 예산 등을 적어 주세요."
+              maxLength={1000}
+              value={memo}
+              onChange={(e) => setMemo(e.target.value)}
+            />
+          </label>
+          <button
+            type="button"
+            style={{ ...btn, ...btnPrimary, opacity: ok && !busy ? 1 : 0.45 }}
+            disabled={!ok || busy}
+            onClick={() => void send()}
+          >
+            {busy ? "보내는 중…" : "문의 보내기"}
+          </button>
+        </>
+      )}
     </div>
   );
 }
