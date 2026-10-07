@@ -710,6 +710,8 @@ const tdNum: CSSProperties = {
 type PayStep = "list" | "detail" | "order" | "billingDetail" | "card";
 
 const PRODUCT_MONTHS = [1, 3, 6, 12];
+/** 결제창·영수증의 상품명(서버 GOODS_NAME)과 같은 말. */
+const GOODS_TITLE = "마이오닥 독점 노출";
 
 /**
  * 결제 흐름: 상품 목록 → 상품 상세 → 주문·결제.
@@ -754,47 +756,69 @@ function PaySteps({
 }) {
   const [agree, setAgree] = useState(false);
   const billingName = "마이오닥 독점 노출 월 자동결제";
-  const name = (m: number) => `마이오닥 독점 노출 ${m}개월`;
+  const name = (m: number) => `${GOODS_TITLE} ${m}개월`;
   const total = monthly * months;
   const won = (n: number) => `${n.toLocaleString()}원`;
 
   if (step === "list") {
+    // 정기와 단건을 나란히 두 칸으로 가른다. 한 줄에 섞어 두면 '월 자동결제'와
+    // '1개월'이 같은 종류로 읽혀, 한 달만 사려던 업체가 자동결제에 들어간다.
+    const showBilling = billingAvailable || autoRenew;
     return (
       <>
-        {autoRenew && (
-          <BillingStatus monthly={monthly} periodEnd={periodEnd} onChanged={onBillingChanged} />
-        )}
         <h4 style={stepTitle}>상품 목록</h4>
-        <div style={productGrid}>
-          {/* 정기결제는 나이스가 열어 준 뒤에만 판다. 이미 쓰는 중이면 또
-              팔지 않는다 - 위의 상태 칸에서 해지하고 다시 등록한다. */}
-          {billingAvailable && !autoRenew && (
-            <button type="button" style={{ ...productCard, borderColor: "#1a73e8" }} onClick={() => setStep("billingDetail")}>
+        <div style={showBilling ? sectionGrid : undefined}>
+          {showBilling && (
+            <section style={{ ...sectionBox, borderColor: "#1a73e8", background: "#f5f9ff" }}>
               <span style={billingTag}>정기결제</span>
-              <b style={{ fontSize: 14.5 }}>{billingName}</b>
-              <span style={{ color: "#666", fontSize: 12.5 }}>매월 자동 결제 · 언제든 해지</span>
-              <b style={{ color: "#1a73e8", fontSize: 16 }}>월 {won(monthly)}</b>
-              <span style={{ color: "#1a73e8", fontSize: 12.5 }}>자세히 보기 →</span>
-            </button>
-          )}
-          {PRODUCT_MONTHS.map((m) => (
-            <button
-              key={m}
-              type="button"
-              style={productCard}
-              onClick={() => {
-                setMonths(m);
-                setStep("detail");
-              }}
-            >
-              <b style={{ fontSize: 14.5 }}>{name(m)}</b>
-              <span style={{ color: "#666", fontSize: 12.5 }}>
-                월 {won(monthly)} × {m}개월
+              <b style={{ fontSize: 15.5 }}>{billingName}</b>
+              <span style={{ color: "#4b5563", fontSize: 13 }}>
+                카드를 한 번 등록하면 매월 자동으로 결제됩니다. 언제든 해지할 수 있습니다.
               </span>
-              <b style={{ color: "#1a73e8", fontSize: 16 }}>{won(monthly * m)}</b>
-              <span style={{ color: "#1a73e8", fontSize: 12.5 }}>자세히 보기 →</span>
+              <b style={{ color: "#1a73e8", fontSize: 18 }}>월 {won(monthly)}</b>
+              {/* 이미 쓰는 중이면 또 팔지 않는다 - 여기서 해지하고 다시 등록한다. */}
+              {autoRenew ? (
+                <BillingStatus monthly={monthly} periodEnd={periodEnd} onChanged={onBillingChanged} />
+              ) : (
+                <button
+                  type="button"
+                  style={{ ...btn, ...btnPrimary, alignSelf: "flex-start", marginBottom: 0 }}
+                  onClick={() => setStep("billingDetail")}
+                >
+                  자세히 보기
+                </button>
+              )}
+            </section>
+          )}
+          <section style={sectionBox}>
+            <span style={singleTag}>단건결제</span>
+            <b style={{ fontSize: 15.5 }}>{GOODS_TITLE}</b>
+            <span style={{ color: "#4b5563", fontSize: 13 }}>
+              원하는 기간만큼 한 번 결제합니다. 자동으로 다시 결제되지 않습니다.
+            </span>
+            <label style={{ ...label, marginBottom: 0, minWidth: 0 }}>
+              기간
+              <select
+                value={months}
+                onChange={(e) => setMonths(Number(e.target.value))}
+                style={input}
+              >
+                {PRODUCT_MONTHS.map((m) => (
+                  <option key={m} value={m}>
+                    {m}개월 · {won(monthly * m)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <b style={{ color: "#1a73e8", fontSize: 18 }}>{won(monthly * months)}</b>
+            <button
+              type="button"
+              style={{ ...btn, alignSelf: "flex-start", marginBottom: 0 }}
+              onClick={() => setStep("detail")}
+            >
+              다음
             </button>
-          ))}
+          </section>
         </div>
       </>
     );
@@ -948,24 +972,6 @@ function SummaryRow({ k, v }: { k: string; v: string }) {
 }
 
 const stepTitle: CSSProperties = { margin: "4px 0 10px", fontSize: 14, color: "#333" };
-const productGrid: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-  gap: 10,
-  marginBottom: 12,
-};
-const productCard: CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: 6,
-  alignItems: "flex-start",
-  textAlign: "left",
-  border: "1px solid #e3e7ee",
-  borderRadius: 10,
-  background: "#fff",
-  padding: 14,
-  cursor: "pointer",
-};
 const summaryBox: CSSProperties = {
   border: "1px solid #eef1f6",
   borderRadius: 10,
@@ -1215,7 +1221,12 @@ function BillingStatus({
           매월 {monthly.toLocaleString()}원{next ? ` · 다음 결제 예정 ${next}` : ""}
         </div>
       </div>
-      <button type="button" style={btn} disabled={busy} onClick={() => void cancel()}>
+      <button
+        type="button"
+        style={{ ...btn, whiteSpace: "nowrap", marginBottom: 0 }}
+        disabled={busy}
+        onClick={() => void cancel()}
+      >
         {busy ? "해지 중…" : "자동결제 해지"}
       </button>
     </div>
@@ -1223,6 +1234,7 @@ function BillingStatus({
 }
 
 const billingTag: CSSProperties = {
+  alignSelf: "flex-start",
   fontSize: 11.5,
   fontWeight: 700,
   color: "#1a73e8",
@@ -1277,3 +1289,29 @@ function extendedEnd(endDay: string, months: number): string {
   const last = sd > dim ? new Date(Date.UTC(ty, tm0, dim)) : new Date(Date.UTC(ty, tm0, sd - 1));
   return last.toISOString().slice(0, 10);
 }
+
+const sectionGrid: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+  gap: 12,
+  marginBottom: 12,
+};
+const sectionBox: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 10,
+  border: "1px solid #e3e7ee",
+  borderRadius: 12,
+  padding: 16,
+  background: "#fff",
+  marginBottom: 12,
+};
+const singleTag: CSSProperties = {
+  alignSelf: "flex-start",
+  fontSize: 11.5,
+  fontWeight: 700,
+  color: "#4b5563",
+  background: "#eef1f6",
+  borderRadius: 4,
+  padding: "2px 7px",
+};
