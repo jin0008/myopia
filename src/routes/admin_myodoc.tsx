@@ -66,7 +66,10 @@ const GROUPS: {
   },
   {
     title: "운영",
-    items: [{ href: "/admin/reports", label: "신고 처리", badge: "reports" }],
+    items: [
+      { href: "/admin/reports", label: "신고 처리", badge: "reports" },
+      { href: "/admin/app-stats", label: "가입 현황", hint: "앱 보호자 가입 · 자녀 · 이용" },
+    ],
   },
 ];
 
