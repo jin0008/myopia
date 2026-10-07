@@ -428,7 +428,15 @@ export default function PartnerPromotions() {
         {/* 결제가 켜져 있으면 결제로, 아니면 예전처럼 신청으로. 켜지지 않은
             곳에서 결제 버튼을 보이면 눌러도 아무 일이 없다. */}
         {pay?.available ? (
-          avail != null && (
+          // 자리 정보를 못 받으면(동을 모름 503, 네트워크) 가격도 동도 모르니
+          // 상품을 그릴 수 없다. 그래도 말없이 비워 두면 왜 결제가 안 되는지
+          // 알 길이 없어 이유와 갈 곳을 적는다.
+          avail == null ? (
+            <p style={hint}>
+              노출 지역 정보를 불러오지 못했습니다. 잠시 후 새로고침해 주시고, 계속
+              보이지 않으면 myodoc@idx.ai.kr 로 업체명과 함께 알려 주세요.
+            </p>
+          ) : (
             <PaySteps
               step={step}
               setStep={setStep}
