@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 
 import {
@@ -1014,7 +1014,9 @@ function BillingCardForm({
   onDone: () => void;
 }) {
   const [corp, setCorp] = useState(false);
-  const [cardNo, setCardNo] = useState("");
+  // 4칸으로 받는다. 세 번째 칸은 가린다(아래 CardNumberInput).
+  const [cardParts, setCardParts] = useState(["", "", "", ""]);
+  const cardNo = cardParts.join("");
   const [expMonth, setExpMonth] = useState("");
   const [expYear, setExpYear] = useState("");
   const [idNo, setIdNo] = useState("");
@@ -1024,6 +1026,8 @@ function BillingCardForm({
   const digits = (v: string, n: number) => v.replace(/\D/g, "").slice(0, n);
 
   const valid =
+    // 앞 세 칸은 4자리씩 꽉 차야 한다. 중간 칸이 비면 번호가 당겨져 다른 카드가 된다.
+    cardParts.slice(0, 3).every((p) => p.length === 4) &&
     /^\d{14,16}$/.test(cardNo) &&
     /^(0[1-9]|1[0-2])$/.test(expMonth) &&
     /^\d{2}$/.test(expYear) &&
@@ -1031,7 +1035,7 @@ function BillingCardForm({
     /^\d{2}$/.test(cardPw);
 
   const clear = () => {
-    setCardNo("");
+    setCardParts(["", "", "", ""]);
     setExpMonth("");
     setExpYear("");
     setIdNo("");
@@ -1084,16 +1088,10 @@ function BillingCardForm({
       </div>
 
       <div style={cardGrid}>
-        <label style={label}>
+        {/* 한 줄을 다 쓴다. 칸에 끼워 두면 네 칸이 좁아져 숫자가 잘린다. */}
+        <label style={{ ...label, gridColumn: "1 / -1" }}>
           카드번호
-          <input
-            style={input}
-            inputMode="numeric"
-            autoComplete="cc-number"
-            placeholder="숫자만 입력"
-            value={cardNo}
-            onChange={(e) => setCardNo(digits(e.target.value, 16))}
-          />
+          <CardNumberInput parts={cardParts} onChange={setCardParts} />
         </label>
         <label style={label}>
           유효기간
@@ -1373,3 +1371,65 @@ const planBtn: CSSProperties = {
   padding: "11px 0",
   cursor: "pointer",
 };
+
+/**
+ * 카드번호 4칸. 세 번째 칸은 비밀번호처럼 가린다.
+ *
+ * 국내 카드 입력 화면이 흔히 그렇게 한다 - 옆에서 화면을 봐도 번호 전체를
+ * 알 수 없게. 4자리를 채우면 다음 칸으로 넘어가고, 번호를 통째로 붙여 넣으면
+ * 칸에 나눠 담는다. 마지막 칸은 2~4자리(14~16자리 카드)다.
+ */
+function CardNumberInput({
+  parts,
+  onChange,
+}: {
+  parts: string[];
+  onChange: (next: string[]) => void;
+}) {
+  const refs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const set = (i: number, raw: string) => {
+    const d = raw.replace(/\D/g, "");
+    // 한 칸에 4자리를 넘게 넣었다(붙여넣기 등). 그 칸부터 나눠 담는다.
+    if (d.length > 4) {
+      const next = [...parts];
+      let rest = d;
+      for (let k = i; k < 4 && rest !== ""; k++) {
+        next[k] = rest.slice(0, 4);
+        rest = rest.slice(4);
+      }
+      onChange(next);
+      refs.current[Math.min(3, i + Math.ceil(d.length / 4) - 1)]?.focus();
+      return;
+    }
+    const next = [...parts];
+    next[i] = d;
+    onChange(next);
+    if (d.length === 4 && i < 3) refs.current[i + 1]?.focus();
+  };
+
+  return (
+    <div style={{ display: "flex", gap: 6 }}>
+      {parts.map((p, i) => (
+        <input
+          key={i}
+          ref={(el) => {
+            refs.current[i] = el;
+          }}
+          style={{ ...input, width: 84, textAlign: "center", letterSpacing: 1 }}
+          type={i === 2 ? "password" : "text"}
+          inputMode="numeric"
+          autoComplete={i === 0 ? "cc-number" : "off"}
+          aria-label={`카드번호 ${i + 1}번째 칸`}
+          placeholder={i === 2 ? "••••" : "0000"}
+          value={p}
+          onChange={(e) => set(i, e.target.value)}
+          onKeyDown={(e) => {
+            // 빈 칸에서 지우면 앞 칸으로 돌아간다.
+            if (e.key === "Backspace" && p === "" && i > 0) refs.current[i - 1]?.focus();
+          }}
+        />
+      ))}
+    </div>
+  );
+}
