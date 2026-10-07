@@ -161,7 +161,7 @@ export default function PartnerVerification() {
             <div style={{ display: "flex", gap: 8 }}>
               <input
                 style={{ ...input, flex: 1 }}
-                placeholder="상호 또는 주소 (두 글자 이상)"
+                placeholder="상호와 동네를 함께 (예: 연세안과 신정동)"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && search()}
@@ -191,12 +191,23 @@ export default function PartnerVerification() {
                     주소로도 찾아보세요.
                   </p>
                 ) : (
-                  results.map((f) => (
-                    <button key={f.key} style={resultRow} onClick={() => setPicked(f)}>
-                      <b>{f.name}</b>
-                      <div style={{ color: "#666", fontSize: 12 }}>{f.address}</div>
-                    </button>
-                  ))
+                  <>
+                    <p style={{ ...hint, margin: "0 0 6px" }}>
+                      {results.length >= SEARCH_LIMIT
+                        ? `${SEARCH_LIMIT}곳까지 보여 드립니다. 동네나 주소를 붙여 좁혀 보세요.`
+                        : `${results.length}곳`}
+                    </p>
+                    {/* 흔한 상호는 수십 곳이 나온다. 목록이 페이지를 밀어내지 않게
+                        칸 안에서 스크롤한다. */}
+                    <div style={resultList}>
+                      {results.map((f) => (
+                        <button key={f.key} style={resultRow} onClick={() => setPicked(f)}>
+                          <b>{f.name}</b>
+                          <div style={{ color: "#666", fontSize: 12 }}>{f.address}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </>
                 )}
               </div>
             )}
@@ -420,4 +431,15 @@ const linkBtn: CSSProperties = {
   cursor: "pointer",
   fontSize: 13,
   padding: 0,
+};
+
+/** 서버가 업종마다 돌려주는 최대 개수(partner.ts FACILITY_SEARCH_LIMIT). */
+const SEARCH_LIMIT = 200;
+
+const resultList: CSSProperties = {
+  maxHeight: 320,
+  overflowY: "auto",
+  border: "1px solid #e5e7eb",
+  borderRadius: 8,
+  padding: 4,
 };
