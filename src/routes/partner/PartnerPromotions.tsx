@@ -1126,7 +1126,13 @@ function BillingCardForm({
       <div style={termsBox}>
         <b style={{ fontSize: 13 }}>결제 조건</b>
         <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
-          <li>오늘 첫 달 {monthly.toLocaleString()}원이 결제되고, 이후 매월 같은 날 같은 금액이 자동 결제됩니다.</li>
+          {/* 서버 동작 그대로 적는다(extendSubscription, 갱신은 끝나기 하루
+              안쪽). "매월 같은 날"이라 쓰면 남은 기간이 있는 업체에게 틀린 말이다. */}
+          <li>
+            오늘 첫 달 {monthly.toLocaleString()}원이 결제됩니다. 이미 이용 중인 기간이 있으면
+            그 기간이 끝난 뒤에 한 달이 이어 붙습니다.
+          </li>
+          <li>이후 이용 기간이 끝나기 전날 같은 금액이 자동 결제됩니다.</li>
           <li>결제 7일 전에 메일로 미리 알려 드립니다.</li>
           <li>언제든 이 화면에서 해지할 수 있으며, 해지해도 이미 결제한 기간까지는 노출됩니다.</li>
           <li>카드 정보는 저장하지 않고 결제대행사(나이스페이먼츠)에 암호화해 전달합니다.</li>
@@ -1164,12 +1170,19 @@ function BillingStatus({
   onChanged: () => void;
 }) {
   const [busy, setBusy] = useState(false);
-  const next = periodEnd ? korean(periodEnd.slice(0, 10)) : null;
+  // 갱신은 기간이 끝나기 하루 안쪽에 돈다. 끝나는 날이 아니라 그 전날을 적는다.
+  const end = periodEnd ? new Date(periodEnd) : null;
+  const next = end
+    ? korean(new Date(end.getTime() + 9 * 3600 * 1000 - 24 * 3600 * 1000).toISOString().slice(0, 10))
+    : null;
+  const endsOn = end
+    ? korean(new Date(end.getTime() + 9 * 3600 * 1000).toISOString().slice(0, 10))
+    : null;
 
   async function cancel() {
     if (
       !confirm(
-        `자동결제를 해지할까요?${next ? `\n${next}까지는 그대로 노출되고, 그 뒤로는 결제되지 않습니다.` : ""}`,
+        `자동결제를 해지할까요?${endsOn ? `\n${endsOn}까지는 그대로 노출되고, 그 뒤로는 결제되지 않습니다.` : ""}`,
       )
     )
       return;
@@ -1189,7 +1202,7 @@ function BillingStatus({
       <div>
         <span style={billingTag}>자동결제 이용 중</span>
         <div style={{ fontSize: 13.5, marginTop: 6 }}>
-          매월 {monthly.toLocaleString()}원{next ? ` · 다음 결제 ${next}` : ""}
+          매월 {monthly.toLocaleString()}원{next ? ` · 다음 결제 예정 ${next}` : ""}
         </div>
       </div>
       <button type="button" style={btn} disabled={busy} onClick={() => void cancel()}>
