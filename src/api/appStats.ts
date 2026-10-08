@@ -33,6 +33,9 @@ export interface GuardianRow {
   linkedChildren: number;
   /** "YYYY-MM-DD" 최근 앱을 연 날(어림). 없으면 null. */
   lastSeen: string | null;
+  /** 정지된 날(한국 시간). 정상이면 null. */
+  suspendedOn: string | null;
+  suspendedReason: string | null;
 }
 
 /** 보호자 목록. 서버가 볼 때마다 감사 기록을 남긴다. */
@@ -44,4 +47,18 @@ export function listGuardians(q: string, page: number): Promise<{
 }> {
   const qs = new URLSearchParams({ q, page: String(page) });
   return jsonFetchWithSession(API_ROOT + "/app-stats/guardians?" + qs.toString());
+}
+
+/** 앱 이용을 막는다. 사유는 본인이 다시 로그인할 때 보인다. */
+export function suspendGuardian(id: string, reason: string): Promise<{ ok: true }> {
+  return jsonFetchWithSession(API_ROOT + `/app-stats/guardians/${id}/suspend`, { method: "POST" }, { reason });
+}
+
+export function unsuspendGuardian(id: string): Promise<{ ok: true }> {
+  return jsonFetchWithSession(API_ROOT + `/app-stats/guardians/${id}/unsuspend`, { method: "POST" });
+}
+
+/** 계정을 지운다. 앱의 회원 탈퇴와 같다. 되돌릴 수 없다. */
+export function deleteGuardian(id: string): Promise<{ ok: true }> {
+  return jsonFetchWithSession(API_ROOT + `/app-stats/guardians/${id}`, { method: "DELETE" });
 }

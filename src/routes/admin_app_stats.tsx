@@ -1,8 +1,16 @@
 import { useContext, useState, type CSSProperties } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { UserContext } from "../App";
-import { getAppStats, listGuardians, type AppStats } from "../api/appStats";
+import {
+  deleteGuardian,
+  getAppStats,
+  listGuardians,
+  suspendGuardian,
+  unsuspendGuardian,
+  type AppStats,
+  type GuardianRow,
+} from "../api/appStats";
 
 /**
  * 마이오닥 앱 보호자 가입 현황.
@@ -189,6 +197,35 @@ function GuardianList() {
     queryKey: ["admin", "guardians", q, page],
     queryFn: () => listGuardians(q, page),
   });
+  const qc = useQueryClient();
+  // 바꾸고 나면 목록과 위의 숫자(삭제하면 줄어든다)를 다시 읽는다.
+  const refresh = () => {
+    void qc.invalidateQueries({ queryKey: ["admin", "guardians"] });
+    void qc.invalidateQueries({ queryKey: ["admin", "app-stats"] });
+  };
+  const act = useMutation({
+    mutationFn: async ({ g, kind }: { g: GuardianRow; kind: "suspend" | "unsuspend" | "delete" }) => {
+      const who = g.email ?? g.username ?? "이 보호자";
+      if (kind === "suspend") {
+        const reason = prompt(`${who} 계정을 정지합니다.\n정지 사유(본인에게도 보입니다):`);
+        if (!reason?.trim()) return;
+        await suspendGuardian(g.id, reason.trim());
+      } else if (kind === "unsuspend") {
+        if (!confirm(`${who} 계정의 정지를 풀까요?`)) return;
+        await unsuspendGuardian(g.id);
+      } else {
+        if (
+          !confirm(
+            `${who} 계정을 삭제할까요?\n\n자녀 기록, 커뮤니티 글·댓글, 후기가 모두 지워지며 되돌릴 수 없습니다.\n(병원에 있는 진료 기록은 남습니다)`,
+          )
+        )
+          return;
+        await deleteGuardian(g.id);
+      }
+      refresh();
+    },
+    onError: () => alert("처리하지 못했습니다. 잠시 후 다시 시도해 주세요."),
+  });
   const total = list.data?.total ?? 0;
   const pages = Math.max(1, Math.ceil(total / (list.data?.pageSize ?? 50)));
   const search = () => {
@@ -231,8 +268,8 @@ function GuardianList() {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
               <thead>
                 <tr>
-                  {["가입일", "이메일", "아이디", "가입 방법", "자녀", "병원 연동", "최근 접속"].map((h) => (
-                    <th key={h} style={th}>
+                  {["가입일", "이메일", "아이디", "가입 방법", "자녀", "병원 연동", "최근 접속", "상태", ""].map((h, i) => (
+                    <th key={h || i} style={th}>
                       {h}
                     </th>
                   ))}
@@ -248,6 +285,33 @@ function GuardianList() {
                     <td style={{ ...td, textAlign: "right" }}>{g.children}</td>
                     <td style={{ ...td, textAlign: "right" }}>{g.linkedChildren}</td>
                     <td style={td}>{g.lastSeen ?? "—"}</td>
+                    <td style={td}>
+                      {g.suspendedOn ? (
+                        <span style={suspendedTag} title={g.suspendedReason ?? ""}>
+                          정지 {g.suspendedOn}
+                        </span>
+                      ) : (
+                        <span style={{ color: MUTED }}>정상</span>
+                      )}
+                    </td>
+                    <td style={{ ...td, textAlign: "right" }}>
+                      <button
+                        type="button"
+                        style={smallBtn}
+                        disabled={act.isPending}
+                        onClick={() => act.mutate({ g, kind: g.suspendedOn ? "unsuspend" : "suspend" })}
+                      >
+                        {g.suspendedOn ? "정지 해제" : "정지"}
+                      </button>{" "}
+                      <button
+                        type="button"
+                        style={{ ...smallBtn, color: "#b3261e", borderColor: "#f1c4c0" }}
+                        disabled={act.isPending}
+                        onClick={() => act.mutate({ g, kind: "delete" })}
+                      >
+                        삭제
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -317,4 +381,21 @@ const btnStyle: CSSProperties = {
   fontSize: 13.5,
   fontWeight: 600,
   cursor: "pointer",
+};
+const smallBtn: CSSProperties = {
+  border: "1px solid #d1d5db",
+  background: "#fff",
+  borderRadius: 6,
+  padding: "3px 9px",
+  fontSize: 12.5,
+  fontWeight: 600,
+  cursor: "pointer",
+};
+const suspendedTag: CSSProperties = {
+  fontSize: 12,
+  fontWeight: 700,
+  color: "#b3261e",
+  background: "#fdecea",
+  borderRadius: 4,
+  padding: "2px 6px",
 };
