@@ -21,6 +21,7 @@ import {
 import { RecentALGrowth } from "./RecentALGrowth";
 import { PercentileSummary } from "./PercentileSummary";
 import { StudyButtons } from "./StudyButtons";
+import { PrescriptionList } from "./PrescriptionList";
 import { TreatmentList } from "./TreatmentList";
 import { MYOPIA_STATUS_LABELS, PatientDataInput } from "./PatientDataInput";
 import {
@@ -680,6 +681,7 @@ export default function ChartRoute() {
           patientSex={patientQuery.data.sex}
           referenceEthnicity={referenceEthnicity}
         />
+        <PrescriptionList />
         <TreatmentList edit={edit} />
         <PatientDataInput patientId={patientId!} edit={edit} />
       </ContentDiv>
