@@ -5,6 +5,7 @@ import {
   signupWithGoogleAuth,
   signupWithPasswordAuth,
   SignupConsents,
+  PASSWORD_RULE,
 } from "../api/auth";
 import { HttpError } from "../lib/fetch";
 import { GoogleLogin } from "@react-oauth/google";
@@ -252,6 +253,7 @@ export default function Signup() {
             )}
           </EyeButton>
         </PasswordWrapper>
+        <p style={{ margin: "4px 0 8px", fontSize: 13, color: "#86868b" }}>{PASSWORD_RULE}</p>
         <LoginInput
           defaultValue={""}
           placeholder="Email"
