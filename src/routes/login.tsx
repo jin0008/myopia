@@ -279,7 +279,7 @@ export default function Login() {
             <input type="checkbox" /> Stay Sign in
           </CheckboxLabel>
           <ForgotLink onClick={() => navigate("/forgot_password")}>
-            Forgot your password?
+            Forgot your username or password?
           </ForgotLink>
         </OptionsRow>
 

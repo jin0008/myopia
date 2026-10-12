@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { PasswordInput } from "../components/PasswordInput";
 import { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { LoginInput } from "../components/input";
@@ -209,10 +210,10 @@ function ChangePassword({
         Your password no longer meets the security rules for this site. Please choose a new one to
         continue.
       </Lead>
-      <LoginInput type="password" placeholder="New password" value={pw} onChange={(e) => setPw(e.target.value)} />
-      <LoginInput
-        type="password"
+      <PasswordInput placeholder="New password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} />
+      <PasswordInput
         placeholder="Confirm new password"
+        autoComplete="new-password"
         value={pw2}
         onChange={(e) => setPw2(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && submit()}
