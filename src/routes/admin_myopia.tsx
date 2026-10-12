@@ -1,3 +1,4 @@
+import { adminResetTwoFactor } from "../api/auth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getHospitalList,
@@ -184,6 +185,7 @@ export default function AdminMyopia() {
                 <th>approve</th>
                 <th>reject/kick</th>
                 <th>admin</th>
+                <th>2FA</th>
               </tr>
             </thead>
             <tbody>
@@ -242,6 +244,19 @@ export default function AdminMyopia() {
                     ) : (
                       <></>
                     )}
+                  </td>
+                  <td>
+                    {/* 폰과 백업 코드를 모두 잃은 사람. 다음 로그인 때 다시 등록한다. */}
+                    <PrimaryNagativeButton
+                      onClick={() => {
+                        if (!confirm(`${e.name}의 2단계 인증을 초기화할까요? 그 사람의 로그인도 모두 끊깁니다.`)) return;
+                        adminResetTwoFactor(e.user_id)
+                          .then(() => alert("초기화했습니다. 다음 로그인 때 다시 등록합니다."))
+                          .catch((err) => alert("초기화하지 못했습니다: " + err.message));
+                      }}
+                    >
+                      Reset 2FA
+                    </PrimaryNagativeButton>
                   </td>
                 </tr>
               ))}

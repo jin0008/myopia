@@ -2,7 +2,8 @@ import styled from "styled-components";
 import { useRef, useState } from "react";
 import { LoginInput } from "../components/input";
 import { useNavigate } from "react-router";
-import { googleLogin, passwordLogin } from "../api/auth";
+import { googleLogin, passwordLogin, type LoginStep } from "../api/auth";
+import { BackupCodesView, LoginStepView } from "./login_steps";
 import { HttpError } from "../lib/fetch";
 import { useQueryClient } from "@tanstack/react-query";
 import { GoogleLogin } from "@react-oauth/google";
@@ -184,14 +185,20 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  // 첫 단계가 맞으면 서버가 다음 단계(비밀번호 변경·2단계 등록·코드 입력)를
+  // 알려 준다. 세션은 그 단계를 마친 뒤에 생긴다.
+  const [step, setStep] = useState<LoginStep | null>(null);
+  const [backupCodes, setBackupCodes] = useState<string[] | null>(null);
+
+  function finish() {
+    queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+    queryClient.invalidateQueries({ queryKey: ["hospital"] });
+    navigate("/choose_profile");
+  }
 
   function handleLogin() {
     passwordLogin(username.current, password.current)
-      .then(() => navigate("/choose_profile"))
-      .then(() => {
-        queryClient.invalidateQueries({ queryKey: ["currentUser"] });
-        queryClient.invalidateQueries({ queryKey: ["hospital"] });
-      })
+      .then(setStep)
       .catch((e: HttpError) => {
         console.error(e);
         alert("Login failed\n" + e.message);
@@ -200,15 +207,34 @@ export default function Login() {
 
   function handleGoogleLogin(token: string) {
     googleLogin(token)
-      .then(() => navigate("/choose_profile"))
-      .then(() => {
-        queryClient.invalidateQueries({ queryKey: ["currentUser"] });
-        queryClient.invalidateQueries({ queryKey: ["hospital"] });
-      })
+      .then(setStep)
       .catch((e: HttpError) => {
         console.error(e);
         alert("Login failed\n" + e.message);
       });
+  }
+
+  if (backupCodes || step) {
+    return (
+      <PageWrapper>
+        <LogoContainer>
+          <Logo size="large" />
+        </LogoContainer>
+        <FormContainer>
+          {backupCodes ? (
+            <BackupCodesView codes={backupCodes} onDone={finish} />
+          ) : (
+            <LoginStepView
+              step={step!}
+              onStep={setStep}
+              onBackupCodes={setBackupCodes}
+              onDone={finish}
+              onRestart={() => setStep(null)}
+            />
+          )}
+        </FormContainer>
+      </PageWrapper>
+    );
   }
 
   return (
@@ -249,7 +275,9 @@ export default function Login() {
           <CheckboxLabel>
             <input type="checkbox" /> Stay Sign in
           </CheckboxLabel>
-          <ForgotLink>Forgot your password?</ForgotLink>
+          <ForgotLink onClick={() => navigate("/forgot_password")}>
+            Forgot your password?
+          </ForgotLink>
         </OptionsRow>
 
         <SubmitButton onClick={() => handleLogin()}>Sign in</SubmitButton>

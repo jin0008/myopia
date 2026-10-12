@@ -39,6 +39,7 @@ import {
   addGoogleAuth,
   addPasswordAuth,
   changePassword,
+  PASSWORD_RULE,
   deleteAccount,
   editSelf,
   removeGoogleAuth,
@@ -603,6 +604,7 @@ function AddPasswordAuthDialog({
             }}
           ></TextInput>
         </label>
+        <p style={{ margin: "4px 0 8px", fontSize: 13, color: "#86868b" }}>{PASSWORD_RULE}</p>
       </DialogContent>
       <DialogActions>
         <PrimaryNagativeButton onClick={onClose}>Cancel</PrimaryNagativeButton>
@@ -669,6 +671,7 @@ function ChangePasswordDialog({
             }}
           ></TextInput>
         </label>
+        <p style={{ margin: "4px 0 8px", fontSize: 13, color: "#86868b" }}>{PASSWORD_RULE}</p>
       </DialogContent>
       <DialogActions>
         <PrimaryButton onClick={onClose}>Cancel</PrimaryButton>

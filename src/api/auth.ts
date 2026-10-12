@@ -5,36 +5,80 @@ import {
 } from "../lib/fetch";
 import { API_ROOT } from "./root";
 
+/**
+ * 로그인은 두 단계다. 아이디·비밀번호(또는 Google)가 맞으면 세션 대신
+ * 다음 단계와 10분짜리 티켓이 온다. 세션은 2단계 코드까지 맞은 뒤에만 온다.
+ */
+export type LoginStep = {
+  next: "change_password" | "setup_2fa" | "verify_2fa";
+  ticket: string;
+};
+
+const post = <T,>(path: string, body: unknown) =>
+  jsonFetch<T>(API_ROOT + path, { method: "POST" }, body) as Promise<T>;
+
+function keepSession<T extends { session_key: string }>(res: T): T {
+  localStorage.setItem("session_key", res.session_key);
+  return res;
+}
+
 export function passwordLogin(username: string, password: string) {
-  return jsonFetch(
-    API_ROOT + "/auth/passwordLogin",
-    {
-      method: "POST",
-    },
-    {
-      username,
-      password,
-    },
-  ).then((res) => {
-    localStorage.setItem("session_key", res.session_key);
-    return res;
-  });
+  return post<LoginStep>("/auth/passwordLogin", { username, password });
 }
 
 export function googleLogin(idToken: string) {
-  return jsonFetch(
-    API_ROOT + "/auth/googleLogin",
-    {
-      method: "POST",
-    },
-    {
-      token: idToken,
-    },
-  ).then((res) => {
-    localStorage.setItem("session_key", res.session_key);
-    return res;
-  });
+  return post<LoginStep>("/auth/googleLogin", { token: idToken });
 }
+
+/** 지금 비밀번호가 새 규칙에 안 맞을 때, 로그인 중에 바꾼다. */
+export function changePasswordAtLogin(ticket: string, newPassword: string) {
+  return post<LoginStep>("/auth/login/password", { ticket, newPassword });
+}
+
+export function startTwoFactorSetup(ticket: string) {
+  return post<{ secret: string; otpauthUrl: string }>("/auth/2fa/setup", { ticket });
+}
+
+export function confirmTwoFactorSetup(ticket: string, code: string) {
+  return post<{ session_key: string; backupCodes: string[] }>("/auth/2fa/setup/confirm", {
+    ticket,
+    code,
+  }).then(keepSession);
+}
+
+/** code: 인증 앱의 6자리 또는 백업 코드. */
+export function verifyTwoFactor(ticket: string, code: string) {
+  return post<{ session_key: string; backupCodesLeft: number | null }>("/auth/2fa/verify", {
+    ticket,
+    code,
+  }).then(keepSession);
+}
+
+export function sendPasswordResetCode(email: string) {
+  return post("/auth/password/send-code", { email });
+}
+
+export function verifyPasswordResetCode(email: string, code: string) {
+  return post<{ ticket: string }>("/auth/password/verify-code", { email, code });
+}
+
+export function resetPassword(email: string, ticket: string, password: string) {
+  return post("/auth/password/reset", { email, ticket, password });
+}
+
+/** 사이트 관리자: 폰과 백업 코드를 모두 잃은 사람의 2단계 인증을 지운다. */
+export function adminResetTwoFactor(userId: string) {
+  return jsonFetchWithSession(
+    API_ROOT + `/auth/admin/users/${userId}/2fa/reset`,
+    { method: "POST" },
+    {},
+    false,
+  );
+}
+
+/** 서버 규칙과 같은 문장. 입력 칸 아래에 미리 보여 준다. */
+export const PASSWORD_RULE =
+  "At least 8 characters with an uppercase letter, a lowercase letter, a number and a special character.";
 
 export interface SignupConsents {
   agree_terms: true;

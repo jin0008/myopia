@@ -16,6 +16,7 @@ import { WithBusinessFooter } from "./components/business_footer";
 const Home = lazy(() => import("./routes/home"));
 const HeaderRoute = lazy(() => import("./routes/header_footer"));
 const Login = lazy(() => import("./routes/login"));
+const ForgotPassword = lazy(() => import("./routes/forgot_password"));
 const Signup = lazy(() => import("./routes/signup"));
 const ProfileChoice = lazy(() => import("./routes/choose_profile"));
 const ProfessionalProfile = lazy(
@@ -105,6 +106,7 @@ const App = () => {
               <Route element={<HeaderRoute></HeaderRoute>}>
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/forgot_password" element={<ForgotPassword />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/choose_profile" element={<ProfileChoice />} />
                 <Route path="/axial_length_growth">
