@@ -63,6 +63,16 @@ export function TreatmentList({ edit }: TreatmentListProps) {
   const [editData, setEditData] = useState<TreatmentEditDefaultData>();
 
   const treatments = patientQuery.data?.patient_treatment ?? [];
+  // 보호자가 앱에 적은 치료. 다른 병원에서 받은 치료일 수 있어 따로 표시하고,
+  // 보호자가 원본이라 여기서는 고치지 않는다.
+  const parentTreatments: {
+    id: string;
+    treatment_id: string;
+    start_date: string;
+    end_date: string | null;
+  }[] = patientQuery.data?.parent_treatment ?? [];
+  const treatmentName = (id: string) =>
+    treatmentQuery.data?.find((i: { id: string }) => i.id === id)?.name ?? "";
   const sortedTreatments = [...treatments].sort((a, b) =>
     a.start_date.localeCompare(b.start_date),
   );
@@ -77,7 +87,7 @@ export function TreatmentList({ edit }: TreatmentListProps) {
           </PrimaryButton>
         )}
       </TreatmentListHeader>
-      {treatments.length === 0
+      {treatments.length === 0 && parentTreatments.length === 0
         ? "No Data"
         : sortedTreatments.map(
             (t: {
@@ -112,6 +122,17 @@ export function TreatmentList({ edit }: TreatmentListProps) {
               />
             ),
           )}
+      {parentTreatments.map((t) => (
+        <TreatmentCard
+          key={t.id}
+          name={`${treatmentName(t.treatment_id)} (entered by parent)`}
+          startDate={t.start_date.split("T")[0]}
+          endDate={t.end_date?.split("T")[0] ?? ""}
+          edit={false}
+          onEdit={() => {}}
+          onDelete={() => {}}
+        />
+      ))}
       <TreatmentRegisterDialog
         open={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
