@@ -13,6 +13,24 @@ export type LoginStep = {
   next: "change_password" | "setup_2fa" | "verify_2fa";
   ticket: string;
 };
+/** "이 브라우저 기억하기"로 2단계를 건너뛰면 바로 세션이 온다. */
+export type LoginResult = LoginStep | { next: "signed_in"; session_key: string };
+
+/* 기억해 둔 브라우저 토큰. 한 PC 를 여러 사람이 쓸 수 있어 몇 개를 둔다.
+ * 로그인할 때 모두 보내고, 서버가 그 사람 것만 받아들인다. */
+const DEVICE_KEY = "trusted_devices";
+function deviceTokens(): string[] {
+  try {
+    const v = JSON.parse(localStorage.getItem(DEVICE_KEY) ?? "[]");
+    return Array.isArray(v) ? v.filter((x) => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}
+function rememberDeviceToken(token: string | null | undefined) {
+  if (!token) return;
+  localStorage.setItem(DEVICE_KEY, JSON.stringify([token, ...deviceTokens()].slice(0, 5)));
+}
 
 const post = <T,>(path: string, body: unknown) =>
   jsonFetch<T>(API_ROOT + path, { method: "POST" }, body) as Promise<T>;
@@ -22,12 +40,24 @@ function keepSession<T extends { session_key: string }>(res: T): T {
   return res;
 }
 
+function signedInOrStep(res: LoginResult): LoginResult {
+  if (res.next === "signed_in") keepSession(res);
+  return res;
+}
+
 export function passwordLogin(username: string, password: string) {
-  return post<LoginStep>("/auth/passwordLogin", { username, password });
+  return post<LoginResult>("/auth/passwordLogin", {
+    username,
+    password,
+    deviceTokens: deviceTokens(),
+  }).then(signedInOrStep);
 }
 
 export function googleLogin(idToken: string) {
-  return post<LoginStep>("/auth/googleLogin", { token: idToken });
+  return post<LoginResult>("/auth/googleLogin", {
+    token: idToken,
+    deviceTokens: deviceTokens(),
+  }).then(signedInOrStep);
 }
 
 /** 지금 비밀번호가 새 규칙에 안 맞을 때, 로그인 중에 바꾼다. */
@@ -39,19 +69,25 @@ export function startTwoFactorSetup(ticket: string) {
   return post<{ secret: string; otpauthUrl: string }>("/auth/2fa/setup", { ticket });
 }
 
-export function confirmTwoFactorSetup(ticket: string, code: string) {
-  return post<{ session_key: string; backupCodes: string[] }>("/auth/2fa/setup/confirm", {
-    ticket,
-    code,
-  }).then(keepSession);
+export function confirmTwoFactorSetup(ticket: string, code: string, rememberDevice: boolean) {
+  return post<{ session_key: string; backupCodes: string[]; deviceToken: string | null }>(
+    "/auth/2fa/setup/confirm",
+    { ticket, code, rememberDevice },
+  ).then((r) => {
+    rememberDeviceToken(r.deviceToken);
+    return keepSession(r);
+  });
 }
 
 /** code: 인증 앱의 6자리 또는 백업 코드. */
-export function verifyTwoFactor(ticket: string, code: string) {
-  return post<{ session_key: string; backupCodesLeft: number | null }>("/auth/2fa/verify", {
-    ticket,
-    code,
-  }).then(keepSession);
+export function verifyTwoFactor(ticket: string, code: string, rememberDevice: boolean) {
+  return post<{ session_key: string; backupCodesLeft: number | null; deviceToken: string | null }>(
+    "/auth/2fa/verify",
+    { ticket, code, rememberDevice },
+  ).then((r) => {
+    rememberDeviceToken(r.deviceToken);
+    return keepSession(r);
+  });
 }
 
 export function sendPasswordResetCode(email: string) {

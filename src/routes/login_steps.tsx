@@ -106,6 +106,29 @@ const CodeGrid = styled.ol`
   font-size: 15px;
 `;
 
+const RememberRow = styled.label`
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 2px 0 14px;
+  font-size: 14px;
+  color: ${theme.textPrimary};
+  cursor: pointer;
+`;
+
+/** 기본은 끈다. 공용 PC 에서 켜 두면 다음 사람이 코드 없이 들어온다. */
+function RememberDevice({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <>
+      <RememberRow>
+        <input type="checkbox" checked={value} onChange={(e) => onChange(e.target.checked)} />
+        Remember this browser for 30 days
+      </RememberRow>
+      {value && <Hint style={{ marginTop: -8 }}>Don't use this on a shared or public computer.</Hint>}
+    </>
+  );
+}
+
 const messageOf = (e: unknown) =>
   e instanceof HttpError && e.message ? e.message : "Something went wrong. Please try again.";
 
@@ -217,6 +240,7 @@ function SetupTwoFactor({
 }) {
   const [setup, setSetup] = useState<{ secret: string; otpauthUrl: string } | null>(null);
   const [code, setCode] = useState("");
+  const [remember, setRemember] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -230,7 +254,7 @@ function SetupTwoFactor({
 
   const submit = () => {
     setBusy(true);
-    confirmTwoFactorSetup(ticket, code)
+    confirmTwoFactorSetup(ticket, code, remember)
       .then((r) => onBackupCodes(r.backupCodes))
       .catch((e) => onError(e, setError))
       .finally(() => setBusy(false));
@@ -263,6 +287,7 @@ function SetupTwoFactor({
         onKeyDown={(e) => e.key === "Enter" && code.length === 6 && submit()}
       />
       {error && <ErrorText>{error}</ErrorText>}
+      <RememberDevice value={remember} onChange={setRemember} />
       <PrimaryAction disabled={busy || !setup || code.length !== 6} onClick={submit}>
         Verify and continue
       </PrimaryAction>
@@ -284,13 +309,14 @@ function VerifyTwoFactor({
 }) {
   const [useBackup, setUseBackup] = useState(false);
   const [code, setCode] = useState("");
+  const [remember, setRemember] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const ready = useBackup ? code.trim().length >= 10 : code.length === 6;
 
   const submit = () => {
     setBusy(true);
-    verifyTwoFactor(ticket, code)
+    verifyTwoFactor(ticket, code, remember)
       .then((r) => {
         if (r.backupCodesLeft != null && r.backupCodesLeft <= 3) {
           alert(
@@ -322,6 +348,7 @@ function VerifyTwoFactor({
         onKeyDown={(e) => e.key === "Enter" && ready && submit()}
       />
       {error && <ErrorText>{error}</ErrorText>}
+      <RememberDevice value={remember} onChange={setRemember} />
       <PrimaryAction disabled={busy || !ready} onClick={submit}>
         Sign in
       </PrimaryAction>
