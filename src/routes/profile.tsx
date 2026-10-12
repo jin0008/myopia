@@ -1,5 +1,6 @@
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 // TopDiv removed - using custom PageWrapper
+import { PasswordInput } from "../components/PasswordInput";
 import { UserContext } from "../App";
 import NotLoggedIn from "../components/not_logged_in";
 import {
@@ -587,22 +588,22 @@ function AddPasswordAuthDialog({
         </label>
         <label>
           Password:
-          <TextInput
+          <PasswordInput
+            variant="text"
             autoComplete="new-password"
-            type="password"
             onChange={(e) => setPassword(e.target.value)}
-          ></TextInput>
+          />
         </label>
         <label>
           Confirm password:
-          <TextInput
+          <PasswordInput
+            variant="text"
             autoComplete="new-password"
-            type="password"
             onChange={(e) => setConfirmPassword(e.target.value)}
             style={{
               borderColor: password !== confirmPassword ? "red" : undefined,
             }}
-          ></TextInput>
+          />
         </label>
         <p style={{ margin: "4px 0 8px", fontSize: 13, color: "#86868b" }}>{PASSWORD_RULE}</p>
       </DialogContent>
@@ -655,21 +656,23 @@ function ChangePasswordDialog({
       <DialogContent>
         <label>
           New password:
-          <TextInput
-            type="password"
+          <PasswordInput
+            variant="text"
+            autoComplete="new-password"
             onChange={(e) => setNewPassword(e.target.value)}
-          ></TextInput>
+          />
         </label>
         <label>
           Confirm new password:
-          <TextInput
-            type="password"
+          <PasswordInput
+            variant="text"
+            autoComplete="new-password"
             onChange={(e) => setConfirmNewPassword(e.target.value)}
             style={{
               borderColor:
                 newPassword !== confirmNewPassword ? "red" : undefined,
             }}
-          ></TextInput>
+          />
         </label>
         <p style={{ margin: "4px 0 8px", fontSize: 13, color: "#86868b" }}>{PASSWORD_RULE}</p>
       </DialogContent>

@@ -95,7 +95,11 @@ export function sendPasswordResetCode(email: string) {
 }
 
 export function verifyPasswordResetCode(email: string, code: string) {
-  return post<{ ticket: string }>("/auth/password/verify-code", { email, code });
+  // 아이디도 같이 온다. 메일 주인임을 증명했으니 아이디 찾기를 겸한다.
+  return post<{ ticket: string; username: string | null }>("/auth/password/verify-code", {
+    email,
+    code,
+  });
 }
 
 export function resetPassword(email: string, ticket: string, password: string) {

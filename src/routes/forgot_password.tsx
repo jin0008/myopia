@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { PasswordInput } from "../components/PasswordInput";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { LoginInput } from "../components/input";
@@ -50,6 +51,14 @@ const ErrorText = styled.p`
   color: #b3261e;
 `;
 
+const UsernameBox = styled.div`
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: ${theme.primary10};
+  font-size: 15px;
+`;
+
 const Back = styled.button`
   display: block;
   margin-top: 16px;
@@ -74,6 +83,7 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [ticket, setTicket] = useState("");
+  const [username, setUsername] = useState<string | null>(null);
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
   const [error, setError] = useState("");
@@ -96,8 +106,11 @@ export default function ForgotPassword() {
       <Form>
         {stage === "email" && (
           <>
-            <Title>Reset your password</Title>
-            <Lead>Enter the email address on your account. We'll send you a 6-digit code.</Lead>
+            <Title>Find your username or reset your password</Title>
+            <Lead>
+              Enter the email address on your account. We'll send you a 6-digit code, then show your
+              username and let you set a new password.
+            </Lead>
             <LoginInput
               type="email"
               placeholder="Email"
@@ -133,7 +146,9 @@ export default function ForgotPassword() {
               onClick={() =>
                 run(verifyPasswordResetCode(email, code)).then(
                   (r) => {
-                    setTicket((r as { ticket: string }).ticket);
+                    const v = r as { ticket: string; username: string | null };
+                    setTicket(v.ticket);
+                    setUsername(v.username);
                     setStage("password");
                   },
                   () => {},
@@ -148,11 +163,23 @@ export default function ForgotPassword() {
 
         {stage === "password" && (
           <>
+            {username && (
+              <UsernameBox>
+                Your username is <b>{username}</b>
+              </UsernameBox>
+            )}
             <Title>Choose a new password</Title>
-            <LoginInput type="password" placeholder="New password" value={pw} onChange={(e) => setPw(e.target.value)} />
-            <LoginInput
-              type="password"
+            <Lead>
+              Only remembered your username? You can{" "}
+              <a href="/login" onClick={(e) => { e.preventDefault(); navigate("/login"); }}>
+                sign in now
+              </a>{" "}
+              instead.
+            </Lead>
+            <PasswordInput placeholder="New password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} />
+            <PasswordInput
               placeholder="Confirm new password"
+              autoComplete="new-password"
               value={pw2}
               onChange={(e) => setPw2(e.target.value)}
             />
