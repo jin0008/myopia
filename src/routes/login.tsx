@@ -2,7 +2,7 @@ import styled from "styled-components";
 import { useRef, useState } from "react";
 import { LoginInput } from "../components/input";
 import { useNavigate } from "react-router";
-import { googleLogin, passwordLogin, type LoginStep } from "../api/auth";
+import { googleLogin, passwordLogin, type LoginResult, type LoginStep } from "../api/auth";
 import { BackupCodesView, LoginStepView } from "./login_steps";
 import { HttpError } from "../lib/fetch";
 import { useQueryClient } from "@tanstack/react-query";
@@ -196,9 +196,12 @@ export default function Login() {
     navigate("/choose_profile");
   }
 
+  // 기억해 둔 브라우저면 2단계 없이 바로 들어온다.
+  const onFirstStep = (r: LoginResult) => (r.next === "signed_in" ? finish() : setStep(r));
+
   function handleLogin() {
     passwordLogin(username.current, password.current)
-      .then(setStep)
+      .then(onFirstStep)
       .catch((e: HttpError) => {
         console.error(e);
         alert("Login failed\n" + e.message);
@@ -207,7 +210,7 @@ export default function Login() {
 
   function handleGoogleLogin(token: string) {
     googleLogin(token)
-      .then(setStep)
+      .then(onFirstStep)
       .catch((e: HttpError) => {
         console.error(e);
         alert("Login failed\n" + e.message);
