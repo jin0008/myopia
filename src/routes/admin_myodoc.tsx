@@ -68,6 +68,7 @@ const GROUPS: {
     title: "운영",
     items: [
       { href: "/admin/reports", label: "신고 처리", badge: "reports" },
+      { href: "/admin/community", label: "커뮤니티 글 관리", hint: "전체 글·댓글 숨기기 · 되살리기" },
       { href: "/admin/app-stats", label: "가입 현황", hint: "앱 보호자 가입 · 자녀 · 이용" },
     ],
   },

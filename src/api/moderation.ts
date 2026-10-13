@@ -53,3 +53,62 @@ export function resolveReport(
     body,
   );
 }
+
+/* ---- 커뮤니티 글 관리 ---- */
+
+export type PostShow = "live" | "deleted" | "all";
+
+export interface AdminPost {
+  id: string;
+  title: string;
+  bodyPreview: string;
+  category: string;
+  imageCount: number;
+  authorId: string;
+  authorNickname: string | null;
+  authorEmail: string | null;
+  createdAt: string;
+  deleted: boolean;
+  commentCount: number;
+  likeCount: number;
+  viewCount: number;
+  /** 앱 웹(myodoc.co.kr)에서 그 글. 숨긴 글은 열어도 없다고 나온다. */
+  url: string;
+}
+
+export interface AdminComment {
+  id: string;
+  parentCommentId: string | null;
+  body: string;
+  authorNickname: string | null;
+  createdAt: string;
+  deleted: boolean;
+}
+
+export function listAdminPosts(params: {
+  q: string;
+  show: PostShow;
+  cursor?: string;
+}): Promise<{ posts: AdminPost[]; nextCursor: string | null }> {
+  const qs = new URLSearchParams({ q: params.q, show: params.show });
+  if (params.cursor) qs.set("cursor", params.cursor);
+  return jsonFetchWithSession(API_ROOT + "/moderation/posts?" + qs.toString());
+}
+
+export function listAdminComments(postId: string): Promise<AdminComment[]> {
+  return jsonFetchWithSession(API_ROOT + "/moderation/posts/" + postId + "/comments");
+}
+
+/** 숨기기(hide=true)·되살리기. 앱의 삭제와 같은 숨김이라 되돌릴 수 있다. */
+export function setContentHidden(
+  kind: "posts" | "comments",
+  id: string,
+  hide: boolean,
+): Promise<void> {
+  return jsonFetchWithSession(
+    API_ROOT + `/moderation/${kind}/${id}` + (hide ? "" : "/restore"),
+    { method: hide ? "DELETE" : "POST" },
+    undefined,
+    false,
+  );
+}
