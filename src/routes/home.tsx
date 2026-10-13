@@ -67,6 +67,36 @@ const HeroSubtitle = styled.p`
   }
 `;
 
+// 검색용 한글 소개. 'myopia', 'myopia management' 는 해외 학회·렌즈 회사가 이미
+// 선점해 영어로는 상위 노출이 어렵다. 한글 검색어(소아 근시, 안축장 성장곡선)가
+// 페이지 본문과 제목(h1)에 있어야 국내 검색에 걸린다.
+const IntroHeading = styled.h1`
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: ${theme.textPrimary};
+  margin: 28px 0 10px;
+  animation: ${fadeInUp} 0.8s ease-out 0.35s both;
+
+  @media ${MOBILE_MEDIA} {
+    font-size: 1.1rem;
+    margin-top: 22px;
+  }
+`;
+
+const IntroText = styled.p`
+  font-size: 0.95rem;
+  color: ${theme.textSecondary};
+  line-height: 1.7;
+  max-width: 620px;
+  margin: 0 auto;
+  word-break: keep-all;
+  animation: ${fadeInUp} 0.8s ease-out 0.4s both;
+
+  @media ${MOBILE_MEDIA} {
+    font-size: 0.88rem;
+  }
+`;
+
 const GraphCard = styled.div`
   background: white;
   border-radius: 20px;
@@ -285,12 +315,18 @@ export default function Home() {
   return (
     <PageWrapper>
       <HeroSection>
-        <HeroLogo src={eyeLogEnglishSvg} alt="eyelog" />
+        <HeroLogo src={eyeLogEnglishSvg} alt="Myopia Management" />
         <HeroTitle>Myopia Management</HeroTitle>
         <HeroSubtitle>
           Track axial length growth, manage treatments, and monitor myopia
           progression with precision and care.
         </HeroSubtitle>
+        <IntroHeading>안축장 성장곡선으로 보는 소아 근시 진행</IntroHeading>
+        <IntroText>
+          마이오피아 매니지먼트(Myopia Management)는 안과 전문의를 위한 소아 근시
+          관리 플랫폼입니다. 안축장과 굴절값으로 나이별 성장곡선과 또래 백분위를
+          확인하고, 치료 이력과 함께 경과를 추적합니다.
+        </IntroText>
       </HeroSection>
 
       <GraphCard ref={graphRef}>
