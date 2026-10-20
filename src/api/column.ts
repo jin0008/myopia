@@ -1,4 +1,4 @@
-import { jsonFetchWithSession } from "../lib/fetch";
+import { jsonFetchWithSession, uploadImageWithSession } from "../lib/fetch";
 import { API_ROOT } from "./root";
 
 export interface ExpertColumn {
@@ -55,4 +55,9 @@ export function deleteColumn(id: string): Promise<void> {
     undefined,
     false,
   );
+}
+
+/** 본문 그림. 돌려준 url 을 ![](url) 로 넣는다. */
+export function uploadColumnImage(file: File): Promise<{ url: string }> {
+  return uploadImageWithSession(API_ROOT + "/column/upload", file);
 }
