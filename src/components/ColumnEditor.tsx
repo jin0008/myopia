@@ -88,7 +88,7 @@ export default function ColumnEditor({
       const block = before + urls.map((u) => `![](${u})`).join("\n\n") + "\n\n";
       replace(at, at, block, at + block.length, at + block.length);
     } catch {
-      setError("그림을 올리지 못했습니다. 5MB 이하의 그림 파일인지 확인해 주세요.");
+      setError("그림을 올리지 못했습니다. JPG·PNG·WEBP·GIF 파일만 올릴 수 있습니다.");
     } finally {
       setUploading(0);
     }
@@ -109,7 +109,7 @@ export default function ColumnEditor({
         <input
           ref={fileRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp,image/gif"
           multiple
           hidden
           onChange={(e) => {
