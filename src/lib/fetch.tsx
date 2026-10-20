@@ -117,3 +117,27 @@ export async function jsonFetchWithSession<T = any>(
     result.json().then(resolve).catch(reject);
   });
 }
+
+// Not jsonFetchWithSession — that always JSON.stringifies the body and sets
+// Content-Type: application/json, which breaks a multipart file upload.
+export async function uploadImageWithSession(url: string, file: File): Promise<{ url: string }> {
+  const session_key = localStorage.getItem("session_key");
+  if (!session_key) throw new AuthorizationError("Authorization error");
+
+  const body = new FormData();
+  body.append("image", file);
+
+  const result = await fetch(url, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${session_key}` },
+    body,
+  });
+  if (result.status === 401 || result.status === 403) {
+    throw new AuthorizationError("Authorization error");
+  }
+  if (!result.ok) {
+    const respBody = await result.json().catch(() => ({}));
+    throw new HttpError(result.status, respBody?.message);
+  }
+  return result.json();
+}

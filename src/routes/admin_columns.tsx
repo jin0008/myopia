@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { UserContext } from "../App";
 import { PrimaryButton, PrimaryNagativeButton } from "../components/button";
+import ColumnEditor from "../components/ColumnEditor";
 import {
   createColumn,
   deleteColumn,
@@ -89,7 +90,7 @@ export default function AdminColumns() {
   const canSave = !!form.title.trim() && !!form.body.trim() && !!form.category.trim();
 
   return (
-    <div style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
+    <div style={{ padding: 24, maxWidth: 1200, margin: "0 auto" }}>
       <h1>칼럼 관리</h1>
 
       <div style={card}>
@@ -140,12 +141,8 @@ export default function AdminColumns() {
             <input value={form.author_role} onChange={set("author_role")} style={inp} />
           </Field>
         </div>
-        <Field label="본문 (마크다운)">
-          <textarea
-            value={form.body}
-            onChange={set("body")}
-            style={{ ...inp, height: 240, fontFamily: "monospace" }}
-          />
+        <Field label="본문">
+          <ColumnEditor value={form.body} onChange={(body) => setForm((f) => ({ ...f, body }))} />
         </Field>
         <label style={{ display: "flex", alignItems: "center", gap: 8, margin: "8px 0" }}>
           <input

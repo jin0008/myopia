@@ -1,4 +1,4 @@
-import { AuthorizationError, HttpError, jsonFetchWithSession } from "../lib/fetch";
+import { jsonFetchWithSession, uploadImageWithSession } from "../lib/fetch";
 import { API_ROOT } from "./root";
 
 export interface AdBanner {
@@ -52,28 +52,8 @@ export function updateBanner(
   return jsonFetchWithSession(API_ROOT + "/banner/" + id, { method: "PATCH" }, data);
 }
 
-// Not jsonFetchWithSession — that always JSON.stringifies the body and sets
-// Content-Type: application/json, which breaks a multipart file upload.
-export async function uploadBannerImage(file: File): Promise<{ url: string }> {
-  const session_key = localStorage.getItem("session_key");
-  if (!session_key) throw new AuthorizationError("Authorization error");
-
-  const body = new FormData();
-  body.append("image", file);
-
-  const result = await fetch(API_ROOT + "/banner/upload", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${session_key}` },
-    body,
-  });
-  if (result.status === 401 || result.status === 403) {
-    throw new AuthorizationError("Authorization error");
-  }
-  if (!result.ok) {
-    const respBody = await result.json().catch(() => ({}));
-    throw new HttpError(result.status, respBody?.message);
-  }
-  return result.json();
+export function uploadBannerImage(file: File): Promise<{ url: string }> {
+  return uploadImageWithSession(API_ROOT + "/banner/upload", file);
 }
 
 export function deleteBanner(id: string): Promise<void> {
