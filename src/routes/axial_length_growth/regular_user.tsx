@@ -227,6 +227,8 @@ function PatientRegisterDialog({
     onError: (e: any) => {
       if (e instanceof HttpError && e.code === 404)
         alert("Patient with specified information does not exist");
+      else if (e instanceof HttpError && e.code === 429)
+        alert("Too many failed attempts. Please try again tomorrow.");
       else alert("An error occured");
     },
   });
