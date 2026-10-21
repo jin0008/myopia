@@ -7,15 +7,18 @@ import LegalPage, { Scroll, Section, Table } from "./LegalPage";
  * 백엔드 prisma/schema.prisma 를 함께 확인할 것. 특히 아래 세 가지는
  * 코드에서 확인한 사실이라 임의로 바꾸면 방침이 거짓이 된다.
  *  - 위치 좌표: /api/mobile/facilities 가 카카오 조회에만 쓰고 저장하지 않는다
- *  - 푸시 토큰: 저장 모델이 없다(알림은 앱 안에서만 목록으로 보여준다)
+ *  - 푸시 토큰: push_token 테이블에 기기 종류와 함께 저장하고 Expo 를 거쳐 보낸다
+ *  - 처방전 사진: 도수 인식에만 쓰고 메모리에서 처리해 저장하지 않는다(ocrUpload)
+ *  - AI 상담: 질문과 최근 대화만 Gemini 로 보내고(자녀 기록은 안 보냄), 대화는
+ *    서버 data/chat 에 1년 보관한다(lib/chatRetention)
  *  - 병원 등록번호·생년월일: patient 테이블에 암호화해서 저장한다
  *
  * 문안이 바뀌면 백엔드 src/lib/consent.ts 의 CONSENT_VERSION 도 같은
  * 날짜로 올려야 동의 이력이 어느 판본에 대한 것인지 남는다.
  */
 
-const EFFECTIVE_DATE = "2026년 9월 1일";
-const VERSION = "2026-09-01";
+const EFFECTIVE_DATE = "2026년 10월 29일";
+const VERSION = "2026-10-29";
 
 export default function MyodocPrivacy() {
   return (
@@ -46,6 +49,16 @@ export default function MyodocPrivacy() {
                 <td>회원 가입<br />(필수)</td>
                 <td>소셜 로그인 제공자명, 제공자가 발급한 회원 식별자</td>
                 <td>구글·카카오·네이버·애플 로그인 시 자동 전달</td>
+              </tr>
+              <tr>
+                <td>회원 가입<br />(이메일 가입 시 필수)</td>
+                <td>이메일 주소, 비밀번호(복원할 수 없는 방식으로 변환해 저장)</td>
+                <td>이용자가 직접 입력</td>
+              </tr>
+              <tr>
+                <td>회원 정보<br />(필수)</td>
+                <td>닉네임</td>
+                <td>이용자가 직접 입력. 입력 전에는 자동으로 정해 둡니다</td>
               </tr>
               <tr>
                 <td>회원 가입<br />(선택)</td>
@@ -86,6 +99,21 @@ export default function MyodocPrivacy() {
                 </td>
                 <td>서비스 이용 과정에서 자동 생성</td>
               </tr>
+              <tr>
+                <td>AI 상담<br />(선택)</td>
+                <td>상담 질문과 답변 내용</td>
+                <td>AI 상담을 이용하는 경우</td>
+              </tr>
+              <tr>
+                <td>처방전 사진<br />(선택)</td>
+                <td>처방전 사진</td>
+                <td>도수 자동 입력을 이용하는 경우. 도수를 읽은 뒤 저장하지 않습니다</td>
+              </tr>
+              <tr>
+                <td>기기 정보<br />(선택)</td>
+                <td>푸시 알림 토큰, 기기 종류(iOS·Android)</td>
+                <td>알림을 허용한 경우 자동 생성</td>
+              </tr>
             </tbody>
           </Table>
         </Scroll>
@@ -118,6 +146,9 @@ export default function MyodocPrivacy() {
           <li>진료 병원의 검사 기록 연동 및 다음 검진 안내</li>
           <li>근시치료 병원 정보와 후기 제공, 후기 작성 자격 확인</li>
           <li>커뮤니티 게시·댓글 기능 제공 및 신고 처리, 이용자 보호</li>
+          <li>AI 상담 답변 제공 및 답변 품질 개선</li>
+          <li>처방전 사진에서 도수를 읽어 자동 입력</li>
+          <li>검진·치료 일정 등 알림 발송</li>
           <li>
             투표 기능은 종료했으나, 종료 전 참여 내역은 아래 보유 기간 동안 보관합니다
           </li>
@@ -169,6 +200,14 @@ export default function MyodocPrivacy() {
                   기록은 신고자 보호를 위해 남기되, 누구를 신고한 것인지 알 수 없도록 대상 표시를
                   지웁니다
                 </td>
+              </tr>
+              <tr>
+                <td>AI 상담 대화 기록</td>
+                <td>대화일로부터 1년 후 파기</td>
+              </tr>
+              <tr>
+                <td>푸시 알림 토큰</td>
+                <td>회원 탈퇴 또는 앱 삭제가 확인될 때까지</td>
               </tr>
               <tr>
                 <td>약관·개인정보 수집 동의 이력</td>
@@ -228,12 +267,93 @@ export default function MyodocPrivacy() {
                 <td>네이버</td>
                 <td>지도 표시</td>
               </tr>
+              <tr>
+                <td>Google LLC (Google Cloud)</td>
+                <td>서버 운영 및 데이터 보관 (대한민국 서울 리전)</td>
+              </tr>
+              <tr>
+                <td>Google LLC (Gemini API)</td>
+                <td>AI 상담 답변 생성, 처방전 사진의 도수 인식</td>
+              </tr>
+              <tr>
+                <td>650 Industries, Inc. (Expo)</td>
+                <td>푸시 알림 발송</td>
+              </tr>
+              <tr>
+                <td>Resend, Inc.</td>
+                <td>인증번호·비밀번호 재설정 등 이메일 발송</td>
+              </tr>
             </tbody>
           </Table>
         </Scroll>
         <p>
           회사는 위탁 계약 시 개인정보가 안전하게 관리되도록 필요한 사항을 규정하고 수탁자를
           감독합니다. 위탁 업무의 내용이나 수탁자가 변경되면 본 방침을 통해 공개합니다.
+        </p>
+
+        <h3>개인정보의 국외 이전</h3>
+        <p>
+          서비스 제공을 위해 아래와 같이 개인정보를 국외에서 처리하도록 위탁합니다(「개인정보 보호법」
+          제28조의8). 서버와 데이터베이스는 대한민국(서울)에 있으며, 아래 기능을 이용할 때에만 해당
+          정보가 국외로 전송됩니다.
+        </p>
+        <Scroll>
+          <Table>
+            <thead>
+              <tr>
+                <th>이전받는 자 (연락처)</th>
+                <th>국가</th>
+                <th>이전 항목</th>
+                <th>이전 목적</th>
+                <th>이전 시기·방법</th>
+                <th>보유 기간</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  Google LLC
+                  <br />
+                  (policies.google.com/privacy)
+                </td>
+                <td>미국</td>
+                <td>AI 상담 질문·대화 내용, 처방전 사진</td>
+                <td>AI 상담 답변 생성, 처방전 도수 인식</td>
+                <td>해당 기능을 이용할 때마다 암호화된 네트워크로 전송</td>
+                <td>처리 목적 달성 시까지. 세부 사항은 수탁자의 방침에 따름</td>
+              </tr>
+              <tr>
+                <td>
+                  650 Industries, Inc. (Expo)
+                  <br />
+                  (expo.dev/privacy)
+                </td>
+                <td>미국</td>
+                <td>푸시 알림 토큰, 알림 내용</td>
+                <td>푸시 알림 발송</td>
+                <td>알림을 보낼 때마다 암호화된 네트워크로 전송</td>
+                <td>발송 완료 시까지. 세부 사항은 수탁자의 방침에 따름</td>
+              </tr>
+              <tr>
+                <td>
+                  Resend, Inc.
+                  <br />
+                  (resend.com/legal/privacy-policy)
+                </td>
+                <td>미국</td>
+                <td>이메일 주소, 메일 내용(인증번호 등)</td>
+                <td>이메일 발송</td>
+                <td>메일을 보낼 때마다 암호화된 네트워크로 전송</td>
+                <td>발송 완료 시까지. 세부 사항은 수탁자의 방침에 따름</td>
+              </tr>
+            </tbody>
+          </Table>
+        </Scroll>
+        <p>
+          국외 이전을 원하지 않으시면 AI 상담·처방전 도수 인식을 이용하지 않거나 기기 설정에서 알림을
+          끄시면 됩니다. 이 경우 해당 기능만 이용할 수 없고, 다른 서비스 이용에는 제한이 없습니다.
+          이메일 발송은 이메일 가입과 비밀번호 재설정에 필요하므로, 원하지 않으시면 소셜 로그인으로
+          이용하실 수 있습니다.
         </p>
       </Section>
 
