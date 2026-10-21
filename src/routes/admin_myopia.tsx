@@ -141,18 +141,16 @@ export default function AdminMyopia() {
       return updateProfessionalStatus(userId, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["hospital", selectedHospitalId, "member"],
-      });
+      // 직원 목록과 병원 목록(승인 대기 뱃지)을 같이 새로 받는다.
+      queryClient.invalidateQueries({ queryKey: ["hospital"] });
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (userId: string) => deleteProfessional(userId),
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["hospital", selectedHospitalId, "member"],
-      });
+      // 직원 목록과 병원 목록(승인 대기 뱃지)을 같이 새로 받는다.
+      queryClient.invalidateQueries({ queryKey: ["hospital"] });
     },
   });
 
@@ -402,6 +400,22 @@ function HospitalCard({
           </p>
         )}
         <p>Code: {hospital.code}</p>
+        {hospital.pendingCount > 0 && (
+          <span
+            style={{
+              display: "inline-block",
+              marginTop: 4,
+              padding: "2px 8px",
+              borderRadius: 999,
+              background: "#fef3c7",
+              color: "#92400e",
+              fontSize: 12,
+              fontWeight: 600,
+            }}
+          >
+            승인 대기 {hospital.pendingCount}명
+          </span>
+        )}
       </div>
       <img
         src={downloadIcon}
@@ -906,7 +920,11 @@ function HospitalList({ onSelect }: { onSelect: (hospitalId: any) => void }) {
 
   const filteredData = useMemo(() => {
     if (query.data) {
-      return query.data.filter((e: any) => hospitalMatches(e, search));
+      // 승인 기다리는 병원을 맨 위로. 목록이 5곳만 펼쳐져 있어 아래에 있으면
+      // 안 보인다. 나머지 순서(이름순)는 서버가 정한 그대로 둔다.
+      return query.data
+        .filter((e: any) => hospitalMatches(e, search))
+        .sort((a: any, b: any) => (b.pendingCount > 0 ? 1 : 0) - (a.pendingCount > 0 ? 1 : 0));
     }
     return [];
   }, [query.data, search]);
