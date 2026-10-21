@@ -25,6 +25,7 @@ import {
 import { TextInput } from "../../components/input";
 import NotLoggedIn from "../../components/not_logged_in";
 import { HttpError } from "../../lib/fetch";
+import { useLanguage } from "../../lib/language_context";
 
 const PageWrapper = styled.div`
   max-width: 1100px;
@@ -222,6 +223,7 @@ function PatientRegisterDialog({
     mutationFn: addUserPatient,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user", "patient"] });
+      setConsent(false); // 다음 아이는 다시 동의받는다
       onClose();
     },
     onError: (e: any) => {
@@ -233,6 +235,9 @@ function PatientRegisterDialog({
     },
   });
   const [hospitalId, setHospitalId] = useState("");
+  // 연결되면 아이 차트가 이 계정에 열린다. 앱 연동과 같은 법정대리인 동의를 받는다.
+  const [consent, setConsent] = useState(false);
+  const ko = useLanguage().language === "ko";
 
   const registration = useRef("");
   const dateOfBirth = useRef(new Date().toISOString().split("T")[0]);
@@ -249,6 +254,7 @@ function PatientRegisterDialog({
       alert("Missing field: registration #");
       return;
     }
+    if (!consent) return;
     const data = {
       hospitalId: hospitalId,
       registration: registration.current,
@@ -296,11 +302,23 @@ function PatientRegisterDialog({
               onChange={(e) => (dateOfBirth.current = e.target.value)}
             ></TextInput>
           </label>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12 }}>
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+            />
+            {ko
+              ? "법정대리인으로서 자녀의 정보 처리에 동의합니다."
+              : "I am the legal guardian and consent to processing this child's data."}
+          </label>
         </div>
       </DialogContent>
       <DialogActions>
         <PrimaryNagativeButton onClick={onClose}>Dismiss</PrimaryNagativeButton>
-        <PrimaryButton onClick={handleSubmit}>Confirm</PrimaryButton>
+        <PrimaryButton onClick={handleSubmit} disabled={!consent}>
+          Confirm
+        </PrimaryButton>
       </DialogActions>
     </Dialog>
   );
