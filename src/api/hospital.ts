@@ -11,8 +11,25 @@ export interface HospitalListItem {
 
 // 반환 타입은 붙이지 않는다. 이 함수를 쓰는 다른 화면들이 any 로 받아
 // 쓰고 있어, 좁히면 그쪽이 줄줄이 터진다 - 그 정리는 따로 할 일이다.
+//
+// 로그인돼 있으면 세션을 같이 보낸다. 서버는 사이트 관리자에게만 승인 전
+// 병원까지 준다 - 관리자 화면이 그 병원을 열어 승인해야 하므로. 그 밖의
+// 사람(로그인 안 한 방문자 포함)은 승인된 병원만 받는다. 미리 그리기(빌드)
+// 에는 localStorage 가 없다.
 export function getHospitalList() {
-  return jsonFetch(API_ROOT + "/hospital");
+  const session_key =
+    typeof localStorage === "undefined" ? null : localStorage.getItem("session_key");
+  return jsonFetch(
+    API_ROOT + "/hospital",
+    session_key
+      ? {
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${session_key}`,
+          },
+        }
+      : {},
+  );
 }
 
 export function getMembers() {
