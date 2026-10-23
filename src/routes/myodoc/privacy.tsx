@@ -52,7 +52,10 @@ export default function MyodocPrivacy() {
               </tr>
               <tr>
                 <td>회원 가입<br />(이메일 가입 시 필수)</td>
-                <td>이메일 주소, 비밀번호(복원할 수 없는 방식으로 변환해 저장)</td>
+                <td>
+                  이메일 주소, 비밀번호(복원할 수 없는 방식으로 변환해 저장), 휴대폰 번호(가입 시
+                  본인 확인용 문자 인증)
+                </td>
                 <td>이용자가 직접 입력</td>
               </tr>
               <tr>
@@ -128,7 +131,7 @@ export default function MyodocPrivacy() {
         <h3>앱이 저장하지 않는 정보</h3>
         <ul>
           <li>주민등록번호를 포함한 고유식별정보</li>
-          <li>연락처, 주소 등 별도로 입력받지 않는 신원 정보</li>
+          <li>주소, 휴대폰 주소록 등 별도로 입력받지 않는 신원 정보</li>
           <li>단말기 광고 식별자, 마케팅 목적의 행태정보</li>
         </ul>
       </Section>
@@ -137,6 +140,7 @@ export default function MyodocPrivacy() {
         <h2>2. 개인정보의 처리 목적</h2>
         <ul>
           <li>회원 식별 및 로그인 유지</li>
+          <li>회원 가입 시 휴대폰 문자 인증을 통한 본인 확인, 중복 가입 방지</li>
           <li>자녀별 근시 경과(안축장·굴절값) 기록과 추이 제공</li>
           <li>
             자녀 식별 — 자녀 이름은 보호자가 등록한 여러 자녀를 구분하고, 병원 진료 기록에서 같은
@@ -282,6 +286,10 @@ export default function MyodocPrivacy() {
               <tr>
                 <td>Resend, Inc.</td>
                 <td>인증번호·비밀번호 재설정 등 이메일 발송</td>
+              </tr>
+              <tr>
+                <td>솔라피(SOLAPI)</td>
+                <td>회원 가입 인증번호 문자 발송</td>
               </tr>
             </tbody>
           </Table>
