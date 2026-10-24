@@ -138,7 +138,7 @@ export default function LegalPage({
         <Foot>
           마이오닥(MyoDoc) · 아이디엑스
           <br />
-          경기도 광명시 덕안로104번길 17 지하3층
+          경기도 광명시 덕안로104번길 17, 비323호(일직동)
           <br />
           문의 myodoc@idx.ai.kr
         </Foot>

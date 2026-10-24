@@ -426,7 +426,7 @@ export default function MyodocPrivacy() {
               </tr>
               <tr>
                 <th>주소</th>
-                <td>경기도 광명시 덕안로104번길 17 지하3층</td>
+                <td>경기도 광명시 덕안로104번길 17, 비323호(일직동)</td>
               </tr>
             </tbody>
           </Table>
