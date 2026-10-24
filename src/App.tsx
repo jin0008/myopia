@@ -52,6 +52,7 @@ const PartnerVerification = lazy(
   () => import("./routes/partner/PartnerVerification"),
 );
 const PartnerProfile = lazy(() => import("./routes/partner/PartnerProfile"));
+const PartnerQuestions = lazy(() => import("./routes/partner/PartnerQuestions"));
 const PartnerPromotions = lazy(
   () => import("./routes/partner/PartnerPromotions"),
 );
@@ -162,6 +163,7 @@ const App = () => {
                 <Route path="/partner/verification" element={<PartnerVerification />} />
                 <Route path="/partner/profile" element={<PartnerProfile />} />
                 <Route path="/partner/promotions" element={<PartnerPromotions />} />
+                <Route path="/partner/questions" element={<PartnerQuestions />} />
                 <Route
                   path="/partner/forgot-password"
                   element={<PartnerForgotPassword />}
