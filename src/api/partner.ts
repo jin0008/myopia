@@ -522,3 +522,51 @@ export function sendPartnerInquiry(body: {
 }): Promise<{ ok: true }> {
   return partnerFetch("/partner/inquiry", { method: "POST" }, body);
 }
+
+/* ---- 시술/수술 질문 답변 (프리미엄 안과) ---- */
+
+export type AnswerEligibility =
+  | { ok: true; hospitalName: string }
+  | { ok: false; reason: "not_eye_hospital" | "not_approved" | "no_subscription" };
+
+export interface QuestionSummary {
+  id: string;
+  title: string;
+  preview: string;
+  createdAt: string;
+  answerCount: number;
+  answeredByMe: boolean;
+}
+
+export interface QuestionAnswer {
+  id: string;
+  hospitalName: string;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+  mine: boolean;
+}
+
+export function listQuestions(cursor?: string): Promise<{
+  eligibility: AnswerEligibility;
+  questions: QuestionSummary[];
+  nextCursor: string | null;
+}> {
+  return partnerFetch(`/partner/questions${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`);
+}
+
+export function getQuestion(id: string): Promise<{
+  eligibility: AnswerEligibility;
+  question: { id: string; title: string; body: string; imageUrls: string[]; createdAt: string };
+  answers: QuestionAnswer[];
+}> {
+  return partnerFetch(`/partner/questions/${encodeURIComponent(id)}`);
+}
+
+export function saveMyAnswer(id: string, body: string): Promise<{ id: string }> {
+  return partnerFetch(`/partner/questions/${encodeURIComponent(id)}/answer`, { method: "PUT" }, { body });
+}
+
+export function deleteMyAnswer(id: string): Promise<void> {
+  return partnerFetch(`/partner/questions/${encodeURIComponent(id)}/answer`, { method: "DELETE" });
+}

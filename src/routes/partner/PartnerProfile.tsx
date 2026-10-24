@@ -182,6 +182,9 @@ export default function PartnerProfile() {
             <button style={logout} onClick={() => nav("/partner/promotions")}>
               프리미엄 노출
             </button>
+            <button style={logout} onClick={() => nav("/partner/questions")}>
+              질문 답변
+            </button>
             <button
               style={logout}
               onClick={() => {

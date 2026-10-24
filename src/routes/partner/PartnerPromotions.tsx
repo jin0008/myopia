@@ -243,6 +243,11 @@ export default function PartnerPromotions() {
               프로필 관리
             </button>
           )}
+          {businessKind === "hospital" && (
+            <button type="button" style={headBtn} onClick={() => navigate("/partner/questions")}>
+              질문 답변
+            </button>
+          )}
           <button
             type="button"
             style={headBtn}
