@@ -16,7 +16,7 @@ const BUSINESS = {
   ceo: "김응수",
   registrationNo: "668-86-03923",
   address: "경기도 광명시 덕안로104번길 17, 비323호(일직동)",
-  phone: "010-9893-6877",
+  phone: "02-898-0901",
   email: "myodoc@idx.ai.kr",
   mailOrderNo: "",
 };
