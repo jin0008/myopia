@@ -4,10 +4,12 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tansta
 import { UserContext } from "../App";
 import { PrimaryButton, PrimaryNagativeButton } from "../components/button";
 import {
+  listAdminAnswers,
   listAdminComments,
   listAdminPosts,
   setContentHidden,
   type AdminPost,
+  type HideKind,
   type PostShow,
 } from "../api/moderation";
 
@@ -18,7 +20,8 @@ const FILTERS: { key: PostShow; label: string }[] = [
 ];
 
 const CATEGORY_LABEL: Record<string, string> = {
-  general: "질문",
+  general: "시술/수술 질문",
+  expert: "전문가 상담",
   chat: "자유수다",
   review: "치료후기",
 };
@@ -45,7 +48,7 @@ export default function AdminCommunity() {
   });
 
   const hide = useMutation({
-    mutationFn: (v: { kind: "posts" | "comments"; id: string; hide: boolean }) =>
+    mutationFn: (v: { kind: HideKind; id: string; hide: boolean }) =>
       setContentHidden(v.kind, v.id, v.hide),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "community"] }),
     onError: (e: any) => alert(e?.message ?? "처리하지 못했습니다."),
@@ -64,7 +67,7 @@ export default function AdminCommunity() {
       </a>
       <h1>커뮤니티 글 관리</h1>
       <p style={{ color: "#6b7280", marginTop: -6 }}>
-        앱 커뮤니티의 전체 글입니다. "숨기기"를 누르면 앱에서 바로 사라지고(앱의 삭제와 같음),
+        앱 커뮤니티와 전문가 상담의 전체 글입니다. "숨기기"를 누르면 앱에서 바로 사라지고(앱의 삭제와 같음),
         숨김 목록에서 되살릴 수 있습니다.
       </p>
 
@@ -123,7 +126,7 @@ export default function AdminCommunity() {
                 open={openId === p.id}
                 onToggle={() => setOpenId(openId === p.id ? null : p.id)}
                 onHide={(kind, id, h) => {
-                  const what = kind === "posts" ? "글" : "댓글";
+                  const what = kind === "posts" ? "글" : kind === "answers" ? "병원 답변" : "댓글";
                   if (!h || confirm(`이 ${what}을 앱에서 숨길까요?`)) hide.mutate({ kind, id, hide: h });
                 }}
               />
@@ -152,7 +155,7 @@ function PostRow({
   p: AdminPost;
   open: boolean;
   onToggle: () => void;
-  onHide: (kind: "posts" | "comments", id: string, hide: boolean) => void;
+  onHide: (kind: HideKind, id: string, hide: boolean) => void;
 }) {
   const muted = p.deleted ? "#9ca3af" : "#111";
   return (
@@ -181,7 +184,7 @@ function PostRow({
         <td style={{ ...td, whiteSpace: "nowrap" }}>{p.createdAt.slice(0, 10)}</td>
         <td style={{ ...td, whiteSpace: "nowrap", fontSize: 13, color: "#4b5563" }}>
           <button onClick={onToggle} style={linkBtn}>
-            댓글 {p.commentCount} {open ? "▲" : "▼"}
+            {p.category === "expert" ? `병원 답변 ${p.answerCount}` : `댓글 ${p.commentCount}`} {open ? "▲" : "▼"}
           </button>
           <div>좋아요 {p.likeCount} · 조회 {p.viewCount}</div>
         </td>
@@ -196,7 +199,11 @@ function PostRow({
       {open && (
         <tr>
           <td colSpan={5} style={{ ...td, background: "#f9fafb" }}>
-            <Comments postId={p.id} onHide={onHide} />
+            {p.category === "expert" ? (
+              <Answers postId={p.id} onHide={onHide} />
+            ) : (
+              <Comments postId={p.id} onHide={onHide} />
+            )}
           </td>
         </tr>
       )}
@@ -209,7 +216,7 @@ function Comments({
   onHide,
 }: {
   postId: string;
-  onHide: (kind: "posts" | "comments", id: string, hide: boolean) => void;
+  onHide: (kind: HideKind, id: string, hide: boolean) => void;
 }) {
   const comments = useQuery({
     // 글 목록과 같은 키 아래에 두어, 숨기기 뒤 목록을 다시 받을 때 같이 갱신된다.
@@ -243,6 +250,49 @@ function Comments({
             </button>
           ) : (
             <button style={{ ...linkBtn, color: "#c62828" }} onClick={() => onHide("comments", c.id, true)}>
+              숨기기
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** 전문가 상담 글엔 회원 댓글이 없고 병원 답변만 달린다. */
+function Answers({
+  postId,
+  onHide,
+}: {
+  postId: string;
+  onHide: (kind: HideKind, id: string, hide: boolean) => void;
+}) {
+  const answers = useQuery({
+    queryKey: ["admin", "community", "answers", postId],
+    queryFn: () => listAdminAnswers(postId),
+  });
+  if (answers.isLoading) return <div>Loading…</div>;
+  if (!answers.data || answers.data.length === 0)
+    return <div style={{ color: "#9ca3af" }}>병원 답변이 없습니다.</div>;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ color: "#6b7280", fontSize: 12 }}>
+        숨긴 답변은 병원이 고쳐 쓸 수 없고, 여기서 되살려야 다시 보입니다.
+      </div>
+      {answers.data.map((a) => (
+        <div key={a.id} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+          <div style={{ flex: 1, color: a.deleted ? "#9ca3af" : "#111", fontSize: 14, lineHeight: 1.45 }}>
+            <span style={{ fontWeight: 700 }}>{a.hospitalName}</span>
+            <span style={{ color: "#9ca3af", fontSize: 12 }}> · {a.createdAt.slice(0, 10)}</span>
+            {a.deleted && <span style={{ ...badge, marginLeft: 6 }}>숨김</span>}
+            <div style={{ whiteSpace: "pre-wrap" }}>{a.body}</div>
+          </div>
+          {a.deleted ? (
+            <button style={linkBtn} onClick={() => onHide("answers", a.id, false)}>
+              되살리기
+            </button>
+          ) : (
+            <button style={{ ...linkBtn, color: "#c62828" }} onClick={() => onHide("answers", a.id, true)}>
               숨기기
             </button>
           )}
