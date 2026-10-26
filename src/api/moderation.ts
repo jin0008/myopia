@@ -88,12 +88,15 @@ export interface AdminComment {
   deleted: boolean;
 }
 
+export type AdminBoard = "community" | "expert";
+
 export function listAdminPosts(params: {
   q: string;
   show: PostShow;
+  board: AdminBoard;
   cursor?: string;
 }): Promise<{ posts: AdminPost[]; nextCursor: string | null }> {
-  const qs = new URLSearchParams({ q: params.q, show: params.show });
+  const qs = new URLSearchParams({ q: params.q, show: params.show, board: params.board });
   if (params.cursor) qs.set("cursor", params.cursor);
   return jsonFetchWithSession(API_ROOT + "/moderation/posts?" + qs.toString());
 }

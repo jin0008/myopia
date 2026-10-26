@@ -8,6 +8,7 @@ import {
   listAdminComments,
   listAdminPosts,
   setContentHidden,
+  type AdminBoard,
   type AdminPost,
   type HideKind,
   type PostShow,
@@ -30,8 +31,12 @@ const CATEGORY_LABEL: Record<string, string> = {
  * 커뮤니티 글 관리. 신고 처리(/admin/reports)는 들어온 신고만 보이는데,
  * 테스트 글·광고처럼 아무도 신고하지 않는 것도 지워야 해서 전체를 훑는다.
  * 숨기기는 앱의 삭제와 같아 되살릴 수 있다.
+ *
+ * 전문가 상담(/admin/expert)도 같은 화면을 board="expert" 로 쓴다 - 커뮤니티 글
+ * 사이에 섞이면 찾기 어렵다. 그쪽은 펼치면 댓글 대신 병원 답변이 나온다.
  */
-export default function AdminCommunity() {
+export default function AdminCommunity({ board = "community" }: { board?: AdminBoard }) {
+  const expert = board === "expert";
   const { user } = useContext(UserContext);
   const qc = useQueryClient();
   const [show, setShow] = useState<PostShow>("live");
@@ -40,8 +45,8 @@ export default function AdminCommunity() {
   const [openId, setOpenId] = useState<string | null>(null);
 
   const posts = useInfiniteQuery({
-    queryKey: ["admin", "community", show, q],
-    queryFn: ({ pageParam }) => listAdminPosts({ q, show, cursor: pageParam }),
+    queryKey: ["admin", "community", board, show, q],
+    queryFn: ({ pageParam }) => listAdminPosts({ q, show, board, cursor: pageParam }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
     enabled: user?.is_site_admin === true,
@@ -65,9 +70,9 @@ export default function AdminCommunity() {
       <a href="/admin/myodoc" style={{ display: "inline-block", marginBottom: 12, color: "#6b7280" }}>
         ← myodoc 관리
       </a>
-      <h1>커뮤니티 글 관리</h1>
+      <h1>{expert ? "전문가 상담 관리" : "커뮤니티 글 관리"}</h1>
       <p style={{ color: "#6b7280", marginTop: -6 }}>
-        앱 커뮤니티와 전문가 상담의 전체 글입니다. "숨기기"를 누르면 앱에서 바로 사라지고(앱의 삭제와 같음),
+        {expert ? "앱 전문가 상담의 전체 질문입니다. 펼치면 병원 답변을 하나씩 숨길 수 있습니다." : "앱 커뮤니티의 전체 글입니다."} "숨기기"를 누르면 앱에서 바로 사라지고(앱의 삭제와 같음),
         숨김 목록에서 되살릴 수 있습니다.
       </p>
 
@@ -114,7 +119,7 @@ export default function AdminCommunity() {
               <th style={th}>글</th>
               <th style={th}>작성자</th>
               <th style={th}>작성일</th>
-              <th style={th}>반응</th>
+              <th style={th}>{expert ? "답변" : "반응"}</th>
               <th style={th} />
             </tr>
           </thead>
