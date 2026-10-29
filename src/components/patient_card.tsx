@@ -5,6 +5,7 @@ import Edit from "@mui/icons-material/Edit";
 import DeleteOutline from "@mui/icons-material/DeleteOutline";
 import LinkIcon from "@mui/icons-material/Link";
 import LinkOff from "@mui/icons-material/LinkOff";
+import StickyNote2 from "@mui/icons-material/StickyNote2";
 
 const CardDiv = styled.div`
   background-color: white;
@@ -115,6 +116,7 @@ export function PatientCard({
   onDelete,
   onInvite,
   linked = false,
+  memo,
 }: {
   registration: string;
   dateOfBirth: string;
@@ -126,6 +128,8 @@ export function PatientCard({
   onInvite?: () => void;
   /** 보호자 앱과 이어져 있는지. */
   linked?: boolean;
+  /** 병원 내부 메모. 있으면 병록번호 옆에 표시가 붙고, 올리면 내용이 보인다. */
+  memo?: string | null;
 }) {
   return (
     <CardDiv onClick={onClick}>
@@ -133,6 +137,14 @@ export function PatientCard({
         <NameSection>
           <Description style={{ fontSize: "18px", color: "#bbb" }} />
           <RegistrationName>{registration}</RegistrationName>
+          {memo && (
+            <span title={memo} style={{ display: "flex", flexShrink: 0 }}>
+              <StickyNote2
+                aria-label={`메모: ${memo}`}
+                style={{ fontSize: "18px", color: "#f5a623" }}
+              />
+            </span>
+          )}
         </NameSection>
         <IconGroup>
           {onInvite && (

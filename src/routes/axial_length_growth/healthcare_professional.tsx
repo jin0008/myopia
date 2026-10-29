@@ -106,7 +106,7 @@ function PatientSearch({
   return (
     <SearchWrapper>
       <SearchInput
-        placeholder="Search by registration #"
+        placeholder="Search by registration # or memo"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         style={{ paddingRight: "40px" }}
@@ -779,8 +779,10 @@ function PatientList({
     <>
       <GridDiv>
         {patientQuery.data
-          ?.filter((patient: any) =>
-            patient.registration_number.includes(search),
+          ?.filter(
+            (patient: any) =>
+              patient.registration_number.includes(search) ||
+              patient.memo?.toLowerCase().includes(search.toLowerCase()),
           )
           ?.map((patient: any) => (
             <PatientCard
@@ -789,12 +791,14 @@ function PatientList({
               dateOfBirth={patient.date_of_birth.split("T")[0]}
               sex={patient.sex === "male" ? "M" : "F"}
               linked={(patient.appLinkCount ?? 0) > 0}
+              memo={patient.memo}
               onClick={() => navigate(`/chart/${patient.id}?edit=true`)}
               onEdit={() => {
                 setEditPatientData({
                   id: patient.id,
                   date_of_birth: patient.date_of_birth.split("T")[0],
                   sex: patient.sex,
+                  memo: patient.memo ?? "",
                 });
               }}
               onDelete={() => {
@@ -886,6 +890,23 @@ function PatientList({
                 <option value="male">male</option>
                 <option value="female">female</option>
               </TextInput>
+            </label>
+            <label>
+              Memo:
+              <TextInput
+                as="textarea"
+                rows={4}
+                maxLength={1000}
+                style={{ fontFamily: "inherit", resize: "vertical" }}
+                placeholder="병원 내부 메모 (환자·보호자에게 보이지 않음)"
+                value={editPatientData.memo ?? ""}
+                onChange={(e) =>
+                  setEditPatientData({
+                    ...editPatientData,
+                    memo: e.target.value,
+                  })
+                }
+              />
             </label>
           </DialogContent>
           <DialogActions>
