@@ -10,6 +10,7 @@ export type UpdatePatientInput = {
   id: string;
   date_of_birth?: string;
   sex?: "male" | "female";
+  memo?: string;
 };
 
 export type MyopiaStatus =
