@@ -448,10 +448,13 @@ export default function ChartRoute() {
     <ChartPageRoot>
       <HeaderDiv>
         <HeaderTextDiv>{patientQuery.data.registration_number}</HeaderTextDiv>
-        <PatientMemo
-          patientId={patientId!}
-          memo={patientQuery.data.memo ?? null}
-        />
+        {/* 병원 내부 메모 — 보호자가 여는 차트(edit=false)에는 두지 않는다. */}
+        {edit && (
+          <PatientMemo
+            patientId={patientId!}
+            memo={patientQuery.data.memo ?? null}
+          />
+        )}
       </HeaderDiv>
       <ContentDiv>
         <ChartTitleDiv>
