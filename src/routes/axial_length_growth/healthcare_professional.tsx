@@ -859,7 +859,12 @@ function PatientList({
         }}
       />
       {editPatientData != null && (
-        <Dialog open={true} onClose={() => setEditPatientData(null)}>
+        <Dialog
+          open={true}
+          onClose={() => setEditPatientData(null)}
+          fullWidth
+          maxWidth="sm"
+        >
           <DialogTitle>Edit patient</DialogTitle>
           <DialogContent>
             <label>
