@@ -23,6 +23,7 @@ import { PercentileSummary } from "./PercentileSummary";
 import { StudyButtons } from "./StudyButtons";
 import { PrescriptionList } from "./PrescriptionList";
 import { TreatmentList } from "./TreatmentList";
+import { PatientMemo } from "./PatientMemo";
 import { MYOPIA_STATUS_LABELS, PatientDataInput } from "./PatientDataInput";
 import {
   HeaderDiv,
@@ -447,6 +448,10 @@ export default function ChartRoute() {
     <ChartPageRoot>
       <HeaderDiv>
         <HeaderTextDiv>{patientQuery.data.registration_number}</HeaderTextDiv>
+        <PatientMemo
+          patientId={patientId!}
+          memo={patientQuery.data.memo ?? null}
+        />
       </HeaderDiv>
       <ContentDiv>
         <ChartTitleDiv>
