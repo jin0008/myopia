@@ -79,6 +79,17 @@ const LinkButton = styled(IconButton)<{ $linked: boolean }>`
   }
 `;
 
+/** 메모가 있으면 노랗게 칠한다. 회색은 아직 메모가 없는 것이다. */
+const MemoButton = styled(IconButton)<{ $hasMemo: boolean }>`
+  flex-shrink: 0;
+  color: ${(props) => (props.$hasMemo ? "#f5a623" : "#bbb")};
+
+  &:hover {
+    color: ${(props) => (props.$hasMemo ? "#d48806" : "#666")};
+    background-color: ${(props) => (props.$hasMemo ? "#fff8eb" : "#f5f5f5")};
+  }
+`;
+
 const BadgeRow = styled.div`
   display: flex;
   gap: 8px;
@@ -117,6 +128,7 @@ export function PatientCard({
   onInvite,
   linked = false,
   memo,
+  onMemo,
 }: {
   registration: string;
   dateOfBirth: string;
@@ -128,8 +140,10 @@ export function PatientCard({
   onInvite?: () => void;
   /** 보호자 앱과 이어져 있는지. */
   linked?: boolean;
-  /** 병원 내부 메모. 있으면 병록번호 옆에 표시가 붙고, 올리면 내용이 보인다. */
+  /** 병원 내부 메모. 병록번호 옆 메모 표시가 노랗게 되고, 올리면 내용이 보인다. */
   memo?: string | null;
+  /** 메모 창 열기. */
+  onMemo?: () => void;
 }) {
   return (
     <CardDiv onClick={onClick}>
@@ -137,13 +151,18 @@ export function PatientCard({
         <NameSection>
           <Description style={{ fontSize: "18px", color: "#bbb" }} />
           <RegistrationName>{registration}</RegistrationName>
-          {memo && (
-            <span title={memo} style={{ display: "flex", flexShrink: 0 }}>
-              <StickyNote2
-                aria-label={`메모: ${memo}`}
-                style={{ fontSize: "18px", color: "#f5a623" }}
-              />
-            </span>
+          {onMemo && (
+            <MemoButton
+              $hasMemo={!!memo}
+              title={memo || "메모 쓰기"}
+              aria-label={memo ? `메모: ${memo}` : "메모 쓰기"}
+              onClick={(e) => {
+                e.stopPropagation();
+                onMemo();
+              }}
+            >
+              <StickyNote2 style={{ fontSize: "18px" }} />
+            </MemoButton>
           )}
         </NameSection>
         <IconGroup>

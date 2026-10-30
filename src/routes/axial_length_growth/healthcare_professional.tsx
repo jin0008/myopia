@@ -33,6 +33,7 @@ import { HttpError } from "../../lib/fetch";
 import ConfirmDialog from "../../components/dialog";
 import { PatientCard } from "../../components/patient_card";
 import { LinkInviteDialog } from "../../components/link_invite_dialog";
+import { MemoDialog } from "../../components/memo_dialog";
 import NotLoggedIn from "../../components/not_logged_in";
 import { professionalRoleList, MOBILE_MEDIA } from "../../lib/constants";
 import HospitalSelector from "../../components/hospital_selector";
@@ -770,6 +771,8 @@ function PatientList({
     registration: string;
   } | null>(null);
 
+  const [memoPatient, setMemoPatient] = useState<any>(null);
+
   const [editPatientData, setEditPatientData] =
     useState<UpdatePatientInput | null>(null);
 
@@ -792,13 +795,13 @@ function PatientList({
               sex={patient.sex === "male" ? "M" : "F"}
               linked={(patient.appLinkCount ?? 0) > 0}
               memo={patient.memo}
+              onMemo={() => setMemoPatient(patient)}
               onClick={() => navigate(`/chart/${patient.id}?edit=true`)}
               onEdit={() => {
                 setEditPatientData({
                   id: patient.id,
                   date_of_birth: patient.date_of_birth.split("T")[0],
                   sex: patient.sex,
-                  memo: patient.memo ?? "",
                 });
               }}
               onDelete={() => {
@@ -813,6 +816,14 @@ function PatientList({
             />
           ))}
       </GridDiv>
+      {memoPatient != null && (
+        <MemoDialog
+          patientId={memoPatient.id}
+          registration={memoPatient.registration_number}
+          memo={memoPatient.memo ?? null}
+          onClose={() => setMemoPatient(null)}
+        />
+      )}
       <LinkInviteDialog
         open={invitePatient != null}
         patientId={invitePatient?.id ?? null}
@@ -895,23 +906,6 @@ function PatientList({
                 <option value="male">male</option>
                 <option value="female">female</option>
               </TextInput>
-            </label>
-            <label>
-              Memo:
-              <TextInput
-                as="textarea"
-                rows={4}
-                maxLength={1000}
-                style={{ fontFamily: "inherit", resize: "vertical" }}
-                placeholder="병원 내부 메모 (환자·보호자에게 보이지 않음)"
-                value={editPatientData.memo ?? ""}
-                onChange={(e) =>
-                  setEditPatientData({
-                    ...editPatientData,
-                    memo: e.target.value,
-                  })
-                }
-              />
             </label>
           </DialogContent>
           <DialogActions>
