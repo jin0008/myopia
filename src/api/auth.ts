@@ -62,7 +62,8 @@ export function googleLogin(idToken: string) {
 
 /** 지금 비밀번호가 새 규칙에 안 맞을 때, 로그인 중에 바꾼다. */
 export function changePasswordAtLogin(ticket: string, newPassword: string) {
-  return post<LoginStep>("/auth/login/password", { ticket, newPassword });
+  // 관리자가 2단계 인증을 꺼 두었으면 여기서 바로 로그인된다.
+  return post<LoginResult>("/auth/login/password", { ticket, newPassword }).then(signedInOrStep);
 }
 
 export function startTwoFactorSetup(ticket: string) {

@@ -160,7 +160,7 @@ export function LoginStepView({
   };
 
   if (step.next === "change_password")
-    return <ChangePassword ticket={step.ticket} onStep={onStep} onError={handle} onRestart={onRestart} />;
+    return <ChangePassword ticket={step.ticket} onStep={onStep} onDone={onDone} onError={handle} onRestart={onRestart} />;
   if (step.next === "setup_2fa")
     return (
       <SetupTwoFactor
@@ -178,11 +178,13 @@ type ErrorHandler = (e: unknown, setError: (m: string) => void) => void;
 function ChangePassword({
   ticket,
   onStep,
+  onDone,
   onError,
   onRestart,
 }: {
   ticket: string;
   onStep: (s: LoginStep) => void;
+  onDone: () => void;
   onError: ErrorHandler;
   onRestart: () => void;
 }) {
@@ -198,7 +200,7 @@ function ChangePassword({
     }
     setBusy(true);
     changePasswordAtLogin(ticket, pw)
-      .then(onStep)
+      .then((r) => (r.next === "signed_in" ? onDone() : onStep(r)))
       .catch((e) => onError(e, setError))
       .finally(() => setBusy(false));
   };

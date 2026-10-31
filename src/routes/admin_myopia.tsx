@@ -35,6 +35,10 @@ import {
   updateAlertSetting,
 } from "../api/alert_setting";
 import {
+  getSecuritySetting,
+  updateSecuritySetting,
+} from "../api/security_setting";
+import {
   createStudy,
   deleteStudy,
   getStudies,
@@ -264,6 +268,9 @@ export default function AdminMyopia() {
         </Card>
       </TopRow>
       <AdminSection style={{ marginTop: 32 }}>
+        <SecuritySettingManagement />
+      </AdminSection>
+      <AdminSection style={{ marginTop: 32 }}>
         <AlertSettingManagement />
       </AdminSection>
       <AdminSection style={{ marginTop: 32 }}>
@@ -490,6 +497,91 @@ const ALERT_FIELDS: {
     step: "0.25",
   },
 ];
+
+/** 사이트 전체 웹 로그인 2단계 인증 켜기·끄기. 다음 로그인부터 바로 적용된다. */
+function SecuritySettingManagement() {
+  const queryClient = useQueryClient();
+  const settingQuery = useQuery({
+    queryKey: ["security_setting"],
+    queryFn: getSecuritySetting,
+  });
+  const mutation = useMutation({
+    mutationFn: (enabled: boolean) =>
+      updateSecuritySetting({ web_2fa_enabled: enabled }),
+    onSuccess: (s) => {
+      queryClient.setQueryData(["security_setting"], s);
+      alert(
+        s.web_2fa_enabled
+          ? "2단계 인증을 켰습니다. 다음 로그인부터 인증 코드를 묻습니다."
+          : "2단계 인증을 껐습니다. 다음 로그인부터 비밀번호만으로 들어옵니다.",
+      );
+    },
+    onError: (e: any) => alert(e?.message ?? "저장 실패"),
+  });
+
+  const enabled = settingQuery.data?.web_2fa_enabled;
+
+  const toggle = () => {
+    if (enabled == null) return;
+    const msg = enabled
+      ? "웹 로그인 2단계 인증을 끌까요?\n모든 계정이 비밀번호(또는 Google)만으로 로그인하게 됩니다."
+      : "웹 로그인 2단계 인증을 켤까요?\n등록하지 않은 계정은 다음 로그인 때 인증 앱을 등록해야 합니다.";
+    if (!confirm(msg)) return;
+    mutation.mutate(!enabled);
+  };
+
+  return (
+    <Card>
+      <SectionTitle>2단계 인증 (웹 로그인)</SectionTitle>
+      <p style={{ color: "#6b7280", marginTop: 0 }}>
+        사이트 전체에 적용됩니다. 끄더라도 이미 등록한 인증 앱과 백업 코드는
+        지워지지 않아, 다시 켜면 그대로 쓸 수 있습니다.
+      </p>
+      {enabled == null ? (
+        <p>{settingQuery.isError ? "불러오지 못했습니다." : "불러오는 중…"}</p>
+      ) : (
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={enabled}
+            aria-label="2단계 인증"
+            disabled={mutation.isPending}
+            onClick={toggle}
+            style={{
+              position: "relative",
+              width: 52,
+              height: 28,
+              borderRadius: 14,
+              border: "none",
+              padding: 0,
+              cursor: mutation.isPending ? "wait" : "pointer",
+              background: enabled ? "#2563eb" : "#d1d5db",
+              transition: "background 0.15s",
+            }}
+          >
+            <span
+              style={{
+                position: "absolute",
+                top: 3,
+                left: enabled ? 27 : 3,
+                width: 22,
+                height: 22,
+                borderRadius: "50%",
+                background: "#fff",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.25)",
+                transition: "left 0.15s",
+              }}
+            />
+          </button>
+          <span style={{ fontWeight: 600, color: enabled ? "#1f2937" : "#b91c1c" }}>
+            {enabled ? "켜짐 — 로그인 시 인증 코드 필요" : "꺼짐 — 비밀번호만으로 로그인"}
+          </span>
+        </div>
+      )}
+    </Card>
+  );
+}
 
 function AlertSettingManagement() {
   const queryClient = useQueryClient();
