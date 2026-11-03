@@ -5,11 +5,9 @@ import { Outlet } from "react-router";
  * 결제가 일어나는 화면(파트너 포털) 하단의 사업자 정보.
  *
  * 전자상거래법상 통신판매업자가 알려야 하는 정보이고, 나이스페이 결제 경로
- * 심사도 이 줄을 본다. 값은 사업자등록증(2026-09-15 발급)에서 옮겼다.
+ * 심사도 이 줄을 본다. 값은 사업자등록증(2026-09-15 발급)과
+ * 통신판매업 신고증에서 옮겼다.
  * public/myodoc/partners.html 하단에도 같은 값이 있으니 함께 고친다.
- *
- * 통신판매신고번호는 아직 받지 못했다. 지어내서 채우면 공개
- * 화면에 거짓 정보가 나가므로 비워 두고, 채워지면 그 줄이 나타난다.
  */
 const BUSINESS = {
   name: "주식회사 아이디엑스",
@@ -18,7 +16,7 @@ const BUSINESS = {
   address: "경기도 광명시 덕안로104번길 17, 비323호(일직동)",
   phone: "02-898-0901",
   email: "myodoc@idx.ai.kr",
-  mailOrderNo: "",
+  mailOrderNo: "제2026-경기광명-0996호",
 };
 
 export function BusinessFooter() {
