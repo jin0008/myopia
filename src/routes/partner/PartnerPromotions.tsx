@@ -1275,7 +1275,7 @@ function BillingCardForm({
         위 결제 조건을 확인했으며 매월 자동 결제에 동의합니다.
       </label>
       {(!valid || !agree) && (
-        <p style={{ ...hint, color: "#c0353a" }}>
+        <p style={hint}>
           {!valid
             ? "회색 칸(빈 칸)을 채우고 빨간 칸(잘못 입력)을 고쳐 주세요."
             : "결제 조건에 동의해 주세요."}
