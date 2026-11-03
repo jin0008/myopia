@@ -1046,6 +1046,10 @@ function PaySteps({
       <p style={hint}>
         1회 결제 상품입니다. 기간이 끝나기 7일 전에 메일로 안내드립니다.
       </p>
+      <p style={hint}>
+        노출 시작 전 취소는 전액, 노출 중 취소는 노출된 날수를 뺀 나머지를 환불합니다(
+        <a href="/myodoc/tos" target="_blank" rel="noreferrer">이용약관 제11조</a>).
+      </p>
       <div style={{ display: "flex", gap: 8 }}>
         <button type="button" style={btn} onClick={() => setStep("detail")}>
           이전
@@ -1252,6 +1256,10 @@ function BillingCardForm({
           <li>이후 이용 기간이 끝나기 전날 같은 금액이 자동 결제됩니다.</li>
           <li>결제 7일 전에 메일로 미리 알려 드립니다.</li>
           <li>언제든 이 화면에서 해지할 수 있으며, 해지해도 이미 결제한 기간까지는 노출됩니다.</li>
+          <li>
+            노출 시작 전 취소는 전액, 노출 중 취소는 노출된 날수를 뺀 나머지를 환불합니다(
+            <a href="/myodoc/tos" target="_blank" rel="noreferrer">이용약관 제11조</a>).
+          </li>
           <li>카드 정보는 저장하지 않고 결제대행사(나이스페이먼츠)에 암호화해 전달합니다.</li>
         </ul>
       </div>
