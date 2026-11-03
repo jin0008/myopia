@@ -707,6 +707,13 @@ const input: CSSProperties = {
   fontSize: 14,
   fontWeight: 400,
 };
+/** 카드 칸: 비었으면 회색, 채웠는데 틀리면 빨간 테두리, 맞으면 그대로. */
+const cardField = (value: string, ok: boolean): CSSProperties =>
+  value === ""
+    ? { ...input, background: "#f1f3f6" }
+    : ok
+      ? input
+      : { ...input, borderColor: "#e5484d", background: "#fff5f5" };
 const btn: CSSProperties = {
   border: "1px solid #ddd",
   background: "#fff",
@@ -1203,7 +1210,7 @@ function BillingCardForm({
           유효기간
           <div style={{ display: "flex", gap: 6 }}>
             <input
-              style={{ ...input, width: 70 }}
+              style={{ ...cardField(expMonth, /^(0[1-9]|1[0-2])$/.test(expMonth)), width: 70 }}
               inputMode="numeric"
               autoComplete="cc-exp-month"
               placeholder="MM"
@@ -1211,7 +1218,7 @@ function BillingCardForm({
               onChange={(e) => setExpMonth(digits(e.target.value, 2))}
             />
             <input
-              style={{ ...input, width: 70 }}
+              style={{ ...cardField(expYear, /^\d{2}$/.test(expYear)), width: 70 }}
               inputMode="numeric"
               autoComplete="cc-exp-year"
               placeholder="YY"
@@ -1223,7 +1230,7 @@ function BillingCardForm({
         <label style={label}>
           {corp ? "사업자등록번호 (10자리)" : "생년월일 (6자리)"}
           <input
-            style={input}
+            style={cardField(idNo, idNo.length === (corp ? 10 : 6))}
             inputMode="numeric"
             placeholder={corp ? "숫자 10자리" : "YYMMDD"}
             value={idNo}
@@ -1233,7 +1240,7 @@ function BillingCardForm({
         <label style={label}>
           카드 비밀번호 앞 2자리
           <input
-            style={{ ...input, width: 90 }}
+            style={{ ...cardField(cardPw, cardPw.length === 2), width: 90 }}
             type="password"
             inputMode="numeric"
             autoComplete="off"
@@ -1267,6 +1274,13 @@ function BillingCardForm({
         <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
         위 결제 조건을 확인했으며 매월 자동 결제에 동의합니다.
       </label>
+      {(!valid || !agree) && (
+        <p style={hint}>
+          {!valid
+            ? "회색 칸(빈 칸)을 채우고 빨간 칸(잘못 입력)을 고쳐 주세요."
+            : "결제 조건에 동의해 주세요."}
+        </p>
+      )}
       <div style={{ display: "flex", gap: 8 }}>
         <button type="button" style={btn} onClick={() => { clear(); onBack(); }}>
           이전
@@ -1526,7 +1540,13 @@ function CardNumberInput({
           ref={(el) => {
             refs.current[i] = el;
           }}
-          style={{ ...input, width: 84, textAlign: "center", letterSpacing: 1 }}
+          // 마지막 칸은 카드에 따라 2~4자리(14~16자리 카드), 나머지는 4자리다.
+          style={{
+            ...cardField(p, i === 3 ? p.length >= 2 : p.length === 4),
+            width: 84,
+            textAlign: "center",
+            letterSpacing: 1,
+          }}
           type={i === 2 ? "password" : "text"}
           inputMode="numeric"
           autoComplete={i === 0 ? "cc-number" : "off"}
