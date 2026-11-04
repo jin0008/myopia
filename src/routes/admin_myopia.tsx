@@ -184,6 +184,7 @@ export default function AdminMyopia() {
               <tr>
                 <th>User ID</th>
                 <th>name</th>
+                <th>email</th>
                 <th>approve</th>
                 <th>reject/kick</th>
                 <th>admin</th>
@@ -195,6 +196,13 @@ export default function AdminMyopia() {
                 <tr key={e.user_id}>
                   <td>{e.user_id}</td>
                   <td>{e.name}</td>
+                  <td>
+                    {e.email ? (
+                      <a href={`mailto:${e.email}`}>{e.email}</a>
+                    ) : (
+                      "-"
+                    )}
+                  </td>
                   <td>
                     {e.approved ? (
                       "Approved"
@@ -407,6 +415,28 @@ function HospitalCard({
           </p>
         )}
         <p>Code: {hospital.code}</p>
+        {(hospital.admins ?? []).length > 0 ? (
+          (hospital.admins as { name: string; email: string | null }[]).map(
+            (admin, i) => (
+              <p key={i} style={{ fontSize: 13, color: "#374151" }}>
+                Admin: {admin.name}
+                {" · "}
+                {admin.email ? (
+                  <a
+                    href={`mailto:${admin.email}`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {admin.email}
+                  </a>
+                ) : (
+                  "이메일 없음"
+                )}
+              </p>
+            ),
+          )
+        ) : (
+          <p style={{ fontSize: 13, color: "#9ca3af" }}>Admin 없음</p>
+        )}
         {hospital.pendingCount > 0 && (
           <span
             style={{
@@ -1000,6 +1030,17 @@ function StudyHospitalAssign({
   );
 }
 
+/** 병원 카드에 보이는 admin 이름·이메일로도 찾을 수 있게. */
+function adminMatches(h: any, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  return ((h.admins ?? []) as { name: string; email: string | null }[]).some(
+    (a) =>
+      a.name.toLowerCase().includes(q) ||
+      (a.email ?? "").toLowerCase().includes(q),
+  );
+}
+
 function HospitalList({ onSelect }: { onSelect: (hospitalId: any) => void }) {
   const query = useQuery({
     queryKey: ["hospital"],
@@ -1015,7 +1056,7 @@ function HospitalList({ onSelect }: { onSelect: (hospitalId: any) => void }) {
       // 승인 기다리는 병원을 맨 위로. 목록이 5곳만 펼쳐져 있어 아래에 있으면
       // 안 보인다. 나머지 순서(이름순)는 서버가 정한 그대로 둔다.
       return query.data
-        .filter((e: any) => hospitalMatches(e, search))
+        .filter((e: any) => hospitalMatches(e, search) || adminMatches(e, search))
         .sort((a: any, b: any) => (b.pendingCount > 0 ? 1 : 0) - (a.pendingCount > 0 ? 1 : 0));
     }
     return [];
@@ -1038,7 +1079,7 @@ function HospitalList({ onSelect }: { onSelect: (hospitalId: any) => void }) {
     <Card style={{ minWidth: "320px" }}>
       <SectionTitle>Hospital List</SectionTitle>
       <SearchInput
-        placeholder="Search hospital by name or code"
+        placeholder="Search hospital by name, code or admin email"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         style={{ marginBottom: "12px", width: "100%" }}
