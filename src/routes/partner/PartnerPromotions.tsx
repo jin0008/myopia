@@ -8,6 +8,7 @@ import {
   getPaymentState,
   getPromotionAvailability,
   startCheckout,
+  type MyPayment,
   type PaymentState,
   type PromotionAvailability,
   getPartnerToken,
@@ -481,7 +482,11 @@ export default function PartnerPromotions() {
         )}
       </div>
 
-      {/* 신청 내역 */}
+      {pay?.available && <PaymentHistory payments={pay.payments} />}
+
+      {/* 신청 내역 - 결제 없이 운영자 승인을 받던 방식이다. 결제가 켜진 뒤로는
+          새로 생기지 않으니, 예전 신청이 남은 업체에게만 보인다. */}
+      {(!pay?.available || requests.length > 0) && (
       <div style={card}>
         <h3 style={h3}>신청 내역</h3>
         {requests.length === 0 ? (
@@ -526,6 +531,7 @@ export default function PartnerPromotions() {
           </table>
         )}
       </div>
+      )}
 
       {/* 상단 노출 말고 다른 광고(배너 등)를 원하는 파트너가 물을 곳. 로그인 없는
           안내 페이지의 문의와 같은 곳(관리자 → 광고 문의)에 쌓이고 메일로도 간다. */}
@@ -633,6 +639,61 @@ function Stat({ label, value }: { label: string; value: number | string }) {
       <div style={{ fontSize: 18, fontWeight: 700 }}>
         {typeof value === "number" ? value.toLocaleString() : value}
       </div>
+    </div>
+  );
+}
+
+const PAY_STATUS: Record<string, { label: string; color: string }> = {
+  paid: { label: "결제 완료", color: "#1a7f37" },
+  canceled: { label: "취소·환불", color: "#666" },
+  failed: { label: "실패", color: "#c0353a" },
+  pending: { label: "확인 중", color: "#a2610a" },
+};
+
+/**
+ * 카드 결제 기록. 환불을 요청할 때 업체가 짚을 근거이기도 하다.
+ *
+ * 결제창을 열었다 닫으면 pending 줄이 남는다 - 돈이 오가지 않았으니 빼고,
+ * 결과를 모르는 자동결제(서버가 사유를 적어 둔 줄)만 '확인 중'으로 둔다.
+ */
+function PaymentHistory({ payments }: { payments: MyPayment[] }) {
+  const rows = payments.filter((p) => p.status !== "pending" || p.failedReason != null);
+  return (
+    <div style={card}>
+      <h3 style={h3}>결제 내역</h3>
+      {rows.length === 0 ? (
+        <p style={hint}>아직 결제한 적이 없습니다.</p>
+      ) : (
+        <table style={table}>
+          <thead>
+            <tr>
+              <th style={th}>날짜</th>
+              <th style={th}>구분</th>
+              <th style={th}>금액</th>
+              <th style={th}>상태</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((p) => {
+              const st = PAY_STATUS[p.status] ?? { label: p.status, color: "#666" };
+              return (
+                <tr key={p.id}>
+                  <td style={td}>{(p.paidAt ?? p.createdAt).slice(0, 10)}</td>
+                  <td style={td}>{p.payMethod === "billing" ? "자동결제" : "단건 결제"}</td>
+                  <td style={td}>{p.amount.toLocaleString()}원</td>
+                  <td style={td}>
+                    <span style={{ color: st.color, fontWeight: 600 }}>{st.label}</span>
+                    {p.status === "failed" && p.failedReason && (
+                      <div style={{ color: "#a33", fontSize: 12, marginTop: 3 }}>{p.failedReason}</div>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+      <p style={hint}>환불은 myodoc@idx.ai.kr 또는 02-898-0901로 요청해 주세요.</p>
     </div>
   );
 }
