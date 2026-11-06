@@ -646,18 +646,16 @@ function Stat({ label, value }: { label: string; value: number | string }) {
 const PAY_STATUS: Record<string, { label: string; color: string }> = {
   paid: { label: "결제 완료", color: "#1a7f37" },
   canceled: { label: "취소·환불", color: "#666" },
-  failed: { label: "실패", color: "#c0353a" },
-  pending: { label: "확인 중", color: "#a2610a" },
 };
 
 /**
  * 카드 결제 기록. 환불을 요청할 때 업체가 짚을 근거이기도 하다.
  *
- * 결제창을 열었다 닫으면 pending 줄이 남는다 - 돈이 오가지 않았으니 빼고,
- * 결과를 모르는 자동결제(서버가 사유를 적어 둔 줄)만 '확인 중'으로 둔다.
+ * 돈이 오간 줄(결제 완료·취소)만 보인다. 실패나 결제창을 열었다 닫은 줄은
+ * 업체에게 의미가 없고 헷갈리기만 한다.
  */
 function PaymentHistory({ payments }: { payments: MyPayment[] }) {
-  const rows = payments.filter((p) => p.status !== "pending" || p.failedReason != null);
+  const rows = payments.filter((p) => p.status in PAY_STATUS);
   return (
     <div style={card}>
       <h3 style={h3}>결제 내역</h3>
@@ -675,7 +673,7 @@ function PaymentHistory({ payments }: { payments: MyPayment[] }) {
           </thead>
           <tbody>
             {rows.map((p) => {
-              const st = PAY_STATUS[p.status] ?? { label: p.status, color: "#666" };
+              const st = PAY_STATUS[p.status];
               return (
                 <tr key={p.id}>
                   <td style={td}>{(p.paidAt ?? p.createdAt).slice(0, 10)}</td>
@@ -683,9 +681,6 @@ function PaymentHistory({ payments }: { payments: MyPayment[] }) {
                   <td style={td}>{p.amount.toLocaleString()}원</td>
                   <td style={td}>
                     <span style={{ color: st.color, fontWeight: 600 }}>{st.label}</span>
-                    {p.status === "failed" && p.failedReason && (
-                      <div style={{ color: "#a33", fontSize: 12, marginTop: 3 }}>{p.failedReason}</div>
-                    )}
                   </td>
                 </tr>
               );
