@@ -393,7 +393,7 @@ export default function PartnerPromotions() {
               onChange={(e) => setMonths(Number(e.target.value))}
               style={input}
             >
-              {[1, 3, 6, 12].map((m) => (
+              {PRODUCT_MONTHS.map((m) => (
                 <option key={m} value={m}>
                   {m}개월
                 </option>
@@ -818,7 +818,8 @@ const tdNum: CSSProperties = {
 /** 단건: list → detail → order. 정기결제: list → billingDetail → card. */
 type PayStep = "list" | "detail" | "order" | "billingDetail" | "card";
 
-const PRODUCT_MONTHS = [1, 3, 6, 12];
+// 나이스 입점 기준: 서비스 기간 3개월 넘는 상품은 못 판다(2026-11-05 심사 안내).
+const PRODUCT_MONTHS = [1, 3];
 /** 결제창·영수증의 상품명(서버 GOODS_NAME)과 같은 말. */
 const GOODS_TITLE = "마이오닥 독점 노출";
 
@@ -919,7 +920,7 @@ function PaySteps({
               </select>
             }
             points={[
-              "1·3·6·12개월 중 원하는 기간을 고릅니다",
+              "1개월 또는 3개월 중 고릅니다",
               "자동으로 다시 결제되지 않습니다",
               "기간이 끝나기 7일 전에 메일로 알려 드립니다",
               "노출 중에 또 사면 남은 기간 뒤에 이어 붙습니다",
