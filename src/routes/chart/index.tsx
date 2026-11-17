@@ -650,7 +650,9 @@ export default function ChartRoute() {
             />
           </ChartWrapper>
           {!(displayAxialLength && refractiveErrorType) && (
-            <MeasurementListWrapper>
+            <MeasurementListWrapper
+              style={{ display: "flex", flexDirection: "column" }}
+            >
               <MeasurementList
                 mode={viewMode}
                 edit={edit}
@@ -681,8 +683,17 @@ export default function ChartRoute() {
                   dateOfBirth={patientQuery.data.date_of_birth}
                 />
               )}
-              {/* 진료 중에 화면을 돌려 보호자에게 바로 보여줄 수 있게 측정값 옆에 둔다. */}
-              <div style={{ marginTop: 24 }}>
+              {/* 그래프 오른쪽 아래. 진료 중에 화면을 돌려 보호자에게 보여준다.
+                  width 0 + minWidth 100%: 문구가 칸을 넓히지 않고 칸 폭에서 줄바꿈되게 -
+                  안 그러면 오른쪽 칸이 커져 그래프가 좁아진다. */}
+              <div
+                style={{
+                  marginTop: "auto",
+                  paddingTop: 24,
+                  width: 0,
+                  minWidth: "100%",
+                }}
+              >
                 <AppDownloadQr
                   size={88}
                   title="보호자 앱 안내"
