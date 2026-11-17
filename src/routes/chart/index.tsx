@@ -686,7 +686,7 @@ export default function ChartRoute() {
                 <AppDownloadQr
                   size={88}
                   title="보호자 앱 안내"
-                  description="보호자에게 이 QR 을 보여주세요. 휴대폰 카메라로 찍으면 앱 설치 화면이 열려요."
+                  description="보호자용 마이오닥 앱입니다. QR 코드를 스캔하면 아이폰은 App Store, 안드로이드는 Google Play로 연결됩니다."
                 />
               </div>
             </MeasurementListWrapper>

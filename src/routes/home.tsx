@@ -572,7 +572,7 @@ export default function Home() {
         <AppDownloadQr
           size={112}
           title="마이오닥 앱 받기"
-          description="아이 안축장 기록을 보호자 휴대폰에서 볼 수 있는 앱이에요. 카메라로 찍으면 아이폰·안드로이드에 맞는 스토어가 열려요."
+          description="보호자용 마이오닥 앱입니다. QR 코드를 스캔하면 아이폰은 App Store, 안드로이드는 Google Play로 연결됩니다."
         />
       </AppCard>
     </PageWrapper>
