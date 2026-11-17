@@ -61,6 +61,7 @@ import {
   getTreatmentList,
 } from "../../api/static";
 import { MagnifyingGlass } from "../../components/magnifying_glass";
+import { AppDownloadQr } from "../../components/app_download_qr";
 import { Treatment } from "../../types/treatment";
 
 // Clinical "query" thresholds for axial length entries. Values outside the
@@ -680,6 +681,14 @@ export default function ChartRoute() {
                   dateOfBirth={patientQuery.data.date_of_birth}
                 />
               )}
+              {/* 진료 중에 화면을 돌려 보호자에게 바로 보여줄 수 있게 측정값 옆에 둔다. */}
+              <div style={{ marginTop: 24 }}>
+                <AppDownloadQr
+                  size={88}
+                  title="보호자 앱 안내"
+                  description="보호자에게 이 QR 을 보여주세요. 휴대폰 카메라로 찍으면 앱 설치 화면이 열려요."
+                />
+              </div>
             </MeasurementListWrapper>
           )}
         </ChartAndListWrapper>

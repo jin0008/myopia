@@ -3,11 +3,7 @@ import styled, { keyframes } from "styled-components";
 import theme from "../theme";
 import { MOBILE_MEDIA } from "../lib/constants";
 import eyeLogEnglishSvg from "../assets/myopia-management-logo.svg";
-import { QRCodeSVG } from "qrcode.react";
-
-// 기기별 스토어로 보내는 주소 하나(백엔드 GET /app). 아이폰·안드로이드 QR 을
-// 따로 두면 고르다 틀리므로 하나만 둔다.
-const APP_DOWNLOAD_URL = "https://myopiamanage.org/api/app";
+import { AppDownloadQr } from "../components/app_download_qr";
 
 const PageWrapper = styled.div`
   max-width: 980px;
@@ -130,15 +126,6 @@ const GraphDescription = styled.p`
 
 const AppCard = styled(GraphCard)`
   margin-top: 24px;
-  display: flex;
-  align-items: center;
-  gap: 28px;
-
-  @media ${MOBILE_MEDIA} {
-    flex-direction: column;
-    text-align: center;
-    gap: 16px;
-  }
 `;
 
 const SVGContainer = styled.div`
@@ -582,14 +569,11 @@ export default function Home() {
       </GraphCard>
 
       <AppCard>
-        <QRCodeSVG value={APP_DOWNLOAD_URL} size={120} aria-label="마이오닥 앱 다운로드 QR" />
-        <div>
-          <GraphTitle>마이오닥 앱 받기</GraphTitle>
-          <GraphDescription style={{ marginBottom: 0 }}>
-            보호자용 마이오닥 앱입니다. 휴대폰 카메라로 QR 을 찍으면 아이폰은 App
-            Store, 안드로이드는 Google Play 로 바로 이동합니다.
-          </GraphDescription>
-        </div>
+        <AppDownloadQr
+          size={112}
+          title="마이오닥 앱 받기"
+          description="아이 안축장 기록을 보호자 휴대폰에서 볼 수 있는 앱이에요. 카메라로 찍으면 아이폰·안드로이드에 맞는 스토어가 열려요."
+        />
       </AppCard>
     </PageWrapper>
   );
