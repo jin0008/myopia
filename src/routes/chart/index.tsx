@@ -61,6 +61,7 @@ import {
   getTreatmentList,
 } from "../../api/static";
 import { MagnifyingGlass } from "../../components/magnifying_glass";
+import { AppDownloadQr } from "../../components/app_download_qr";
 import { Treatment } from "../../types/treatment";
 
 // Clinical "query" thresholds for axial length entries. Values outside the
@@ -649,7 +650,9 @@ export default function ChartRoute() {
             />
           </ChartWrapper>
           {!(displayAxialLength && refractiveErrorType) && (
-            <MeasurementListWrapper>
+            <MeasurementListWrapper
+              style={{ display: "flex", flexDirection: "column" }}
+            >
               <MeasurementList
                 mode={viewMode}
                 edit={edit}
@@ -680,6 +683,23 @@ export default function ChartRoute() {
                   dateOfBirth={patientQuery.data.date_of_birth}
                 />
               )}
+              {/* 그래프 오른쪽 아래. 진료 중에 화면을 돌려 보호자에게 보여준다.
+                  width 0 + minWidth 100%: 문구가 칸을 넓히지 않고 칸 폭에서 줄바꿈되게 -
+                  안 그러면 오른쪽 칸이 커져 그래프가 좁아진다. */}
+              <div
+                style={{
+                  marginTop: "auto",
+                  paddingTop: 24,
+                  width: 0,
+                  minWidth: "100%",
+                }}
+              >
+                <AppDownloadQr
+                  size={88}
+                  title="보호자 앱 안내"
+                  description="보호자용 마이오닥 앱입니다. QR 코드를 스캔하면 아이폰은 App Store, 안드로이드는 Google Play로 연결됩니다."
+                />
+              </div>
             </MeasurementListWrapper>
           )}
         </ChartAndListWrapper>

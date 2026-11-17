@@ -3,6 +3,7 @@ import styled, { keyframes } from "styled-components";
 import theme from "../theme";
 import { MOBILE_MEDIA } from "../lib/constants";
 import eyeLogEnglishSvg from "../assets/myopia-management-logo.svg";
+import { AppDownloadQr } from "../components/app_download_qr";
 
 const PageWrapper = styled.div`
   max-width: 980px;
@@ -121,6 +122,10 @@ const GraphDescription = styled.p`
   font-size: 0.9rem;
   color: ${theme.textSecondary};
   margin-bottom: 28px;
+`;
+
+const AppCard = styled(GraphCard)`
+  margin-top: 24px;
 `;
 
 const SVGContainer = styled.div`
@@ -562,6 +567,14 @@ export default function Home() {
           </LegendItem>
         </LegendWrapper>
       </GraphCard>
+
+      <AppCard>
+        <AppDownloadQr
+          size={112}
+          title="마이오닥 앱 받기"
+          description="보호자용 마이오닥 앱입니다. QR 코드를 스캔하면 아이폰은 App Store, 안드로이드는 Google Play로 연결됩니다."
+        />
+      </AppCard>
     </PageWrapper>
   );
 }
