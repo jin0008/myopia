@@ -1,20 +1,25 @@
 // npx tsx scripts/rx.check.ts
 import assert from "assert";
-import { ageOn, cellProblem, fmtD, isQuarter, nearSph, parseNum } from "../src/lib/rx";
+import { ageAt, ageStr, fmtD, fmtPow, hasTok, normAxis, okAxis, okPow, parseNum, toggleTok, transpose } from "../src/lib/rx";
 
 assert.equal(parseNum(""), null);
 assert.equal(parseNum("+1.25"), 1.25);
-assert.ok(Number.isNaN(parseNum("1.2.3") as number));
-assert.ok(isQuarter(-2.75) && !isQuarter(-2.3));
-assert.equal(fmtD(1.25), "+1.25");
 assert.equal(fmtD(-0.5), "-0.50");
-assert.equal(fmtD(0), "0.00");
-assert.equal(ageOn("2015-03-02", "2026-03-01"), 10, "생일 전날");
-assert.equal(ageOn("2015-03-02", "2026-03-02"), 11, "생일 당일");
-assert.equal(nearSph(-2.0, 1.5), -0.5);
-assert.equal(nearSph(null, 2), 2);
-assert.equal(nearSph(-1, null), null);
-assert.equal(cellProblem("sph", -2.3), "0.25 단위");
-assert.equal(cellProblem("axis", 181), "0~180 정수");
-assert.equal(cellProblem("pd", 62), null);
+assert.equal(fmtPow("1.5"), "+1.50");
+assert.equal(fmtPow("-2.3"), "-2.25", "0.25 단위로 맞춘다");
+assert.equal(fmtPow("0"), "0.00");
+assert.ok(okPow("-2.75") && !okPow("-2.3") && !okPow("-31"));
+assert.ok(okAxis("", "") && !okAxis("", "-0.5") && okAxis("180", "-0.5") && !okAxis("0", "-0.5"));
+assert.equal(normAxis(270), 90);
+assert.equal(normAxis(180), 180);
+assert.deepEqual(transpose("-2.00", "-1.00", "180"), { sph: "-3.00", cyl: "+1.00", axis: "90" });
+assert.equal(transpose("-2", "", "180"), null);
+assert.equal(ageStr(ageAt("2015-03-02", "2026-03-01")), "10세", "생일 전날");
+assert.equal(ageStr(ageAt("2024-05-10", "2025-11-10")), "1세 6개월");
+assert.equal(ageStr(ageAt("2025-08-01", "2025-11-24")), "3개월");
+let t = toggleTok("", "상시 착용");
+t = toggleTok(t, "호야 마이오스마트");
+assert.equal(t, "상시 착용, 호야 마이오스마트");
+assert.ok(hasTok(t, "호야 마이오스마트") && !hasTok(t, "호야 마이오스마트IQ"), "앞부분이 같은 칩을 헷갈리지 않는다");
+assert.equal(toggleTok(t, "상시 착용"), "호야 마이오스마트");
 console.log("ok");

@@ -2,9 +2,8 @@ import { jsonFetchWithSession } from "../lib/fetch";
 import { API_ROOT } from "./root";
 
 export type Base = "BI" | "BO" | "BU" | "BD";
-export type EyeKey = "sph" | "cyl" | "axis" | "prism";
 
-/** 한 눈(OD/OS) 묶음. 서버 필드 이름 그대로. */
+/** 한 묶음(원용 또는 근용)의 양안 값. 서버 필드 이름 그대로. */
 export interface EyeRx {
   sph_od: number | null;
   sph_os: number | null;
@@ -22,6 +21,7 @@ export interface Prescription {
   id: string;
   patient_id: string;
   prescriber_name: string;
+  prescriber_license: string | null;
   prescribed_on: string;
   far: EyeRx;
   near: EyeRx;
@@ -30,6 +30,7 @@ export interface Prescription {
   add_od: number | null;
   add_os: number | null;
   note: string | null;
+  remark_tags: string[];
   created_at: string;
 }
 
@@ -47,7 +48,6 @@ export interface NewPrescription {
   registration_number: string;
   date_of_birth: string;
   sex: "male" | "female";
-  ethnicity_id?: string;
   prescribed_on: string;
   far: Partial<EyeRx>;
   near: Partial<EyeRx>;
@@ -56,6 +56,9 @@ export interface NewPrescription {
   add_od: number | null;
   add_os: number | null;
   note: string | null;
+  remark_tags: string[];
+  prescriber_name?: string;
+  prescriber_license?: string | null;
 }
 
 export interface IssueResult {
@@ -82,3 +85,10 @@ export const listPrescriptions = (patientId?: string) =>
 
 export const getPrescription = (id: string) =>
   jsonFetchWithSession<PrescriptionDetail>(API_ROOT + "/patient/prescriptions/" + encodeURIComponent(id), { method: "GET" });
+
+/** 병원별 양식. 모양은 routes/prescription/doc.tsx 의 RxSettings. 없으면 null. */
+export const getRxSettings = () =>
+  jsonFetchWithSession<{ settings: unknown | null }>(API_ROOT + "/patient/prescriptions/settings", { method: "GET" });
+
+export const saveRxSettings = (settings: unknown) =>
+  jsonFetchWithSession(API_ROOT + "/patient/prescriptions/settings", { method: "PUT" }, { settings }, false);
