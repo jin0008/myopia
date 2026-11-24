@@ -49,6 +49,9 @@ function useFitCard(ref: React.RefObject<HTMLDivElement | null>, deps: unknown[]
   return { pt, overflow };
 }
 
+/** 미리보기에만 보이는 이름표(인쇄 안 됨). 확대 비율과 상관없이 같은 크기로. */
+const cap: React.CSSProperties = { fontSize: "2.6mm", color: "#5d6b7a", marginBottom: "-4.5mm" };
+
 /** 오른쪽 실물 크기 미리보기. 화면 폭에 맞춰 확대·축소한다. */
 export function Stage({ D, S, opts, onFit }: { D: DocData; S: RxSettings; opts: PrintOpts; onFit?: (pt: number) => void }) {
   const wrap = useRef<HTMLDivElement>(null);
@@ -70,8 +73,14 @@ export function Stage({ D, S, opts, onFit }: { D: DocData; S: RxSettings; opts: 
       <div style={{ zoom, display: "flex", flexDirection: "column", gap: "6mm" }}>
         {opts.mode === "card" ? (
           <>
+            <span style={cap}>앞면 · 처방 내용</span>
             <CardFront D={D} S={S} />
-            {opts.cardBack && <CardBack D={D} S={S} />}
+            {opts.cardBack && (
+              <>
+                <span style={cap}>뒷면 · 병원 정보·안내·QR</span>
+                <CardBack D={D} S={S} />
+              </>
+            )}
           </>
         ) : (
           <A4 D={D} S={S} />
