@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 import { dateKo } from "../../lib/rx";
 
 /* ------------------------------------------------------------------ *
- * 처방전 출력물(명함 앞·뒷면, A4). 교수님 양식(안경처방전.html)의 배치와
+ * 처방전 출력물(A4 한 장). 마이오닥 가입 QR 은 하단에만. 교수님 양식(안경처방전.html)의 배치와
  * CSS 를 그대로 옮겼다. 출력물은 화면 테마와 상관없이 늘 흰 종이다.
  * QR 만 다르다 - 고정 이미지 대신, 연동 링크가 있으면 그 아이 전용 QR
  * (찍으면 바로 연동), 없으면 앱 설치 QR 을 그린다.
@@ -30,7 +30,6 @@ export interface RxSettings {
   title: string;
   accent: string;
   valid: string;
-  cardMsg: string;
   qrOn: boolean;
   qrText: string;
   blocks: Block[];
@@ -77,9 +76,8 @@ export function defaultSettings(hospital: { name: string; address: string | null
     title: "안 경 처 방 전",
     accent: "#1f5f8b",
     valid: "본 처방전은 처방일로부터 3개월 이내에 조제하십시오.\n조제 후 불편감이 있으면 내원하십시오.",
-    cardMsg: "안경 조제 후 2주 이상 불편하면 내원하세요.",
     qrOn: true,
-    qrText: "처방전은 마이오닥 앱에서도 확인 가능합니다",
+    qrText: "마이오닥 앱에 가입하면 아이의 안경 처방과 근시 진행을 한곳에서 볼 수 있습니다.",
     blocks: [{ on: true, title: "처음 안경 착용 안내", body: PRESETS["처음 안경 착용 안내"] }],
     remChips: REM_CHIPS.slice(),
   };
@@ -152,62 +150,6 @@ const acc = (s: RxSettings) => ({ "--acc": s.accent }) as CSSProperties;
 const Qr = ({ url, className }: { url: string; className: string }) => (
   <QRCodeSVG value={url} size={128} level="M" className={className} />
 );
-
-export function CardFront({ D, S, remPt }: { D: DocData; S: RxSettings; remPt?: number }) {
-  return (
-    <div className={`paper doc card${D.nearOn ? " near" : ""}`} style={acc(S)}>
-      <div className="c-top">
-        <div className="c-title">안경처방전</div>
-        <div className="c-hosp">{S.hospital}{D.doc ? " · " + D.doc.name : ""}</div>
-      </div>
-      <div className="c-pt">
-        <span><b>{D.name || " "}</b>{D.age ? ` (${D.age})` : ""}</span>
-        <span className="dt">{dateKo(D.date)}</span>
-      </div>
-      <RxRows od={D.d_od} os={D.d_os} pd={D.pd} />
-      {D.nearOn && (
-        <>
-          <div className="c-near"><b>NEAR</b><span>ADD {D.add}</span></div>
-          <RxRows od={D.n_od} os={D.n_os} pd={D.npd} />
-        </>
-      )}
-      <div className={`c-bot${S.qrOn ? " has-qr" : ""}`}>
-        <div className="c-left">
-          <div className="c-rem" style={remPt ? { fontSize: `${remPt}pt` } : undefined}>
-            <b>REMARKS</b> {D.remarks.trim()}
-          </div>
-          {S.qrOn && <div className="c-qrtxt">{S.qrText}</div>}
-        </div>
-        {S.qrOn && (
-          <div className="c-qrfig">
-            <Qr url={D.qrUrl} className="c-qrimg" />
-            <span>마이오닥</span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-export function CardBack({ D, S }: { D: DocData; S: RxSettings }) {
-  return (
-    <div className="paper doc card back" style={acc(S)}>
-      {S.logo && <img src={S.logo} style={{ maxHeight: "9mm", maxWidth: "40mm" }} alt="" />}
-      <div className="b-h">{S.hospital}</div>
-      <div className="b-s">{S.sub}</div>
-      {S.cardMsg && <div className="b-m">{S.cardMsg}</div>}
-      {S.qrOn && (
-        <div className="b-qr">
-          <figure className="qf">
-            <Qr url={D.qrUrl} className="b-qrimg" />
-            <figcaption>마이오닥</figcaption>
-          </figure>
-          <span>{S.qrText}</span>
-        </div>
-      )}
-    </div>
-  );
-}
 
 export function A4({ D, S }: { D: DocData; S: RxSettings }) {
   const blocks = S.blocks.filter((b) => b.on && (b.title || b.body));
@@ -288,43 +230,6 @@ export const DOC_CSS = `
 .doc .tri{font-size:.85em;color:#555}
 .doc td.prc{position:relative;padding-right:1.4em!important}
 .doc .tri.tr-r{position:absolute;right:.35em;top:50%;transform:translateY(-50%)}
-.card{width:90mm;height:50mm;padding:2.4mm 3mm;display:flex;flex-direction:column;gap:.8mm}
-.card .c-top{display:flex;align-items:baseline;justify-content:space-between;gap:2mm;line-height:1.2}
-.card .c-pt,.card .c-near{line-height:1.25}
-.card .c-title{font:700 9pt var(--f-display);letter-spacing:.3em}
-.card .c-hosp{font-size:6pt;color:var(--acc);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.card .c-pt{display:flex;justify-content:space-between;align-items:baseline;font-size:8pt;border-bottom:.3mm solid var(--acc);padding-bottom:.6mm;gap:2mm}
-.card .c-pt b{font-weight:700;font-size:10pt}
-.card .c-pt .dt{font-size:7.5pt;font-weight:500}
-.card table.out th{font-size:6pt;height:3.4mm;padding:0}
-.card table.out td{font-size:7.6pt;height:4.4mm;padding:0}
-.card table.out th,.card table.out td{border-width:.18mm}
-.card.near{gap:.55mm;padding-block:2mm}
-.card.near table.out td{font-size:6.6pt;height:3.2mm}
-.card.near table.out th{height:2.7mm;font-size:5.4pt}
-.card.near .c-pt b{font-size:9pt}
-.card .c-near{font-size:6.5pt;display:flex;gap:4mm}
-.card .c-rem{font-size:6.5pt;border:.18mm solid #333;padding:.4mm 1.2mm;flex:none;line-height:1.3;white-space:pre-line;word-break:keep-all;overflow-wrap:anywhere}
-.card .c-rem b{font-size:5.5pt;color:#555;margin-right:1mm}
-.card .c-bot{margin-top:auto;display:flex;align-items:stretch;gap:1.5mm;flex:none}
-.card .c-left{flex:0 0 80%;min-width:0;display:flex;flex-direction:column;gap:.5mm}
-.card .c-bot:not(.has-qr) .c-left{flex:1}
-.card .c-left .c-rem{margin-top:0;flex:1}
-.card .c-qrtxt{font-size:5.4pt;line-height:1.2;color:#333;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.card .c-qrfig{margin-left:auto;align-self:flex-end;display:flex;flex-direction:column;align-items:center;gap:.2mm;flex:none}
-.card .c-qrfig span{font-size:4.8pt;font-weight:600;line-height:1;color:var(--acc)}
-.card .c-qrimg{width:10mm;height:10mm;display:block}
-.card.near .c-qrimg{width:7.2mm;height:7.2mm}
-.card.near .c-qrfig span{font-size:4.2pt}
-.card.near .c-qrtxt{font-size:5pt}
-.card.back{align-items:center;justify-content:center;text-align:center;gap:1.5mm}
-.card.back .b-h{font:700 11pt var(--f-display);color:var(--acc)}
-.card.back .b-s{font-size:6.5pt;color:#333;line-height:1.5;white-space:pre-line}
-.card.back .b-m{font-size:6pt;color:#555;border-top:.2mm solid var(--acc);padding-top:1.2mm;margin-top:1mm;white-space:pre-line;max-width:78mm}
-.card.back .b-qr{display:flex;align-items:center;gap:2mm;font-size:5.8pt;color:#333;text-align:left;max-width:78mm;margin-top:.5mm}
-.card.back .b-qr .qf{margin:0;display:flex;flex-direction:column;align-items:center;gap:.3mm;flex:none}
-.card.back .b-qr .qf figcaption{font-size:4.8pt;font-weight:600;color:var(--acc)}
-.card.back .b-qrimg{width:11mm;height:11mm;display:block}
 .a4{width:210mm;min-height:297mm;padding:16mm 16mm 14mm;display:flex;flex-direction:column;gap:6mm}
 .a4.b-single{outline:.4mm solid var(--acc);outline-offset:-9mm}
 .a4 .head{display:flex;align-items:center;gap:5mm;border-bottom:.8mm solid var(--acc);padding-bottom:4mm}
@@ -360,9 +265,6 @@ export const DOC_CSS = `
 .a4 .qrband-img{width:20mm;height:20mm;display:block}
 .a4 .qrband div{display:flex;flex-direction:column;gap:1mm;font-size:11pt;line-height:1.4}
 .a4 .qrband b{font-size:12.5pt;color:var(--acc);letter-spacing:.02em}
-.sheet{width:210mm;padding:12mm 15mm;display:grid;grid-template-columns:90mm 90mm;gap:6mm;justify-content:center;align-content:start}
-.sheet .card{outline:.1mm dashed #aaa}
-#rx-print-area{display:none}
 @media print{
   body>*:not(#rx-print-area){display:none!important}
   #rx-print-area{display:block}

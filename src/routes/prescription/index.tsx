@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -9,7 +9,7 @@ import { HttpError } from "../../lib/fetch";
 import { ageAt, ageStr, fmtD, fmtPow, hasTok, normAxis, okAxis, okPow, parseNum, toggleTok, transpose } from "../../lib/rx";
 import { issuePrescription, listPrescriptions, lookupPatient, type Base, type EyeRx } from "../../api/prescription";
 import { FOOT_PRESETS, emptyRow, type DocData, type Row } from "./doc";
-import { PrintArea, PrintOptsBar, Stage, usePrintOpts, useRxSettings } from "./stage";
+import { PrintArea, Stage, useRxSettings } from "./stage";
 import { SettingsDialog } from "./settings";
 
 /* ------------------------------------------------------------------ *
@@ -123,7 +123,6 @@ export default function PrescriptionPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { settings: S, refetch } = useRxSettings();
-  const [opts, setOpts] = usePrintOpts();
   const [settingsOpen, setSettingsOpen] = useState(false);
   // 미리보기는 눌러야 펼친다. 입력이 주 화면이고, 미리보기는 확인할 때만 본다.
   const [preview, setPreview] = useState(false);
@@ -151,7 +150,6 @@ export default function PrescriptionPage() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [printNonce, setPrintNonce] = useState(0);
-  const [remPt, setRemPt] = useState(6.5);
   const [showMissing, setShowMissing] = useState(false);
 
   const recent = useQuery({ queryKey: ["prescriptions"], queryFn: () => listPrescriptions(), enabled: !!user?.healthcare_professional?.approved });
@@ -180,7 +178,6 @@ export default function PrescriptionPage() {
   useEffect(() => {
     if (printNonce) window.print();
   }, [printNonce]);
-  const onFit = useCallback((pt: number) => setRemPt(pt), []);
 
   const lookup = async () => {
     setFound(null);
@@ -265,7 +262,6 @@ export default function PrescriptionPage() {
     <div style={{ background: "#eef1f4", minHeight: "100vh" }}>
       <header style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 20px", borderBottom: `1px solid ${C.line}`, background: "white", flexWrap: "wrap", position: "sticky", top: 0, zIndex: 5 }}>
         <h1 style={{ fontSize: 19, margin: 0 }}>안경처방전 <span style={{ color: "#c98a1a" }}>발행</span></h1>
-        <PrintOptsBar opts={opts} set={setOpts} />
         <div style={{ flex: 1 }} />
         <button type="button" onClick={reset} style={{ padding: "7px 12px" }}>새 처방</button>
         <button type="button" onClick={() => setPreview((v) => !v)} aria-expanded={preview} style={{ padding: "7px 12px" }}>
@@ -416,7 +412,7 @@ export default function PrescriptionPage() {
             </p>
           </div>
 
-          {opts.mode === "a4" && (
+          {(
             <div style={sec}>
               <h2 style={h2}>A4 하단 문구</h2>
               <select
@@ -433,13 +429,11 @@ export default function PrescriptionPage() {
           )}
         </div>
 
-        {/* 닫혀 있어도 그려 둔다 - 명함 REMARKS 글자 크기를 여기서 재서 인쇄에 쓴다. */}
-        <div
-          aria-hidden={!preview}
-          style={preview ? { position: "sticky", top: 80 } : { position: "absolute", left: -10000, top: 0, width: 600, visibility: "hidden", pointerEvents: "none" }}
-        >
-          <Stage D={D} S={S} opts={opts} onFit={onFit} />
-        </div>
+        {preview && (
+          <div style={{ position: "sticky", top: 80 }}>
+            <Stage D={D} S={S} />
+          </div>
+        )}
       </div>
 
       <section style={{ padding: "0 20px 48px", maxWidth: 1100 }}>
@@ -458,7 +452,7 @@ export default function PrescriptionPage() {
         </ul>
       </section>
 
-      <PrintArea D={D} S={S} opts={opts} remPt={remPt} />
+      <PrintArea D={D} S={S} />
       <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} initial={S} onSaved={() => refetch()} />
     </div>
   );

@@ -1,4 +1,4 @@
-import { useCallback, useContext, useState } from "react";
+import { useContext, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 
@@ -9,7 +9,7 @@ import { createLinkInvite } from "../../api/patient";
 import { getPrescription, type EyeRx } from "../../api/prescription";
 import { ageAt, ageStr, fmtD } from "../../lib/rx";
 import { FOOT_PRESETS, type DocData, type Row } from "./doc";
-import { PrintArea, PrintOptsBar, Stage, usePrintOpts, useRxSettings } from "./stage";
+import { PrintArea, Stage, useRxSettings } from "./stage";
 
 /** 저장된 숫자 → 찍을 글자. */
 function rowsOf(e: EyeRx): { od: Row; os: Row } {
@@ -33,14 +33,11 @@ export default function PrescriptionPrint() {
   const { user } = useContext(UserContext);
   const navigate = useNavigate();
   const { settings: S } = useRxSettings();
-  const [opts, setOpts] = usePrintOpts();
   const { data: rx, error } = useQuery({ queryKey: ["prescription", id], queryFn: () => getPrescription(id), enabled: !!user });
   const [name, setName] = useState("");
   const [valid, setValid] = useState<string | null>(null);
   const [invite, setInvite] = useState<{ url: string; expires_at: string } | null>(null);
   const [issuing, setIssuing] = useState(false);
-  const [remPt, setRemPt] = useState(6.5);
-  const onFit = useCallback((pt: number) => setRemPt(pt), []);
 
   if (user == null) return <NotLoggedIn />;
   if (error) return <p style={{ padding: 32 }}>처방전을 찾을 수 없습니다.</p>;
@@ -80,7 +77,6 @@ export default function PrescriptionPrint() {
       <header style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 20px", borderBottom: "1px solid #d5dce4", background: "white", flexWrap: "wrap" }}>
         <button type="button" onClick={() => navigate("/prescription")} style={{ padding: "7px 12px" }}>← 처방전 발행</button>
         <h1 style={{ fontSize: 17, margin: 0 }}>다시 인쇄 · 차트번호 {rx.patient.registration_number} · {rx.prescribed_on}</h1>
-        <PrintOptsBar opts={opts} set={setOpts} />
         <div style={{ flex: 1 }} />
         <button type="button" onClick={() => window.print()} style={{ padding: "8px 16px", background: "#1f5f8b", color: "white", border: 0, borderRadius: 6, fontWeight: 600, cursor: "pointer" }}>
           인쇄
@@ -103,7 +99,7 @@ export default function PrescriptionPrint() {
             </div>
           )}
           {invite && <div style={{ color: "#00875a" }}>연동 QR 을 발급했습니다 ({invite.expires_at.slice(0, 10)}까지).</div>}
-          {opts.mode === "a4" && (
+          {(
             <label>
               A4 하단 문구
               <select value="" onChange={(e) => { const p = FOOT_PRESETS.find((x) => x.name === e.target.value); if (p) setValid(p.text); }} style={{ width: "100%", padding: 6 }}>
@@ -113,9 +109,9 @@ export default function PrescriptionPrint() {
             </label>
           )}
         </div>
-        <Stage D={D} S={S} opts={opts} onFit={onFit} />
+        <Stage D={D} S={S} />
       </div>
-      <PrintArea D={D} S={S} opts={opts} remPt={remPt} />
+      <PrintArea D={D} S={S} />
     </div>
   );
 }

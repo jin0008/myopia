@@ -94,9 +94,8 @@ export function SettingsDialog({ open, onClose, initial, onSaved }: { open: bool
             <label>강조색<br /><input type="color" value={S.accent} onChange={(e) => set({ accent: e.target.value })} /></label>
           </div>
           <label>A4 하단 문구 기본값 (유효기간 등)<textarea style={{ ...field, minHeight: 56 }} value={S.valid} onChange={(e) => set({ valid: e.target.value })} /></label>
-          <label>명함 뒷면 문구<input style={field} value={S.cardMsg} onChange={(e) => set({ cardMsg: e.target.value })} /></label>
           <label style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            <input type="checkbox" checked={S.qrOn} onChange={(e) => set({ qrOn: e.target.checked })} /> 마이오닥 QR 표시 (A4 하단·명함 앞뒷면)
+            <input type="checkbox" checked={S.qrOn} onChange={(e) => set({ qrOn: e.target.checked })} /> 마이오닥 가입 QR 표시 (A4 하단)
           </label>
           <label>QR 안내 문구<input style={field} value={S.qrText} onChange={(e) => set({ qrText: e.target.value })} /></label>
         </fieldset>
