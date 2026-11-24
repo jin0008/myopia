@@ -79,7 +79,7 @@ export default function PrescriptionPrint() {
     <div style={{ background: "#eef1f4", minHeight: "100vh" }}>
       <header style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 20px", borderBottom: "1px solid #d5dce4", background: "white", flexWrap: "wrap" }}>
         <button type="button" onClick={() => navigate("/prescription")} style={{ padding: "7px 12px" }}>← 처방전 발행</button>
-        <h1 style={{ fontSize: 17, margin: 0 }}>다시 인쇄 · {rx.patient.registration_number} · {rx.prescribed_on}</h1>
+        <h1 style={{ fontSize: 17, margin: 0 }}>다시 인쇄 · 차트번호 {rx.patient.registration_number} · {rx.prescribed_on}</h1>
         <PrintOptsBar opts={opts} set={setOpts} />
         <div style={{ flex: 1 }} />
         <button type="button" onClick={() => window.print()} style={{ padding: "8px 16px", background: "#1f5f8b", color: "white", border: 0, borderRadius: 6, fontWeight: 600, cursor: "pointer" }}>

@@ -125,6 +125,8 @@ export default function PrescriptionPage() {
   const { settings: S, refetch } = useRxSettings();
   const [opts, setOpts] = usePrintOpts();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // 미리보기는 눌러야 펼친다. 입력이 주 화면이고, 미리보기는 확인할 때만 본다.
+  const [preview, setPreview] = useState(false);
 
   // 환자
   const [regNo, setRegNo] = useState("");
@@ -202,7 +204,7 @@ export default function PrescriptionPage() {
     Object.values(rowBad(allRows[k])).some(Boolean),
   );
   const missing = [
-    !regNo.trim() && "등록번호",
+    !regNo.trim() && "차트번호",
     !name.trim() && "이름",
     !sex && "성별",
     !dob && "생년월일",
@@ -241,7 +243,7 @@ export default function PrescriptionPage() {
       if (e instanceof HttpError) {
         setMsg(
           e.code === 409
-            ? "이 등록번호의 환자 생년월일·성별이 다릅니다. 등록번호를 다시 확인해 주세요."
+            ? "이 차트번호의 환자 생년월일·성별이 다릅니다. 차트번호를 다시 확인해 주세요."
             : e.fields?.map((f) => f.message || f.path).join(", ") || e.message || "발행하지 못했습니다.",
         );
       } else setMsg("발행하지 못했습니다. 잠시 후 다시 시도해 주세요.");
@@ -266,6 +268,9 @@ export default function PrescriptionPage() {
         <PrintOptsBar opts={opts} set={setOpts} />
         <div style={{ flex: 1 }} />
         <button type="button" onClick={reset} style={{ padding: "7px 12px" }}>새 처방</button>
+        <button type="button" onClick={() => setPreview((v) => !v)} aria-expanded={preview} style={{ padding: "7px 12px" }}>
+          {preview ? "미리보기 닫기" : "미리보기"}
+        </button>
         <button type="button" onClick={() => setSettingsOpen(true)} style={{ padding: "7px 12px" }}>설정</button>
         <button
           type="button"
@@ -277,7 +282,17 @@ export default function PrescriptionPage() {
         </button>
       </header>
 
-      <div className="rx-app" style={{ display: "grid", gridTemplateColumns: "minmax(340px, 460px) 1fr", gap: 20, padding: 20, alignItems: "start" }}>
+      <div
+        className="rx-app"
+        style={{
+          display: "grid",
+          gridTemplateColumns: preview ? "minmax(340px, 460px) 1fr" : "minmax(0, 560px)",
+          justifyContent: preview ? undefined : "center",
+          gap: 20,
+          padding: 20,
+          alignItems: "start",
+        }}
+      >
         <style>{"@media (max-width: 900px){.rx-app{grid-template-columns:1fr!important}}"}</style>
         <div style={{ background: "white", borderRadius: 12, padding: 18, border: `1px solid ${C.line}` }}>
           {msg && <p role="alert" style={{ color: C.danger, margin: "0 0 10px", fontSize: 13.5 }}>{msg}</p>}
@@ -292,7 +307,7 @@ export default function PrescriptionPage() {
           <h2 style={h2}>환자 정보</h2>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
             <label style={{ fontSize: 12, color: C.muted }}>
-              등록번호 *
+              차트번호 * <small>(병원 등록번호)</small>
               <input style={inp(miss(!regNo.trim()))} value={regNo} disabled={locked} onChange={(e) => { setRegNo(e.target.value); setFound(null); }} onBlur={lookup} />
             </label>
             <label style={{ fontSize: 12, color: C.muted }}>
@@ -321,7 +336,7 @@ export default function PrescriptionPage() {
               등록된 환자입니다. {found.linked ? "보호자 앱과 연동되어 있어 처방이 앱에도 보입니다." : "앱 미연동 - 이 아이 전용 연동 QR 이 찍힙니다."}
             </p>
           )}
-          <p style={{ fontSize: 11.5, color: C.muted, margin: "6px 0 0" }}>등록번호·성별·생년월일은 기록용이며, 처방전에는 이름과 처방일 기준 만 나이만 인쇄됩니다.</p>
+          <p style={{ fontSize: 11.5, color: C.muted, margin: "6px 0 0" }}>차트번호·성별·생년월일은 기록용이며, 처방전에는 이름과 처방일 기준 만 나이만 인쇄됩니다.</p>
 
           <div style={sec}>
             <h2 style={h2}>처방의</h2>
@@ -418,7 +433,11 @@ export default function PrescriptionPage() {
           )}
         </div>
 
-        <div style={{ position: "sticky", top: 80 }}>
+        {/* 닫혀 있어도 그려 둔다 - 명함 REMARKS 글자 크기를 여기서 재서 인쇄에 쓴다. */}
+        <div
+          aria-hidden={!preview}
+          style={preview ? { position: "sticky", top: 80 } : { position: "absolute", left: -10000, top: 0, width: 600, visibility: "hidden", pointerEvents: "none" }}
+        >
           <Stage D={D} S={S} opts={opts} onFit={onFit} />
         </div>
       </div>
