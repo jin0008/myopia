@@ -98,3 +98,24 @@ export function toggleTok(text: string, w: string): string {
   }
   return text.trim() ? text.replace(/\s+$/, "") + ", " + w : w;
 }
+
+/** 숫자만 받아 YYYY-MM-DD 로 끊는다. 연도 4자리(월 2자리)를 치는 순간 "-" 를 붙여
+ *  다음 칸으로 넘어간 것처럼 보인다. 지울 때(prev 보다 짧아질 때)는 붙이지 않는다 -
+ *  붙이면 "-" 를 지워도 바로 다시 생겨 못 지운다.
+ *  (브라우저 날짜 칸은 연도를 6자리까지 받아 넘어가지 않는다.) */
+export function maskDate(raw: string, prev = ""): string {
+  const d = raw.replace(/\D/g, "").slice(0, 8);
+  const typing = raw.length > prev.length;
+  let out = d.slice(0, 4);
+  if (d.length > 4 || (typing && d.length === 4)) out += "-" + d.slice(4, 6);
+  if (d.length > 6 || (typing && d.length === 6)) out += "-" + d.slice(6, 8);
+  return out;
+}
+
+/** 실제로 있는 날짜인가(2015-02-30 은 아니다). */
+export function isRealDate(v: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
+  const [y, m, d] = v.split("-").map(Number);
+  const t = new Date(Date.UTC(y, m - 1, d));
+  return t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d;
+}

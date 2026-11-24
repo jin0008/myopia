@@ -6,7 +6,7 @@ import { UserContext } from "../../App";
 import NotLoggedIn from "../../components/not_logged_in";
 import { APP_DOWNLOAD_URL } from "../../components/app_download_qr";
 import { HttpError } from "../../lib/fetch";
-import { ageAt, ageStr, fmtD, fmtPow, hasTok, normAxis, okAxis, okPow, parseNum, toggleTok, transpose } from "../../lib/rx";
+import { isRealDate, maskDate, ageAt, ageStr, fmtD, fmtPow, hasTok, normAxis, okAxis, okPow, parseNum, toggleTok, transpose } from "../../lib/rx";
 import { issuePrescription, listPrescriptions, lookupPatient, type Base, type EyeRx } from "../../api/prescription";
 import { FOOT_PRESETS, emptyRow, type DocData, type Row } from "./doc";
 import { PrintArea, Stage, useRxSettings } from "./stage";
@@ -204,8 +204,8 @@ export default function PrescriptionPage() {
     !regNo.trim() && "차트번호",
     !name.trim() && "이름",
     !sex && "성별",
-    !dob && "생년월일",
-    !date && "처방일",
+    !isRealDate(dob) && "생년월일",
+    (!isRealDate(date) || date > todayKst()) && "처방일",
   ].filter(Boolean) as string[];
 
   const setRow = (k: RowKey, r: Row) => setRows((cur) => ({ ...cur, [k]: r }));
@@ -320,11 +320,11 @@ export default function PrescriptionPage() {
             </label>
             <label style={{ fontSize: 12, color: C.muted }}>
               생년월일 * <span style={{ color: C.accent }}>{age && `만 ${age}`}</span>
-              <input type="date" style={inp(miss(!dob))} value={dob} disabled={locked || !!found} onChange={(e) => setDob(e.target.value)} />
+              <input inputMode="numeric" placeholder="YYYY-MM-DD" maxLength={10} style={inp(miss(!isRealDate(dob)) || (dob.length === 10 && !isRealDate(dob)))} value={dob} disabled={locked || !!found} onChange={(e) => setDob(maskDate(e.target.value, dob))} />
             </label>
             <label style={{ fontSize: 12, color: C.muted }}>
               처방일 *
-              <input type="date" style={inp(miss(!date))} value={date} max={todayKst()} disabled={locked} onChange={(e) => setDate(e.target.value)} />
+              <input inputMode="numeric" placeholder="YYYY-MM-DD" maxLength={10} style={inp(miss(!isRealDate(date)) || (date.length === 10 && (!isRealDate(date) || date > todayKst())))} value={date} disabled={locked} onChange={(e) => setDate(maskDate(e.target.value, date))} />
             </label>
           </div>
           {found && (
