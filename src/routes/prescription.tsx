@@ -9,6 +9,7 @@ import { BlackButton, PrimaryButton, PrimaryNagativeButton } from "../components
 import { HttpError } from "../lib/fetch";
 import { ageOn, cellProblem, fmtD, nearSph, parseNum } from "../lib/rx";
 import { createLinkInvite } from "../api/patient";
+import { APP_DOWNLOAD_URL } from "../components/app_download_qr";
 import {
   getPrescription,
   issuePrescription,
@@ -470,13 +471,25 @@ export function PrescriptionPrint() {
     }
   };
 
-  const qr = invite && (
+  // 하단 QR 은 늘 찍는다. 처방전이 앱으로 들어오는 입구다.
+  // 연동 링크가 있으면 그 아이 전용 QR(찍으면 바로 연동), 없으면 앱 설치 QR.
+  const qrUrl = invite?.url ?? APP_DOWNLOAD_URL;
+  const qrText = invite
+    ? settings.appGuide
+    : rx.patient.linked
+      ? "이 처방전은 마이오닥 앱에서도 확인할 수 있습니다."
+      : "마이오닥 앱에서 아이의 안경 처방과 근시 진행을 관리하세요.";
+  const qr = (
     <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-      <QRCodeSVG value={invite.url} size={mode === "a4" ? 96 : 110} level="M" />
+      <QRCodeSVG value={qrUrl} size={mode === "a4" ? 96 : 110} level="M" />
       <div style={{ fontSize: mode === "a4" ? 12 : "7pt", lineHeight: 1.5 }}>
-        {settings.appGuide}
-        <br />
-        <span style={{ color: "#666" }}>QR 유효기간 {invite.expires_at.slice(0, 10)}까지 · 지나면 병원에 새 QR 을 요청하세요.</span>
+        <b>마이오닥</b> · {qrText}
+        {invite && (
+          <>
+            <br />
+            <span style={{ color: "#666" }}>QR 유효기간 {invite.expires_at.slice(0, 10)}까지 · 지나면 병원에 새 QR 을 요청하세요.</span>
+          </>
+        )}
       </div>
     </div>
   );
@@ -514,7 +527,7 @@ export function PrescriptionPrint() {
       </div>
       {needQr && !invite && (
         <p className="rx-noprint" style={{ margin: 0, fontSize: 13, color: "#8a5a00" }}>
-          앱 미연동 환자입니다. 다시 인쇄할 때는 연동 QR 을 새로 발급해야 찍힙니다(이전 QR 은 못 쓰게 됩니다).
+          앱 미연동 환자입니다. 지금은 앱 설치 QR 이 찍힙니다. 찍자마자 이 아이로 연동되게 하려면 연동 QR 을 새로 발급하세요(이전 연동 QR 은 못 쓰게 됩니다).
         </p>
       )}
 
@@ -582,9 +595,14 @@ export function PrescriptionPrint() {
                 <span>{rx.prescribed_on}</span>
               </div>
               <RxTable rx={rx} compact />
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span>PD {rx.pd_far ?? "-"}{rx.pd_near != null ? ` / ${rx.pd_near}` : ""}{rx.add_od != null || rx.add_os != null ? ` · ADD ${fmtD(rx.add_od)}/${fmtD(rx.add_os)}` : ""}</span>
-                <span>처방의 {rx.prescriber_name}</span>
+              {/* 앞면에도 작은 QR. 한 면만 인쇄하는 병원도 있다. */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: "2mm", marginTop: "auto" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5mm" }}>
+                  <span>PD {rx.pd_far ?? "-"}{rx.pd_near != null ? ` / ${rx.pd_near}` : ""}{rx.add_od != null || rx.add_os != null ? ` · ADD ${fmtD(rx.add_od)}/${fmtD(rx.add_os)}` : ""}</span>
+                  <span>처방의 {rx.prescriber_name}</span>
+                  <span style={{ color: "#555", fontSize: "6pt" }}>마이오닥 앱에서도 확인하세요 →</span>
+                </div>
+                <QRCodeSVG value={qrUrl} size={46} level="M" style={{ flexShrink: 0 }} />
               </div>
             </div>
             {/* 뒷면: 연동 QR 과 하단 문구. 양면 인쇄 시 둘째 장. */}
