@@ -265,6 +265,8 @@ export const DOC_CSS = `
 .a4 .qrband-img{width:20mm;height:20mm;display:block}
 .a4 .qrband div{display:flex;flex-direction:column;gap:1mm;font-size:11pt;line-height:1.4}
 .a4 .qrband b{font-size:12.5pt;color:var(--acc);letter-spacing:.02em}
+/* 화면에서는 숨기고 인쇄할 때만 보인다. */
+#rx-print-area{display:none}
 @media print{
   body>*:not(#rx-print-area){display:none!important}
   #rx-print-area{display:block}
