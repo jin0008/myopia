@@ -11,14 +11,17 @@ import { shrinkImage } from "./stage";
  * 교수님 양식의 설정에서 병원 정보·처방의·문구·설명란·REMARKS 칩을 옮겼다.
  * ponytail: 테두리·워터마크·설명란 스타일/위치, 설정 내보내기/불러오기, 칩 순서 바꾸기는 뺐다. 요청이 오면 붙인다.
  */
-export function SettingsDialog({ open, onClose, initial, onSaved }: { open: boolean; onClose: () => void; initial: RxSettings; onSaved: () => void }) {
+export function SettingsDialog({ open, onClose, initial, onSaved, canEdit }: { open: boolean; onClose: () => void; initial: RxSettings; onSaved: () => void; canEdit: boolean }) {
   const [S, setS] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [newChip, setNewChip] = useState("");
+  // 열 때만 초기값으로 채운다. initial 은 부모가 그릴 때마다 새 객체라, 의존하면
+  // 편집 중에 목록이 새로 그려질 때 고친 내용이 날아간다.
   useEffect(() => {
     if (open) setS(initial);
-  }, [open, initial]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const set = (p: Partial<RxSettings>) => setS((s) => ({ ...s, ...p }));
   const field: React.CSSProperties = { width: "100%", padding: "7px 9px", border: "1px solid #d5dce4", borderRadius: 5, fontSize: 14, boxSizing: "border-box", fontFamily: "inherit" };
@@ -143,10 +146,11 @@ export function SettingsDialog({ open, onClose, initial, onSaved }: { open: bool
           </div>
         </fieldset>
         {error && <p style={{ color: "#b3261e", margin: 0 }}>{error}</p>}
+        {!canEdit && <p style={{ color: "#8a5a00", margin: 0 }}>양식은 병원 관리자만 바꿀 수 있습니다. 처방의 목록·면허번호·도장이 병원 전체 처방전에 찍히기 때문입니다.</p>}
       </DialogContent>
       <DialogActions>
         <PrimaryNagativeButton onClick={onClose}>취소</PrimaryNagativeButton>
-        <PrimaryButton onClick={save} disabled={busy}>{busy ? "저장 중…" : "저장"}</PrimaryButton>
+        <PrimaryButton onClick={save} disabled={busy || !canEdit}>{busy ? "저장 중…" : "저장"}</PrimaryButton>
       </DialogActions>
     </Dialog>
   );

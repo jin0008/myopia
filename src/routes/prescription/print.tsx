@@ -38,6 +38,7 @@ export default function PrescriptionPrint() {
   const [valid, setValid] = useState<string | null>(null);
   const [invite, setInvite] = useState<{ url: string; expires_at: string } | null>(null);
   const [issuing, setIssuing] = useState(false);
+  const [inviteError, setInviteError] = useState<string | null>(null);
 
   if (user == null) return <NotLoggedIn />;
   if (error) return <p style={{ padding: 32 }}>처방전을 찾을 수 없습니다.</p>;
@@ -57,7 +58,7 @@ export default function PrescriptionPrint() {
     d_od: far.od, d_os: far.os, n_od: near.od, n_os: near.os,
     remarks: rx.note ?? "",
     // 고른 처방의의 도장은 설정에서 이름으로 다시 찾는다.
-    doc: { name: rx.prescriber_name, license: rx.prescriber_license ?? "", stamp: S.doctors.find((d) => d.name === rx.prescriber_name)?.stamp ?? "" },
+    doc: { name: rx.prescriber_name, license: rx.prescriber_license ?? "", stamp: rx.prescriber_license ? (S.doctors.find((d) => d.name === rx.prescriber_name && d.license === rx.prescriber_license)?.stamp ?? "") : "" },
     valid: valid ?? S.valid,
     qrUrl: invite?.url ?? APP_DOWNLOAD_URL,
   };
@@ -67,6 +68,9 @@ export default function PrescriptionPrint() {
     try {
       const r = await createLinkInvite(rx.patient_id);
       setInvite({ url: r.url, expires_at: r.expiresAt });
+      setInviteError(null);
+    } catch {
+      setInviteError("연동 QR 을 발급하지 못했습니다. 지금 인쇄하면 앱 설치 QR 이 찍힙니다.");
     } finally {
       setIssuing(false);
     }
@@ -98,6 +102,7 @@ export default function PrescriptionPrint() {
               <div style={{ color: "#8a5a00", fontSize: 12, marginTop: 4 }}>새로 발급하면 앞서 준 연동 QR 은 못 쓰게 됩니다.</div>
             </div>
           )}
+          {inviteError && <div role="alert" style={{ color: "#b3261e" }}>{inviteError}</div>}
           {invite && <div style={{ color: "#00875a" }}>연동 QR 을 발급했습니다 ({invite.expires_at.slice(0, 10)}까지).</div>}
           {(
             <label>

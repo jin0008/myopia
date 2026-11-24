@@ -61,7 +61,8 @@ export function transpose(sph: string, cyl: string, axis: string): { sph: string
 
 /** 처방일 기준 나이(만). 3세 미만은 개월까지. */
 export function ageAt(dob: string, ref: string): { y: number; m: number } | null {
-  if (!dob) return null;
+  // 치는 중인 "2015" 같은 값으로 나이를 내면 "NaN세" 가 찍힌다.
+  if (!isRealDate(dob) || (ref && !isRealDate(ref))) return null;
   const [by, bm, bd] = dob.split("-").map(Number);
   const [ry, rm, rd] = (ref || new Date().toISOString().slice(0, 10)).split("-").map(Number);
   if (!by || !ry) return null;

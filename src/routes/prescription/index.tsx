@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -6,7 +6,7 @@ import { UserContext } from "../../App";
 import NotLoggedIn from "../../components/not_logged_in";
 import { APP_DOWNLOAD_URL } from "../../components/app_download_qr";
 import { HttpError } from "../../lib/fetch";
-import { isRealDate, maskDate, ageAt, ageStr, fmtD, fmtPow, hasTok, normAxis, okAxis, okPow, parseNum, toggleTok, transpose } from "../../lib/rx";
+import { isRealDate, maskDate, ageAt, ageStr, fmtD, fmtPow, hasTok, okAxis, okPow, parseNum, toggleTok, transpose } from "../../lib/rx";
 import { issuePrescription, listPrescriptions, lookupPatient, type Base, type EyeRx } from "../../api/prescription";
 import { FOOT_PRESETS, emptyRow, type DocData, type Row } from "./doc";
 import { PrintArea, Stage, useRxSettings } from "./stage";
@@ -68,8 +68,7 @@ function RxTable({ rows, value, onChange, readOnly, disabled }: {
     const v = r[f];
     if (!v) return;
     if (f === "sph" || f === "cyl") onChange(k, { ...r, [f]: fmtPow(v) });
-    if (f === "axis") { const n = parseInt(v); if (!Number.isNaN(n)) onChange(k, { ...r, axis: String(n === 0 ? 180 : normAxis(n)) }); }
-    if (f === "prism") { const n = parseFloat(v); if (!Number.isNaN(n)) onChange(k, { ...r, prism: String(Math.round(n * 2) / 2) }); }
+    if (f === "axis" && Number(v) === 0) onChange(k, { ...r, axis: "180" }); // 0 은 180. 범위 밖(200 등)은 바꾸지 않고 빨갛게 둔다 - 오타를 다른 축으로 바꾸면 안 된다
   };
   return (
     <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 4, tableLayout: "fixed" }}>
@@ -129,6 +128,8 @@ export default function PrescriptionPage() {
 
   // 환자
   const [regNo, setRegNo] = useState("");
+  const regNoRef = useRef(regNo);
+  regNoRef.current = regNo;
   const [name, setName] = useState("");
   const [sex, setSex] = useState<"" | "male" | "female">("");
   const [dob, setDob] = useState("");
@@ -169,7 +170,8 @@ export default function PrescriptionPage() {
   const D: DocData = {
     name, age, date, pd, npd, add: fmtPow(add), nearOn,
     d_od: rows.d_od, d_os: rows.d_os, n_od: near.n_od, n_os: near.n_os,
-    remarks, doc: doc ? { name: doc.name, license: doc.license, stamp: doc.stamp } : null,
+    // 처방의를 안 고르면 서버가 로그인한 의료인으로 기록한다 - 종이에도 같게 찍어야 다시 인쇄와 어긋나지 않는다.
+    remarks, doc: doc ? { name: doc.name, license: doc.license, stamp: doc.stamp } : { name: user?.healthcare_professional?.name ?? "", license: "", stamp: "" },
     valid: valid ?? S.valid,
     qrUrl: issued?.invite?.url ?? APP_DOWNLOAD_URL,
   };
@@ -183,7 +185,10 @@ export default function PrescriptionPage() {
     setFound(null);
     if (!regNo.trim() || locked) return;
     try {
-      const r = await lookupPatient(regNo.trim());
+      const asked = regNo.trim();
+      const r = await lookupPatient(asked);
+      // 그 사이 번호를 바꿨으면 늦게 온 답을 버린다 - 다른 환자 생년월일로 잠기면 안 된다.
+      if (asked !== regNoRef.current.trim()) return;
       if (r.exists) {
         setFound({ linked: r.patient.linked });
         setDob(r.patient.date_of_birth.slice(0, 10));
@@ -197,7 +202,10 @@ export default function PrescriptionPage() {
   if (user == null) return <NotLoggedIn />;
   if (!user.healthcare_professional?.approved) return <p style={{ padding: 32 }}>승인된 의료인만 처방전을 발행할 수 있습니다.</p>;
 
-  const anyBad = (nearOn ? (["d_od", "d_os", "n_od", "n_os"] as const) : (["d_od", "d_os"] as const)).some((k) =>
+  // PD·ADD 도 막는다. 숫자가 아니면 서버엔 null 로 가고 종이엔 친 글자가 찍혀 둘이 어긋난다.
+  const pdBad = (v: string) => { const n = parseNum(v); return n != null && (Number.isNaN(n) || n < 40 || n > 80); };
+  const extraBad = pdBad(pd) || (nearOn && (pdBad(npd) || !okPow(add) || (parseNum(add) ?? 0) < 0 || (parseNum(add) ?? 0) > 4));
+  const anyBad = extraBad || (nearOn ? (["d_od", "d_os", "n_od", "n_os"] as const) : (["d_od", "d_os"] as const)).some((k) =>
     Object.values(rowBad(allRows[k])).some(Boolean),
   );
   const missing = [
@@ -240,8 +248,8 @@ export default function PrescriptionPage() {
       if (e instanceof HttpError) {
         setMsg(
           e.code === 409
-            ? "이 차트번호의 환자 생년월일·성별이 다릅니다. 차트번호를 다시 확인해 주세요."
-            : e.fields?.map((f) => f.message || f.path).join(", ") || e.message || "발행하지 못했습니다.",
+            ? e.message || "이 차트번호의 환자 생년월일·성별이 다릅니다. 차트번호를 다시 확인해 주세요."
+            : e.fields?.map((f) => f.message).filter(Boolean).join(", ") || e.message || "발행하지 못했습니다.",
         );
       } else setMsg("발행하지 못했습니다. 잠시 후 다시 시도해 주세요.");
     } finally {
@@ -370,7 +378,7 @@ export default function PrescriptionPage() {
             </div>
             <RxTable rows={["d_od", "d_os"]} value={allRows} onChange={setRow} disabled={locked} />
             <label style={{ fontSize: 12, color: C.muted, display: "inline-flex", alignItems: "center", gap: 6 }}>
-              PD (mm) <input style={{ ...inp(), width: 80 }} inputMode="decimal" value={pd} disabled={locked} onChange={(e) => setPd(e.target.value)} />
+              PD (mm) <input style={{ ...inp(pdBad(pd)), width: 80 }} inputMode="decimal" value={pd} disabled={locked} onChange={(e) => setPd(e.target.value)} />
             </label>
           </div>
 
@@ -388,7 +396,7 @@ export default function PrescriptionPage() {
                     <input type="checkbox" checked={nearAuto} disabled={locked} onChange={(e) => { setNearAuto(e.target.checked); if (!e.target.checked) setRows((cur) => ({ ...cur, ...near })); }} /> 원용 + ADD 자동계산
                   </label>
                   <label style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                    PD (mm) <input style={{ ...inp(), width: 80 }} inputMode="decimal" value={npd} disabled={locked} onChange={(e) => setNpd(e.target.value)} />
+                    PD (mm) <input style={{ ...inp(pdBad(npd)), width: 80 }} inputMode="decimal" value={npd} disabled={locked} onChange={(e) => setNpd(e.target.value)} />
                   </label>
                 </div>
                 <RxTable rows={["n_od", "n_os"]} value={allRows} onChange={setRow} readOnly={nearAuto} disabled={locked} />
@@ -453,7 +461,7 @@ export default function PrescriptionPage() {
       </section>
 
       <PrintArea D={D} S={S} />
-      <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} initial={S} onSaved={() => refetch()} />
+      <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} initial={S} onSaved={() => refetch()} canEdit={!!user.healthcare_professional.is_admin} />
     </div>
   );
 }
