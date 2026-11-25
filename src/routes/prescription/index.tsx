@@ -200,6 +200,8 @@ export default function PrescriptionPage() {
   };
 
   if (user == null) return <NotLoggedIn />;
+  // 먼저 보여 줄 사람만(백엔드 RX_PILOT_EMAILS). 주소를 직접 쳐도 막는다 - API 도 404.
+  if (!user.rx_pilot) return <p style={{ padding: 32 }}>준비 중인 기능입니다.</p>;
   if (!user.healthcare_professional?.approved) return <p style={{ padding: 32 }}>승인된 의료인만 처방전을 발행할 수 있습니다.</p>;
 
   // PD·ADD 도 막는다. 숫자가 아니면 서버엔 null 로 가고 종이엔 친 글자가 찍혀 둘이 어긋난다.
