@@ -427,7 +427,8 @@ export default function PrescriptionPage() {
               <h2 style={h2}>A4 하단 문구</h2>
               <select
                 style={inp()}
-                value=""
+                // 지금 글이 상용구 그대로면 그 이름을 보인다. 고쳐 쓰면 다시 "상용구 선택…".
+                value={FOOT_PRESETS.find((x) => x.text === (valid ?? S.valid))?.name ?? ""}
                 onChange={(e) => { const p = FOOT_PRESETS.find((x) => x.name === e.target.value); if (p) setValid(p.text); }}
               >
                 <option value="">상용구 선택…</option>
