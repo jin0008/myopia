@@ -3,7 +3,7 @@ import theme from "../theme";
 
 // 기기별 스토어로 보내는 주소 하나(백엔드 GET /app). 아이폰·안드로이드 QR 을
 // 따로 두면 고르다 틀리므로 하나만 둔다. 홈과 환자 차트가 같이 쓴다.
-const APP_DOWNLOAD_URL = "https://myopiamanage.org/api/app";
+export const APP_DOWNLOAD_URL = "https://myopiamanage.org/api/app";
 
 export function AppDownloadQr({
   title,

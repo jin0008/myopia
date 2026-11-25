@@ -255,6 +255,11 @@ function PatientManage() {
                 Pending deletion requests
               </DangerButton>
             )}
+            {user.rx_pilot && (
+              <PrimaryButton onClick={() => navigate("/prescription")}>
+                안경처방전 발행
+              </PrimaryButton>
+            )}
             <BlackButton onClick={() => setOpen(true)}>
               <Add style={{ fontSize: "18px" }} /> New patient
             </BlackButton>
