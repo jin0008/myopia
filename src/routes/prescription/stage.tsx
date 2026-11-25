@@ -11,7 +11,7 @@ import { A4, DOC_CSS, defaultSettings, type DocData, type RxSettings } from "./d
 export function useRxSettings() {
   const { user } = useContext(UserContext);
   const hospital = user?.healthcare_professional?.hospital;
-  const q = useQuery({ queryKey: ["rx-settings"], queryFn: getRxSettings, enabled: !!hospital });
+  const q = useQuery({ queryKey: ["rx-settings"], queryFn: getRxSettings, enabled: !!hospital && !!user?.rx_pilot });
   const base = defaultSettings({ name: hospital ? hospitalDisplayName(hospital, "ko") : "", address: hospital?.address ?? null, phone: hospital?.phone ?? null });
   const saved = (q.data?.settings ?? null) as Partial<RxSettings> | null;
   return { settings: { ...base, ...(saved ?? {}) } as RxSettings, loading: q.isLoading, refetch: q.refetch };

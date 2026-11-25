@@ -153,7 +153,7 @@ export default function PrescriptionPage() {
   const [printNonce, setPrintNonce] = useState(0);
   const [showMissing, setShowMissing] = useState(false);
 
-  const recent = useQuery({ queryKey: ["prescriptions"], queryFn: () => listPrescriptions(), enabled: !!user?.healthcare_professional?.approved });
+  const recent = useQuery({ queryKey: ["prescriptions"], queryFn: () => listPrescriptions(), enabled: !!user?.healthcare_professional?.approved && !!user?.rx_pilot });
   const doc = S.doctors.find((d) => d.id === docId) ?? null;
   const locked = issued != null;
 
