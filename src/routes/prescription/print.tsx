@@ -9,7 +9,7 @@ import { createLinkInvite } from "../../api/patient";
 import { getPrescription, type EyeRx } from "../../api/prescription";
 import { ageAt, ageStr, fmtD } from "../../lib/rx";
 import { FOOT_PRESETS, type DocData, type Row } from "./doc";
-import { PrintArea, Stage, useRxSettings } from "./stage";
+import { PrintArea, SizePicker, Stage, usePaperSize, useRxSettings } from "./stage";
 
 /** 저장된 숫자 → 찍을 글자. */
 function rowsOf(e: EyeRx): { od: Row; os: Row } {
@@ -33,6 +33,7 @@ export default function PrescriptionPrint() {
   const { user } = useContext(UserContext);
   const navigate = useNavigate();
   const { settings: S } = useRxSettings();
+  const [size, setSize] = usePaperSize();
   const { data: rx, error } = useQuery({ queryKey: ["prescription", id], queryFn: () => getPrescription(id), enabled: !!user });
   const [name, setName] = useState("");
   const [valid, setValid] = useState<string | null>(null);
@@ -82,6 +83,7 @@ export default function PrescriptionPrint() {
         <button type="button" onClick={() => navigate("/prescription")} style={{ padding: "7px 12px" }}>← 처방전 발행</button>
         <h1 style={{ fontSize: 17, margin: 0 }}>다시 인쇄 · 차트번호 {rx.patient.registration_number} · {rx.prescribed_on}</h1>
         <div style={{ flex: 1 }} />
+        <SizePicker size={size} onChange={setSize} />
         <button type="button" onClick={() => window.print()} style={{ padding: "8px 16px", background: "#1f5f8b", color: "white", border: 0, borderRadius: 6, fontWeight: 600, cursor: "pointer" }}>
           인쇄
         </button>
@@ -104,19 +106,19 @@ export default function PrescriptionPrint() {
           )}
           {inviteError && <div role="alert" style={{ color: "#b3261e" }}>{inviteError}</div>}
           {invite && <div style={{ color: "#00875a" }}>연동 QR 을 발급했습니다 ({invite.expires_at.slice(0, 10)}까지).</div>}
-          {(
+          {size !== "card" && (
             <label>
-              A4 하단 문구
-              <select value="" onChange={(e) => { const p = FOOT_PRESETS.find((x) => x.name === e.target.value); if (p) setValid(p.text); }} style={{ width: "100%", padding: 6 }}>
+              하단 문구
+              <select value={FOOT_PRESETS.find((x) => x.text === (valid ?? S.valid))?.name ?? ""} onChange={(e) => { const p = FOOT_PRESETS.find((x) => x.name === e.target.value); if (p) setValid(p.text); }} style={{ width: "100%", padding: 6 }}>
                 <option value="">상용구 선택…</option>
                 {FOOT_PRESETS.map((p) => <option key={p.name}>{p.name}</option>)}
               </select>
             </label>
           )}
         </div>
-        <Stage D={D} S={S} />
+        <Stage D={D} S={S} size={size} />
       </div>
-      <PrintArea D={D} S={S} />
+      <PrintArea D={D} S={S} size={size} />
     </div>
   );
 }

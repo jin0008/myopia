@@ -8,8 +8,8 @@ import { APP_DOWNLOAD_URL } from "../../components/app_download_qr";
 import { HttpError } from "../../lib/fetch";
 import { isRealDate, maskDate, ageAt, ageStr, fmtD, fmtPow, hasTok, okAxis, okPow, parseNum, toggleTok, transpose } from "../../lib/rx";
 import { issuePrescription, listPrescriptions, lookupPatient, type Base, type EyeRx } from "../../api/prescription";
-import { FOOT_PRESETS, emptyRow, type DocData, type Row } from "./doc";
-import { PrintArea, Stage, useRxSettings } from "./stage";
+import { CARD_REM_MAX, FOOT_PRESETS, emptyRow, type DocData, type Row } from "./doc";
+import { PrintArea, SizePicker, Stage, usePaperSize, useRxSettings } from "./stage";
 import { SettingsDialog } from "./settings";
 
 /* ------------------------------------------------------------------ *
@@ -125,6 +125,7 @@ export default function PrescriptionPage() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   // 미리보기는 눌러야 펼친다. 입력이 주 화면이고, 미리보기는 확인할 때만 본다.
   const [preview, setPreview] = useState(false);
+  const [size, setSize] = usePaperSize();
 
   // 환자
   const [regNo, setRegNo] = useState("");
@@ -273,6 +274,7 @@ export default function PrescriptionPage() {
       <header style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 20px", borderBottom: `1px solid ${C.line}`, background: "white", flexWrap: "wrap", position: "sticky", top: 0, zIndex: 5 }}>
         <h1 style={{ fontSize: 19, margin: 0 }}>안경처방전 <span style={{ color: "#c98a1a" }}>발행</span></h1>
         <div style={{ flex: 1 }} />
+        <SizePicker size={size} onChange={setSize} />
         <button type="button" onClick={reset} style={{ padding: "7px 12px" }}>새 처방</button>
         <button type="button" onClick={() => setPreview((v) => !v)} aria-expanded={preview} style={{ padding: "7px 12px" }}>
           {preview ? "미리보기 닫기" : "미리보기"}
@@ -420,11 +422,16 @@ export default function PrescriptionPage() {
             <p style={{ fontSize: 11.5, color: C.muted, margin: "6px 0 0" }}>
               버튼을 누르면 추가되고, 한 번 더 누르면 지워집니다. SPH·CYL 은 0.25D 단위로 자동 정리, AXIS 는 1–180. 빨간 칸은 값 확인 필요.
             </p>
+            {/* 미리보기를 열면 실제로 재서 알린다(Stage). 닫혀 있을 때만 글자 수로 짐작한다. */}
+            {size === "card" && !preview && remarks.trim().length > CARD_REM_MAX && (
+              <p role="alert" style={{ fontSize: 12, color: "#b3261e", margin: "6px 0 0" }}>명함에 다 들어가지 않을 수 있습니다. 줄이거나 엽서·A4 로 인쇄하세요.</p>
+            )}
           </div>
 
-          {(
+          {/* 명함에는 하단 문구 자리가 없다. */}
+          {size !== "card" && (
             <div style={sec}>
-              <h2 style={h2}>A4 하단 문구</h2>
+              <h2 style={h2}>하단 문구</h2>
               <select
                 style={inp()}
                 // 지금 글이 상용구 그대로면 그 이름을 보인다. 고쳐 쓰면 다시 "상용구 선택…".
@@ -442,7 +449,7 @@ export default function PrescriptionPage() {
 
         {preview && (
           <div style={{ position: "sticky", top: 80 }}>
-            <Stage D={D} S={S} />
+            <Stage D={D} S={S} size={size} />
           </div>
         )}
       </div>
@@ -463,7 +470,7 @@ export default function PrescriptionPage() {
         </ul>
       </section>
 
-      <PrintArea D={D} S={S} />
+      <PrintArea D={D} S={S} size={size} />
       <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} initial={S} onSaved={() => refetch()} canEdit={!!user.healthcare_professional.is_admin} />
     </div>
   );
