@@ -83,6 +83,14 @@ export function defaultSettings(hospital: { name: string; address: string | null
   };
 }
 
+/** 출력 크기. 엽서는 A6(105×148), 명함은 90×50. 둘 다 A4 용지에 실제 크기로 찍고 점선대로 자른다. */
+export type PaperSize = "a4" | "post" | "card";
+export const PAPER: Record<PaperSize, { label: string; w: number; h: number }> = {
+  a4: { label: "A4", w: 210, h: 297 },
+  post: { label: "엽서", w: 105, h: 148 },
+  card: { label: "명함", w: 90, h: 50 },
+};
+
 /** 출력물 한 장에 필요한 값. 모두 찍을 글자 그대로. */
 export interface Row {
   sph: string;
@@ -151,10 +159,10 @@ const Qr = ({ url, className }: { url: string; className: string }) => (
   <QRCodeSVG value={url} size={128} level="M" className={className} />
 );
 
-export function A4({ D, S }: { D: DocData; S: RxSettings }) {
+export function A4({ D, S, post = false }: { D: DocData; S: RxSettings; post?: boolean }) {
   const blocks = S.blocks.filter((b) => b.on && (b.title || b.body));
   return (
-    <div className="paper doc a4 b-single" style={acc(S)}>
+    <div className={"paper doc a4 b-single" + (post ? " a6" : "")} style={acc(S)}>
       <div className="head">
         {S.logo && <img className="logo" src={S.logo} alt="" />}
         <div>
@@ -218,6 +226,53 @@ export function A4({ D, S }: { D: DocData; S: RxSettings }) {
   );
 }
 
+/** 명함(90×50). 교수님 양식의 명함 앞면 그대로 - 한 면에 처방과 QR. 면허번호·도장·설명란은 자리가 없어 뺀다. */
+export function Card({ D, S }: { D: DocData; S: RxSettings }) {
+  // ponytail: REMARKS 글자 크기를 글자 수로 정한다. 교수님 양식처럼 실제로 재서 줄이려면
+  // 화면에 안 보이는 인쇄 영역도 따로 재야 해서 뺐다. 넘치면 화면에서 경고한다.
+  const len = D.remarks.trim().length;
+  const remPt = len <= 40 ? 6.5 : len <= 80 ? 5.5 : 4.5;
+  return (
+    <div className={"paper doc card" + (D.nearOn ? " near" : "")} style={acc(S)}>
+      <div className="c-top">
+        <div className="c-title">안경처방전</div>
+        <div className="c-hosp">{S.hospital}{D.doc?.name ? " · " + D.doc.name : ""}</div>
+      </div>
+      <div className="c-pt">
+        <span><b>{D.name || "\u00a0"}</b>{D.age ? ` (${D.age})` : ""}</span>
+        <span className="dt">{dateKo(D.date)}</span>
+      </div>
+      <RxRows od={D.d_od} os={D.d_os} pd={D.pd} />
+      {D.nearOn && (
+        <>
+          <div className="c-near"><b>NEAR</b><span>ADD {D.add}</span></div>
+          <RxRows od={D.n_od} os={D.n_os} pd={D.npd} />
+        </>
+      )}
+      <div className={"c-bot" + (S.qrOn ? " has-qr" : "")}>
+        <div className="c-left">
+          <div className="c-rem" style={{ fontSize: remPt + "pt" }}><b>REMARKS</b> {D.remarks.trim()}</div>
+          {S.qrOn && <div className="c-qrtxt">{S.qrText}</div>}
+        </div>
+        {S.qrOn && (
+          <div className="c-qrfig">
+            <Qr url={D.qrUrl} className="c-qrimg" />
+            <span>마이오닥</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** 명함 REMARKS 가 이보다 길면 잘릴 수 있다. */
+export const CARD_REM_MAX = 110;
+
+export function Doc({ D, S, size }: { D: DocData; S: RxSettings; size: PaperSize }) {
+  if (size === "card") return <Card D={D} S={S} />;
+  return <A4 D={D} S={S} post={size === "post"} />;
+}
+
 /** 출력물 CSS. 교수님 양식 그대로, 화면 앱 CSS 와 섞이지 않게 .doc 아래에만 건다. */
 export const DOC_CSS = `
 .rxdoc-root{--f-body:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;--f-display:var(--f-body)}
@@ -265,12 +320,80 @@ export const DOC_CSS = `
 .a4 .qrband-img{width:20mm;height:20mm;display:block}
 .a4 .qrband div{display:flex;flex-direction:column;gap:1mm;font-size:11pt;line-height:1.4}
 .a4 .qrband b{font-size:12.5pt;color:var(--acc);letter-spacing:.02em}
+/* 엽서(A6): A4 배치를 그대로 두고 크기만 줄인다. */
+.a4.a6{width:105mm;min-height:148mm;padding:8mm 8mm 7mm;gap:2.6mm}
+.a4.a6.b-single{outline-width:.25mm;outline-offset:-4.5mm}
+.a6 .head{gap:2.5mm;border-bottom-width:.5mm;padding-bottom:2mm}
+.a6 .head img.logo{max-height:8mm;max-width:20mm}
+.a6 .hosp{font-size:9pt}
+.a6 .hsub{font-size:6pt}
+.a6 h1.t{font-size:13pt;letter-spacing:.4em;padding-left:.4em;margin:0}
+.a6 .pt div{padding:1.2mm 2mm;font-size:8pt}
+.a6 .pt div:first-child{font-size:9.5pt}
+.a6 .pt small{font-size:5.5pt}
+.a6 .lbl{font-size:6.5pt;margin-bottom:.8mm;gap:4mm}
+.a6 table.out th{font-size:6.5pt;padding:1mm 0}
+.a6 table.out td{font-size:8pt;padding:1.4mm 0}
+.a6 table.out th,.a6 table.out td{border-width:.2mm}
+.a6 .rem{font-size:7pt;padding:1mm 1.5mm;min-height:5mm;border-width:.2mm}
+.a6 .blocks{gap:1.8mm}
+.a6 .blk h3{font-size:7pt;margin-bottom:.5mm}
+.a6 .blk h3::before{width:1.4mm;height:1.4mm;border-width:.25mm}
+.a6 .blk p{font-size:6.3pt;line-height:1.5}
+.a6 .blk.box{padding:1.5mm 2mm;border-radius:1mm}
+.a6 .foot{gap:3mm;padding-top:2mm}
+.a6 .valid{font-size:6pt;line-height:1.5}
+.a6 .sign{font-size:7pt;gap:1.5mm}
+.a6 .sign .dr{font-size:8.5pt}
+.a6 .sign img.stamp{height:9mm;width:9mm;margin-left:-3mm}
+.a6 .sign .seal{width:8mm;height:8mm;font-size:5pt;margin-left:-1.5mm}
+.a6 .qrband{gap:2mm;padding:1.5mm 2mm;border-radius:1mm;margin-top:0}
+.a6 .qrband-img{width:12mm;height:12mm}
+.a6 .qrband .qf figcaption{font-size:5.5pt}
+.a6 .qrband div{font-size:6.3pt;gap:.5mm}
+.a6 .qrband b{font-size:7.5pt}
+/* 명함(90×50). 교수님 양식 그대로. */
+.card{width:90mm;height:50mm;padding:2.4mm 3mm;display:flex;flex-direction:column;gap:.8mm}
+.card .c-top{display:flex;align-items:baseline;justify-content:space-between;gap:2mm;line-height:1.2}
+.card .c-pt,.card .c-near{line-height:1.25}
+.card .c-title{font:700 9pt var(--f-display);letter-spacing:.3em}
+.card .c-hosp{font-size:6pt;color:var(--acc);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .c-pt{display:flex;justify-content:space-between;align-items:baseline;font-size:8pt;border-bottom:.3mm solid var(--acc);padding-bottom:.6mm;gap:2mm}
+.card .c-pt b{font-weight:700;font-size:10pt}
+.card .c-pt .dt{font-size:7.5pt;font-weight:500}
+.card table.out th{font-size:6pt;height:3.4mm;padding:0}
+.card table.out td{font-size:7.6pt;height:4.4mm;padding:0}
+.card table.out th,.card table.out td{border-width:.18mm}
+.card.near{gap:.55mm;padding-block:2mm}
+.card.near table.out td{font-size:6.6pt;height:3.2mm}
+.card.near table.out th{height:2.7mm;font-size:5.4pt}
+.card.near .c-pt b{font-size:9pt}
+.card .c-near{font-size:6.5pt;display:flex;gap:4mm}
+.card .c-rem{font-size:6.5pt;border:.18mm solid #333;padding:.4mm 1.2mm;flex:none;line-height:1.3;white-space:pre-line;word-break:keep-all;overflow-wrap:anywhere;overflow:hidden}
+.card .c-rem b{font-size:5.5pt;color:#555;margin-right:1mm}
+.card .c-bot{margin-top:auto;display:flex;align-items:stretch;gap:1.5mm;flex:none;min-height:0}
+.card .c-left{flex:0 0 80%;min-width:0;display:flex;flex-direction:column;gap:.5mm}
+.card .c-bot:not(.has-qr) .c-left{flex:1}
+.card .c-left .c-rem{flex:1}
+.card .c-qrtxt{font-size:5.4pt;line-height:1.2;color:#333;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .c-qrfig{margin-left:auto;align-self:flex-end;display:flex;flex-direction:column;align-items:center;gap:.2mm;flex:none}
+.card .c-qrfig span{font-size:4.8pt;font-weight:600;line-height:1;color:var(--acc)}
+.card .c-qrimg{width:10mm;height:10mm;display:block}
+.card.near .c-qrimg{width:7.2mm;height:7.2mm}
+.card.near .c-qrfig span{font-size:4.2pt}
+.card.near .c-qrtxt{font-size:5pt}
+/* 엽서·명함은 A4 용지 왼쪽 위에 실제 크기로 찍고 점선을 따라 자른다. */
+.sheet{width:210mm;padding:12mm 15mm}
+.sheet .cut{display:inline-block;border:.1mm dashed #999;line-height:0}
+.sheet .cut>.paper{line-height:normal}
 /* 화면에서는 숨기고 인쇄할 때만 보인다. */
 #rx-print-area{display:none}
 @media print{
+  html,body{background:#fff!important}
   body>*:not(#rx-print-area){display:none!important}
   #rx-print-area{display:block}
   #rx-print-area .paper{box-shadow:none}
+  .doc,.doc *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   #rx-print-area .pg{break-after:page}
   #rx-print-area .pg:last-child{break-after:auto}
 }

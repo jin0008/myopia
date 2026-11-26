@@ -6,6 +6,7 @@ import { MOBILE_MEDIA } from "../lib/constants";
 import { UserContext } from "../App";
 import { useLanguage } from "../lib/language_context";
 import ArrowForward from "@mui/icons-material/ArrowForward";
+import ReceiptLong from "@mui/icons-material/ReceiptLong";
 import childImage from "../assets/child-placeholder.webp";
 import doctorImage from "../assets/doctor-placeholder.webp";
 
@@ -51,6 +52,13 @@ export const ContainerDiv = styled.div`
   @media ${MOBILE_MEDIA} {
     grid-template-columns: 1fr;
     gap: 24px;
+  }
+`;
+
+/** 처방전 카드가 붙으면 세 칸. 모바일은 그대로 한 칸. */
+const Grid = styled(ContainerDiv)<{ $three: boolean }>`
+  @media not ${MOBILE_MEDIA} {
+    ${(p) => (p.$three ? "grid-template-columns: repeat(3, 1fr);" : "")}
   }
 `;
 
@@ -132,13 +140,15 @@ const ChooseButton = styled.button`
 
 export default function ProfileChoice() {
   const navigate = useNavigate();
-  const { setRole } = useContext(UserContext);
+  const { user, setRole } = useContext(UserContext);
+  // 안축장 없이 처방전만 쓰는 의료인이 많아 따로 들어가게 한다. 지금은 파일럿 대상만(RX_PILOT_EMAILS).
+  const showRx = !!user?.rx_pilot;
   const { language } = useLanguage();
   const isKorean = language === "ko";
   return (
     <PageWrapper>
       <PageTitle>{isKorean ? "사용자 유형 선택" : "Choose User Type"}</PageTitle>
-      <ContainerDiv>
+      <Grid $three={showRx}>
         <CardDiv
           onClick={() => {
             setRole("regular_user");
@@ -185,7 +195,32 @@ export default function ProfileChoice() {
             </ChooseButton>
           </CardContent>
         </CardDiv>
-      </ContainerDiv>
+        {showRx && (
+          <CardDiv
+            onClick={() => {
+              setRole("healthcare_professional");
+              navigate("/prescription");
+            }}
+          >
+            <CardImage style={{ background: "linear-gradient(135deg, #eef4fa 0%, #dde9f5 50%, #c9dcef 100%)" }}>
+              <ReceiptLong style={{ fontSize: 120, color: "#1f5f8b", opacity: 0.85 }} />
+            </CardImage>
+            <CardContent>
+              <CardTitle style={{ fontStyle: "italic" }}>
+                {isKorean ? "안경처방전 (Glasses Rx)" : "Glasses Prescription"}
+              </CardTitle>
+              <CardDescription>
+                {isKorean
+                  ? "안축장 기록 없이 바로 안경처방전을 발행하고 A4·엽서·명함 크기로 인쇄합니다. 마이오닥 연동 QR 이 함께 찍힙니다."
+                  : "Issue a glasses prescription and print it as A4, postcard or business card, with a Myodoc link QR."}
+              </CardDescription>
+              <ChooseButton>
+                {isKorean ? "선택" : "Choose"} <ArrowForward style={{ fontSize: "18px" }} />
+              </ChooseButton>
+            </CardContent>
+          </CardDiv>
+        )}
+      </Grid>
     </PageWrapper>
   );
 }
