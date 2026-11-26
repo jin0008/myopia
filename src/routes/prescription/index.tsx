@@ -422,7 +422,8 @@ export default function PrescriptionPage() {
             <p style={{ fontSize: 11.5, color: C.muted, margin: "6px 0 0" }}>
               버튼을 누르면 추가되고, 한 번 더 누르면 지워집니다. SPH·CYL 은 0.25D 단위로 자동 정리, AXIS 는 1–180. 빨간 칸은 값 확인 필요.
             </p>
-            {size === "card" && remarks.trim().length > CARD_REM_MAX && (
+            {/* 미리보기를 열면 실제로 재서 알린다(Stage). 닫혀 있을 때만 글자 수로 짐작한다. */}
+            {size === "card" && !preview && remarks.trim().length > CARD_REM_MAX && (
               <p role="alert" style={{ fontSize: 12, color: "#b3261e", margin: "6px 0 0" }}>명함에 다 들어가지 않을 수 있습니다. 줄이거나 엽서·A4 로 인쇄하세요.</p>
             )}
           </div>

@@ -63,15 +63,29 @@ export function Stage({ D, S, size }: { D: DocData; S: RxSettings; size: PaperSi
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
+  // 설명란이 길면 엽서·A4 는 종이 밖으로 자라고, 명함은 잘린다. 미리보기에서 재서 알린다.
+  // 너비 대비 높이로 재서 확대 배율과 상관없다.
+  const inner = useRef<HTMLDivElement>(null);
+  const [over, setOver] = useState(false);
+  useEffect(() => {
+    const el = inner.current?.firstElementChild as HTMLElement | null;
+    if (!el) return;
+    setOver(size === "card" ? el.scrollHeight > el.clientHeight + 1 : el.offsetHeight > (el.offsetWidth * PAPER[size].h) / PAPER[size].w + 2);
+  });
   const px = PAPER[size].w * 3.78;
   const zoom = Math.min(size === "card" ? 2 : 1, (w - 48) / px);
   const hint = size === "a4" ? "A4, 배율 100%, '배경 그래픽' 켜기로 인쇄하세요." : `A4 용지에 실제 크기(${PAPER[size].w}×${PAPER[size].h}mm)로 찍힙니다. 배율 100%로 인쇄하고 점선을 따라 자르세요.`;
   return (
     <div ref={wrap} className="rxdoc-root" style={{ background: "#e9edf1", borderRadius: 12, padding: 24, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
       <style>{DOC_CSS}</style>
-      <div style={{ zoom }}>
+      <div ref={inner} style={{ zoom }}>
         <Doc D={D} S={S} size={size} />
       </div>
+      {over && (
+        <p role="alert" style={{ margin: 0, fontSize: 13, color: "#b3261e", fontWeight: 600, textAlign: "center" }}>
+          {PAPER[size].label} 한 장에 다 들어가지 않습니다. REMARKS·설명란을 줄이{size === "a4" ? "세요." : "거나 더 큰 크기를 고르세요."}
+        </p>
+      )}
       <p style={{ margin: 0, fontSize: 12.5, color: "#5d6b7a", textAlign: "center" }}>{hint}</p>
     </div>
   );
