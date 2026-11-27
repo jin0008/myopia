@@ -416,7 +416,15 @@ export function PatientExplain({
                 {tx.length > 0 && <span><Swatch $bg="transparent" $border="2px dashed #7c3aed" />치료 시작</span>}
               </Legend>
               <div style={{ height: 520 }}>
-                {chart ? <Scatter data={chart.data} options={chart.options as any} /> : <Hint>또래 기준 자료를 불러오는 중…</Hint>}
+                {chart ? (
+                  <Scatter data={chart.data} options={chart.options as any} />
+                ) : (
+                  <Hint>
+                    {growth.isFetching
+                      ? "또래 기준 자료를 불러오는 중…"
+                      : `기준표(${referenceEthnicity})에 또래 자료가 없습니다. 차트 화면의 reference data 를 바꿔 주세요.`}
+                  </Hint>
+                )}
               </div>
             </Card>
 
