@@ -66,7 +66,7 @@ function annualGrowth(
  *   4–5세 ≥ 0.40 · 6세 ≥ 0.35 · 7–9세 ≥ 0.30 · 10세 이상 ≥ 0.25
  * Under 4세 no threshold is applied (no highlight).
  */
-function thresholdForAge(ageYears: number): number | null {
+export function thresholdForAge(ageYears: number): number | null {
   if (ageYears >= 10) return 0.25;
   if (ageYears >= 7) return 0.3;
   if (ageYears >= 6) return 0.35;
