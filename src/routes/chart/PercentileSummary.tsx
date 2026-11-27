@@ -150,12 +150,12 @@ function normCdf(z: number): number {
   return 0.5 * (1 + erf(z / Math.SQRT2));
 }
 
-type GrowthRow = { percentile: number; age: number; value: number };
+export type GrowthRow = { percentile: number; age: number; value: number };
 
 // Interpolate each percentile curve's value at an exact age, then read off the
 // child's percentile on the z-score scale. Returns a display string; the edge
 // cases ("<p" / ">p") mean the value is outside the reference table's range.
-function percentileFor(
+export function percentileFor(
   rows: GrowthRow[],
   age: number,
   al: number,

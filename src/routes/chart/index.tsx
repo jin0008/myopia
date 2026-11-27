@@ -5,7 +5,8 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { UserContext } from "../../App";
 import ExcelJS from "exceljs";
 import { getLatestPatientData, getPatientDetail } from "../../api/patient";
 import { getAlertSetting } from "../../api/alert_setting";
@@ -24,6 +25,7 @@ import { StudyButtons } from "./StudyButtons";
 import { PrescriptionList } from "./PrescriptionList";
 import { TreatmentList } from "./TreatmentList";
 import { PatientMemo } from "./PatientMemo";
+import { PatientExplain } from "./PatientExplain";
 import { MYOPIA_STATUS_LABELS, PatientDataInput } from "./PatientDataInput";
 import {
   HeaderDiv,
@@ -200,6 +202,10 @@ export default function ChartRoute() {
   ] = useState(false);
 
   const [editTargetId, setEditTargetId] = useState<string | null>(null);
+  // 진료 중 보호자에게 화면을 돌려 설명할 때 여는 한국어 큰 글씨 화면.
+  const [explainOpen, setExplainOpen] = useState(false);
+  // 처방전과 같은 시범 계정(RX_PILOT_EMAILS)에만 먼저 연다.
+  const { user } = useContext(UserContext);
 
   const queryClient = useQueryClient();
   const kValueMutation = useMutation({
@@ -463,6 +469,23 @@ export default function ChartRoute() {
             <h1 style={{ fontWeight: "normal" }}>Eye growth chart</h1>
             <span>{new Date().toLocaleDateString()}</span>
             <StudyButtons patientId={patientId!} />
+            {user?.rx_pilot && (
+              <button
+                onClick={() => setExplainOpen(true)}
+                style={{
+                  background: "#00B167",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 999,
+                  padding: "8px 18px",
+                  fontSize: 15,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                환자 설명
+              </button>
+            )}
           </ChartTitleMain>
           <div style={{ display: "flex", flexDirection: "row", gap: "16px" }}>
             <TextButton
@@ -830,6 +853,17 @@ export default function ChartRoute() {
             : undefined
         }
       />
+      {explainOpen && (
+        <PatientExplain
+          dateOfBirth={patientQuery.data.date_of_birth}
+          sex={patientQuery.data.sex}
+          referenceEthnicity={referenceEthnicity}
+          axialLength={sortedAxialLength}
+          refractiveError={patientQuery.data.refractive_error ?? []}
+          treatments={sortedTreatment}
+          onClose={() => setExplainOpen(false)}
+        />
+      )}
     </ChartPageRoot>
   );
 }
