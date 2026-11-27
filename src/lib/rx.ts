@@ -126,3 +126,73 @@ export function isRealDate(v: string): boolean {
   const t = new Date(Date.UTC(y, m - 1, d));
   return t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d;
 }
+
+/** EMR 차트 한 눈의 칸. 종이에 찍을 글자 그대로(+1.25, 180). */
+export interface EmrEye { sph: string; cyl: string; axis: string; prism: string; base: string }
+
+/**
+ * EMR 차트 글을 처방 칸으로. 교수님 차트 예:
+ *   MR pd=54 ****처방
+ *   R: +1.25 -1.50 180 2Δ BI (x1.0)
+ *   L:       -2.00 180
+ * - 부호나 소수점이 있는 수는 도수, 없는 정수는 축(0~180, 0 은 180).
+ * - 도수 둘이면 SPH·CYL, 하나에 축이 있으면 CYL 만(SPH 없는 난시), 축이 없으면 SPH 만.
+ * - "숫자Δ BI/BO/BU/BD" 는 프리즘, 괄호 (x1.0) 은 시력이라 버린다.
+ * - 덩어리(MR·CR …)가 여럿이면 머리줄에 "처방"이 있는 첫 덩어리, 없으면 첫 덩어리.
+ * 0.25 단위가 아니거나 범위를 벗어난 값은 칸을 비우고 warn 에 적는다.
+ */
+export function parseEmrRx(text: string): { od: EmrEye | null; os: EmrEye | null; pd: string; warn: string[] } {
+  type Block = { head: string; eyes: { side: "od" | "os"; body: string }[] };
+  const blocks: Block[] = [];
+  let cur: Block = { head: "", eyes: [] };
+  for (const line of text.split(/\r?\n/)) {
+    // \b: "Refraction", "Remarks", "Lens…" 같은 줄을 눈 줄로 읽지 않는다.
+    const m = /^\s*(R|L|OD|OS)\b\s*[:.]?\s*(.*)$/i.exec(line);
+    if (m) {
+      cur.eyes.push({ side: /^(R|OD)$/i.test(m[1]) ? "od" : "os", body: m[2] });
+    } else if (line.trim()) {
+      if (cur.head || cur.eyes.length) blocks.push(cur);
+      cur = { head: line, eyes: [] };
+    }
+  }
+  blocks.push(cur);
+  const withEyes = blocks.filter((b) => b.eyes.length);
+  const pick = withEyes.find((b) => b.head.includes("처방")) ?? withEyes[0];
+  const warn: string[] = [];
+  const pdOf = (s: string) => /pd\s*[=:]?\s*(\d+(?:\.\d+)?)/i.exec(s)?.[1];
+  const pd = (pick && pdOf(pick.head)) ?? pdOf(text) ?? "";
+
+  const eye = (side: "od" | "os", body: string): EmrEye => {
+    const tag = side === "od" ? "R" : "L";
+    const out: EmrEye = { sph: "", cyl: "", axis: "", prism: "", base: "" };
+    let rest = body.replace(/\([^)]*\)/g, " ");
+    const pr = /(\d+(?:\.\d+)?)\s*(?:Δ|△)?\s*(BI|BO|BU|BD)\b/i.exec(rest);
+    if (pr) {
+      const p = Number(pr[1]);
+      if (p > 0 && p <= 30) { out.prism = String(p); out.base = pr[2].toUpperCase(); } else warn.push(`${tag} 프리즘 ${pr[1]}Δ 는 0~30 사이여야 합니다.`);
+      rest = rest.replace(pr[0], " ");
+    }
+    const toks = rest.match(/[+-]?\d+(?:\.\d+)?/g) ?? [];
+    const pows = toks.filter((x) => /[+-]|\./.test(x));
+    const axes = toks.filter((x) => !/[+-]|\./.test(x));
+    if (pows.length > 2 || axes.length > 1) warn.push(`${tag}: 숫자가 많아 일부만 읽었습니다 - "${body.trim()}"`);
+    const [sphRaw, cylRaw] = pows.length >= 2 ? pows : axes.length ? [undefined, pows[0]] : [pows[0], undefined];
+    const pow = (raw: string | undefined, max: number, label: string) => {
+      if (raw == null) return "";
+      const n = Number(raw);
+      if (!isQuarter(n) || Math.abs(n) > max) { warn.push(`${tag} ${label} ${raw} 는 0.25 단위, ±${max} 안이어야 합니다.`); return ""; }
+      return fmtD(n);
+    };
+    out.sph = pow(sphRaw, 30, "SPH");
+    out.cyl = pow(cylRaw, 10, "CYL");
+    if (axes[0] != null) {
+      const a = Number(axes[0]);
+      if (Number.isInteger(a) && a >= 0 && a <= 180) out.axis = String(a === 0 ? 180 : a);
+      else warn.push(`${tag} 축 ${axes[0]} 는 0~180 정수여야 합니다.`);
+    }
+    return out;
+  };
+  const find = (side: "od" | "os") => pick?.eyes.find((e) => e.side === side);
+  const r = find("od"), l = find("os");
+  return { od: r ? eye("od", r.body) : null, os: l ? eye("os", l.body) : null, pd, warn };
+}

@@ -6,7 +6,7 @@ import { UserContext } from "../../App";
 import NotLoggedIn from "../../components/not_logged_in";
 import { APP_DOWNLOAD_URL } from "../../components/app_download_qr";
 import { HttpError } from "../../lib/fetch";
-import { isRealDate, maskDate, ageAt, ageStr, fmtD, fmtPow, hasPower, hasTok, okAxis, okPow, parseNum, toggleTok, transpose } from "../../lib/rx";
+import { isRealDate, maskDate, ageAt, ageStr, fmtD, fmtPow, hasPower, hasTok, parseEmrRx, okAxis, okPow, parseNum, toggleTok, transpose } from "../../lib/rx";
 import { issuePrescription, listPrescriptions, lookupPatient, type Base, type EyeRx } from "../../api/prescription";
 import { CARD_REM_MAX, FOOT_PRESETS, emptyRow, type DocData, type Row } from "./doc";
 import { PrintArea, SizePicker, Stage, usePaperSize, useRxSettings } from "./stage";
@@ -151,6 +151,16 @@ export default function PrescriptionPage() {
   const [issued, setIssued] = useState<null | { id: string; invite: { url: string; expires_at: string } | null }>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  // EMR 차트 붙여넣기. 읽은 값은 칸에 넣고, 못 읽은 값은 여기 적어 의사가 고치게 한다.
+  const [emr, setEmr] = useState("");
+  const [emrMsg, setEmrMsg] = useState<string | null>(null);
+  const fillFromEmr = () => {
+    const r = parseEmrRx(emr);
+    if (!r.od && !r.os) { setEmrMsg("R: / L: 로 시작하는 줄을 찾지 못했습니다."); return; }
+    setRows((cur) => ({ ...cur, ...(r.od && { d_od: r.od }), ...(r.os && { d_os: r.os }) }));
+    if (r.pd) setPd(r.pd);
+    setEmrMsg(r.warn.length ? "채웠습니다. 확인할 것: " + r.warn.join(" ") : "채웠습니다. 칸을 확인해 주세요.");
+  };
   const [printNonce, setPrintNonce] = useState(0);
   const [showMissing, setShowMissing] = useState(false);
 
@@ -264,7 +274,7 @@ export default function PrescriptionPage() {
   const reset = () => {
     setRegNo(""); setName(""); setSex(""); setDob(""); setDate(todayKst()); setFound(null);
     setRows({ d_od: emptyRow(), d_os: emptyRow(), n_od: emptyRow(), n_os: emptyRow() });
-    setPd(""); setNearOn(false); setAdd(""); setNpd(""); setRemarks(""); setValid(null);
+    setPd(""); setNearOn(false); setAdd(""); setNpd(""); setRemarks(""); setValid(null); setEmr(""); setEmrMsg(null);
     setIssued(null); setMsg(null); setShowMissing(false);
   };
 
@@ -381,6 +391,21 @@ export default function PrescriptionPage() {
                 ±Cyl 변환
               </button>
             </div>
+            {!locked && (
+              <details>
+                <summary style={{ fontSize: 12.5, color: C.muted, cursor: "pointer" }}>EMR 차트 붙여넣기</summary>
+                <textarea
+                  style={{ ...inp(), width: "100%", minHeight: 96, marginTop: 6, fontFamily: "ui-monospace, monospace", fontSize: 12.5 }}
+                  placeholder={"MR pd=54 처방\nR: +1.25 -1.50 180 2Δ BI (x1.0)\nL: +3.00 -1.00 10"}
+                  value={emr}
+                  onChange={(e) => setEmr(e.target.value)}
+                />
+                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                  <button type="button" onClick={fillFromEmr} disabled={!emr.trim()} style={{ fontSize: 12, padding: "3px 10px" }}>칸 채우기</button>
+                  {emrMsg && <span style={{ fontSize: 12, color: C.muted }}>{emrMsg}</span>}
+                </div>
+              </details>
+            )}
             <RxTable rows={["d_od", "d_os"]} value={allRows} onChange={setRow} disabled={locked} />
             <label style={{ fontSize: 12, color: C.muted, display: "inline-flex", alignItems: "center", gap: 6 }}>
               PD (mm) <input style={{ ...inp(pdBad(pd)), width: 80 }} inputMode="decimal" value={pd} disabled={locked} onChange={(e) => setPd(e.target.value)} />
