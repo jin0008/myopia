@@ -66,4 +66,17 @@ assert.equal(bad.od?.sph, ""); assert.equal(bad.od?.axis, ""); assert.equal(bad.
 assert.equal(bad.os?.axis, "180", "축 0 은 180");
 const words = parseEmrRx("Refraction 결과\nR: -1.00\nL: -1.25\nRemarks 2.00 Lens 상시");
 assert.equal(words.od?.sph, "-1.00"); assert.equal(words.os?.sph, "-1.25", "R·L 로 시작하는 낱말 줄은 눈 줄이 아니다");
+// 한진우 교수님 쓰기: 부호가 이름표 앞(-sph4.00) 또는 뒤(sph-1.00), 축은 axis/ax.
+const HJ = parseEmrRx(`Manifest refraction
+OD: -sph4.00 -cyl1.00 axis180
+OS: +sph3.00 +cyl2.00 axis10`);
+assert.deepEqual(HJ.od, { sph: "-4.00", cyl: "-1.00", axis: "180", prism: "", base: "" }, "부호가 이름표 앞");
+assert.deepEqual(HJ.os, { sph: "+3.00", cyl: "+2.00", axis: "10", prism: "", base: "" });
+const HJ2 = parseEmrRx(`R: sph-1.00 cyl+2.00 ax120
+L: sph-3.00 cyl-1.00 ax110`);
+assert.deepEqual(HJ2.od, { sph: "-1.00", cyl: "+2.00", axis: "120", prism: "", base: "" }, "부호가 이름표 뒤, ax");
+assert.deepEqual(HJ2.os, { sph: "-3.00", cyl: "-1.00", axis: "110", prism: "", base: "" });
+const app = parseEmrRx("R: S -2.00 C -0.75 A 175\nL: cyl -1.00 axis 90 2Δ BI");
+assert.deepEqual(app.od, { sph: "-2.00", cyl: "-0.75", axis: "175", prism: "", base: "" }, "S/C/A 한 글자");
+assert.deepEqual(app.os, { sph: "", cyl: "-1.00", axis: "90", prism: "2", base: "BI" }, "이름표 + 프리즘");
 console.log("ok");
