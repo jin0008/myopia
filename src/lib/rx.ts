@@ -172,11 +172,19 @@ export function parseEmrRx(text: string): { od: EmrEye | null; os: EmrEye | null
       if (p > 0 && p <= 30) { out.prism = String(p); out.base = pr[2].toUpperCase(); } else warn.push(`${tag} 프리즘 ${pr[1]}Δ 는 0~30 사이여야 합니다.`);
       rest = rest.replace(pr[0], " ");
     }
-    const toks = rest.match(/[+-]?\d+(?:\.\d+)?/g) ?? [];
+    // 이름표가 붙은 쓰기: "-sph4.00 -cyl1.00 axis180", "sph-1.00 cyl+2.00 ax120", "S -2.00 C -0.75 A 175".
+    // 부호가 이름표 앞에 오면(-sph4.00) 뒤로 옮긴다. 이름표가 하나라도 있으면 자리 대신 이름표로 채운다.
+    rest = rest.replace(/([+-])\s*(sph|cyl)\s*[:=]?\s*(?=\d)/gi, "$2 $1");
+    const lab = (re: RegExp) => { const m = re.exec(rest); if (!m) return undefined; rest = rest.replace(m[0], " "); return m[1].replace(/\s+/g, ""); };
+    const sphL = lab(/(?<![a-z])(?:sph|s)\s*[:=]?\s*([+-]?\s*\d+(?:\.\d+)?)/i);
+    const cylL = lab(/(?<![a-z])(?:cyl|c)\s*[:=]?\s*([+-]?\s*\d+(?:\.\d+)?)/i);
+    const axL = lab(/(?<![a-z])(?:axis|ax|a)\s*[:=]?\s*(\d+)/i);
+    const labeled = sphL != null || cylL != null || axL != null;
+    const toks = labeled ? [] : rest.match(/[+-]?\d+(?:\.\d+)?/g) ?? [];
     const pows = toks.filter((x) => /[+-]|\./.test(x));
-    const axes = toks.filter((x) => !/[+-]|\./.test(x));
+    const axes = labeled ? (axL != null ? [axL] : []) : toks.filter((x) => !/[+-]|\./.test(x));
     if (pows.length > 2 || axes.length > 1) warn.push(`${tag}: 숫자가 많아 일부만 읽었습니다 - "${body.trim()}"`);
-    const [sphRaw, cylRaw] = pows.length >= 2 ? pows : axes.length ? [undefined, pows[0]] : [pows[0], undefined];
+    const [sphRaw, cylRaw] = labeled ? [sphL, cylL] : pows.length >= 2 ? pows : axes.length ? [undefined, pows[0]] : [pows[0], undefined];
     const pow = (raw: string | undefined, max: number, label: string) => {
       if (raw == null) return "";
       const n = Number(raw);
