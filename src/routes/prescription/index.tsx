@@ -6,7 +6,7 @@ import { UserContext } from "../../App";
 import NotLoggedIn from "../../components/not_logged_in";
 import { APP_DOWNLOAD_URL } from "../../components/app_download_qr";
 import { HttpError } from "../../lib/fetch";
-import { isRealDate, maskDate, ageAt, ageStr, fmtD, fmtPow, hasTok, okAxis, okPow, parseNum, toggleTok, transpose } from "../../lib/rx";
+import { isRealDate, maskDate, ageAt, ageStr, fmtD, fmtPow, hasPower, hasTok, okAxis, okPow, parseNum, toggleTok, transpose } from "../../lib/rx";
 import { issuePrescription, listPrescriptions, lookupPatient, type Base, type EyeRx } from "../../api/prescription";
 import { CARD_REM_MAX, FOOT_PRESETS, emptyRow, type DocData, type Row } from "./doc";
 import { PrintArea, SizePicker, Stage, usePaperSize, useRxSettings } from "./stage";
@@ -225,6 +225,7 @@ export default function PrescriptionPage() {
     if (locked) { setPrintNonce((n) => n + 1); return; }
     if (missing.length) { setShowMissing(true); setMsg("필수 입력 누락: " + missing.join(", ")); return; }
     if (anyBad) { setMsg("빨간 칸을 확인해 주세요."); return; }
+    if (!hasPower(nearOn ? [rows.d_od, rows.d_os, near.n_od, near.n_os] : [rows.d_od, rows.d_os], nearOn ? add : "")) { setMsg("도수(SPH·CYL·ADD)를 하나 이상 입력해 주세요."); return; }
     setBusy(true);
     setMsg(null);
     try {

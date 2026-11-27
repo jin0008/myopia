@@ -1,6 +1,6 @@
 // npx tsx scripts/rx.check.ts
 import assert from "assert";
-import { isRealDate, maskDate, ageAt, ageStr, fmtD, fmtPow, hasTok, normAxis, okAxis, okPow, parseNum, toggleTok, transpose } from "../src/lib/rx";
+import { hasPower, isRealDate, maskDate, ageAt, ageStr, fmtD, fmtPow, hasTok, normAxis, okAxis, okPow, parseNum, toggleTok, transpose } from "../src/lib/rx";
 
 assert.equal(parseNum(""), null);
 assert.equal(parseNum("+1.25"), 1.25);
@@ -29,4 +29,8 @@ assert.equal(maskDate("201503021", "20150302"), "2015-03-02", "8자리에서 멈
 assert.equal(maskDate("2015", "2015-"), "2015", "지울 때는 '-' 를 다시 붙이지 않는다");
 assert.equal(maskDate("20150302", ""), "2015-03-02", "붙여넣기");
 assert.ok(isRealDate("2015-03-02") && !isRealDate("2015-02-30") && !isRealDate("2015-3-2"));
+const E = { sph: "", cyl: "" };
+assert.ok(!hasPower([E, E]), "도수 없으면 거절");
+assert.ok(hasPower([E, { sph: "0.00", cyl: "" }]), "0.00 은 도수");
+assert.ok(hasPower([E, E], "+1.50"), "ADD 만");
 console.log("ok");
