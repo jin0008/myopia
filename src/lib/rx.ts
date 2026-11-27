@@ -146,7 +146,8 @@ export function parseEmrRx(text: string): { od: EmrEye | null; os: EmrEye | null
   const blocks: Block[] = [];
   let cur: Block = { head: "", eyes: [] };
   for (const line of text.split(/\r?\n/)) {
-    const m = /^\s*(R|L|OD|OS)\s*[:.]?\s*(.*)$/i.exec(line);
+    // \b: "Refraction", "Remarks", "Lens…" 같은 줄을 눈 줄로 읽지 않는다.
+    const m = /^\s*(R|L|OD|OS)\b\s*[:.]?\s*(.*)$/i.exec(line);
     if (m) {
       cur.eyes.push({ side: /^(R|OD)$/i.test(m[1]) ? "od" : "os", body: m[2] });
     } else if (line.trim()) {

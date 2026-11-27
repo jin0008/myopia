@@ -64,4 +64,6 @@ assert.deepEqual(E5.os, { sph: "-1.00", cyl: "-0.25", axis: "40", prism: "2", ba
 const bad = parseEmrRx("R: -2.30 -1.00 190\nL: +1.00 0");
 assert.equal(bad.od?.sph, ""); assert.equal(bad.od?.axis, ""); assert.equal(bad.warn.length, 2, "0.25 단위·축 범위 경고");
 assert.equal(bad.os?.axis, "180", "축 0 은 180");
+const words = parseEmrRx("Refraction 결과\nR: -1.00\nL: -1.25\nRemarks 2.00 Lens 상시");
+assert.equal(words.od?.sph, "-1.00"); assert.equal(words.os?.sph, "-1.25", "R·L 로 시작하는 낱말 줄은 눈 줄이 아니다");
 console.log("ok");
