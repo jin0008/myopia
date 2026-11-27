@@ -59,6 +59,12 @@ export function transpose(sph: string, cyl: string, axis: string): { sph: string
   return { sph: fmtD(Math.round((s + c) * 4) / 4), cyl: fmtD(-c), axis: String(normAxis((Number(axis) || 180) + 90)) };
 }
 
+/** 도수가 하나라도 있는가(SPH·CYL 칸, ADD). REMARKS 만 있는 처방은 막는다 - 앱에 빈 처방으로 뜬다.
+ *  서버(patientPrescription postSchema)와 같은 규칙이다. */
+export function hasPower(rows: { sph: string; cyl: string }[], add = ""): boolean {
+  return rows.some((r) => r.sph.trim() !== "" || r.cyl.trim() !== "") || add.trim() !== "";
+}
+
 /** 처방일 기준 나이(만). 3세 미만은 개월까지. */
 export function ageAt(dob: string, ref: string): { y: number; m: number } | null {
   // 치는 중인 "2015" 같은 값으로 나이를 내면 "NaN세" 가 찍힌다.

@@ -51,8 +51,11 @@ export const PRESETS: Record<string, string> = {
     "처방된 PD에 맞추어 광학중심을 조제하여 주십시오.\n고도 난시(≥2.00D) 또는 부등시가 있는 경우 경사각·정점간거리를 확인 바랍니다.",
 };
 
+const VALID_DEFAULT = "본 처방전은 처방일로부터 3개월 이내에 맞추세요.\n맞춘 후 불편감이 있으면 내원하십시오.";
+
 export const FOOT_PRESETS: { name: string; text: string }[] = [
-  { name: "기본(유효기간)", text: "본 처방전은 처방일로부터 3개월 이내에 조제하십시오. 조제 후 불편감이 있으면 내원하십시오." },
+  // 기본 양식과 같은 글이어야 처음 열 때 상용구 칸에 "기본"이 골라져 보인다.
+  { name: "기본(유효기간)", text: VALID_DEFAULT },
   { name: "근시", text: "[근시] 소아·청소년기 근시는 성장 중 진행하므로 6개월마다 굴절검사를 받으십시오. 하루 2시간 이상 야외활동, 근거리 작업 시 30cm 이상 거리 유지와 30분마다 휴식을 권합니다. 고도근시(-6.00D 이상)는 망막 정기검진이 필요합니다." },
   { name: "약시", text: "[약시] 약시 치료용 안경은 잠잘 때를 제외하고 항상 착용해야 합니다. 치료 효과는 시력 발달기(대개 8세 이전)에 가장 크므로 처방된 가림치료와 함께 정해진 날짜에 반드시 재진하십시오." },
   { name: "원시", text: "[원시] 원시 안경은 가까운 곳뿐 아니라 먼 곳을 볼 때도 눈의 조절 부담을 줄여 줍니다. 처음에는 먼 곳이 흐리게 느껴질 수 있으나 대부분 1~2주 내 적응합니다. 내사시가 동반된 경우(조절내사시) 상시 착용이 필수입니다." },
@@ -67,6 +70,13 @@ export const REM_CHIPS = [
   "호야 마이오스마트", "호야 마이오스마트IQ", "에실로 스텔리스트", "블루라이트차단", "변색렌즈",
 ];
 
+/** 예전 기본 문구. 병원 양식에 이 글 그대로 저장돼 있으면 새 기본값으로 바꿔 보인다
+ *  (손대지 않은 기본값이 저장된 것이라, 병원이 고친 글은 건드리지 않는다). */
+export const OLD_DEFAULTS: Partial<Record<keyof RxSettings, string>> = {
+  valid: "본 처방전은 처방일로부터 3개월 이내에 조제하십시오.\n조제 후 불편감이 있으면 내원하십시오.",
+  qrText: "마이오닥 앱에 가입하면 아이의 안경 처방과 근시 진행을 한곳에서 볼 수 있습니다.",
+};
+
 export function defaultSettings(hospital: { name: string; address: string | null; phone: string | null }): RxSettings {
   return {
     hospital: hospital.name,
@@ -75,9 +85,9 @@ export function defaultSettings(hospital: { name: string; address: string | null
     doctors: [],
     title: "안 경 처 방 전",
     accent: "#1f5f8b",
-    valid: "본 처방전은 처방일로부터 3개월 이내에 조제하십시오.\n조제 후 불편감이 있으면 내원하십시오.",
+    valid: VALID_DEFAULT,
     qrOn: true,
-    qrText: "마이오닥 앱에 가입하면 아이의 안경 처방과 근시 진행을 한곳에서 볼 수 있습니다.",
+    qrText: "마이오닥 앱에 가입하면 처방전을 확인할 수 있습니다.",
     blocks: [{ on: true, title: "처음 안경 착용 안내", body: PRESETS["처음 안경 착용 안내"] }],
     remChips: REM_CHIPS.slice(),
   };
@@ -207,7 +217,7 @@ export function A4({ D, S, post = false }: { D: DocData; S: RxSettings; post?: b
             <div style={{ fontSize: "8pt", color: "#666" }}>{D.doc?.license ? "면허번호 " + D.doc.license : ""}</div>
             처방의 <span className="dr">{D.doc ? D.doc.name : "   "}</span>
           </div>
-          {D.doc?.stamp ? <img className="stamp" src={D.doc.stamp} alt="" /> : <div className="seal">(인)</div>}
+          {D.doc?.stamp && <img className="stamp" src={D.doc.stamp} alt="" />}
         </div>
       </div>
       {S.qrOn && (
@@ -313,7 +323,6 @@ export const DOC_CSS = `
 .a4 .sign{flex:none;display:flex;align-items:center;gap:3mm;font-size:11pt;position:relative;white-space:nowrap}
 .a4 .sign .dr{font:600 14pt var(--f-display)}
 .a4 .sign img.stamp{height:16mm;width:16mm;object-fit:contain;margin-left:-6mm;opacity:.9}
-.a4 .sign .seal{width:14mm;height:14mm;border:.4mm solid #b3261e;border-radius:50%;color:#b3261e;display:grid;place-items:center;font-size:7pt;margin-left:-3mm}
 .a4 .qrband{display:flex;align-items:center;gap:4mm;padding:3mm 4mm;border:.3mm solid color-mix(in srgb,var(--acc) 40%,#fff);border-radius:2mm;margin-top:-1mm}
 .a4 .qrband .qf{margin:0;display:flex;flex-direction:column;align-items:center;gap:.8mm;flex:none}
 .a4 .qrband .qf figcaption{font-size:8.5pt;font-weight:600;color:var(--acc)}
@@ -346,7 +355,6 @@ export const DOC_CSS = `
 .a6 .sign{font-size:7pt;gap:1.5mm}
 .a6 .sign .dr{font-size:8.5pt}
 .a6 .sign img.stamp{height:9mm;width:9mm;margin-left:-3mm}
-.a6 .sign .seal{width:8mm;height:8mm;font-size:5pt;margin-left:-1.5mm}
 .a6 .qrband{gap:2mm;padding:1.5mm 2mm;border-radius:1mm;margin-top:0}
 .a6 .qrband-img{width:12mm;height:12mm}
 .a6 .qrband .qf figcaption{font-size:5.5pt}

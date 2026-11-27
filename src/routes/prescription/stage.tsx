@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { UserContext } from "../../App";
 import { getRxSettings } from "../../api/prescription";
 import { hospitalDisplayName } from "../../lib/hospitalName";
-import { DOC_CSS, Doc, PAPER, defaultSettings, type DocData, type PaperSize, type RxSettings } from "./doc";
+import { DOC_CSS, Doc, OLD_DEFAULTS, PAPER, defaultSettings, type DocData, type PaperSize, type RxSettings } from "./doc";
 
 /** 병원 양식. 서버에 없으면 기본값(병원 이름으로 채움). 저장돼 있으면 기본값 위에 덮는다. */
 export function useRxSettings() {
@@ -13,8 +13,9 @@ export function useRxSettings() {
   const hospital = user?.healthcare_professional?.hospital;
   const q = useQuery({ queryKey: ["rx-settings"], queryFn: getRxSettings, enabled: !!hospital && !!user?.rx_pilot });
   const base = defaultSettings({ name: hospital ? hospitalDisplayName(hospital, "ko") : "", address: hospital?.address ?? null, phone: hospital?.phone ?? null });
-  const saved = (q.data?.settings ?? null) as Partial<RxSettings> | null;
-  return { settings: { ...base, ...(saved ?? {}) } as RxSettings, loading: q.isLoading, refetch: q.refetch };
+  const saved = { ...((q.data?.settings ?? {}) as Partial<RxSettings>) };
+  for (const [k, v] of Object.entries(OLD_DEFAULTS)) if (saved[k as keyof RxSettings] === v) delete saved[k as keyof RxSettings];
+  return { settings: { ...base, ...saved } as RxSettings, loading: q.isLoading, refetch: q.refetch };
 }
 
 /** 고른 출력 크기. 병원마다 늘 같은 크기를 쓸 테니 이 브라우저에 기억해 둔다. */
