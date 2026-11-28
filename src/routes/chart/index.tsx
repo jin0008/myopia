@@ -475,18 +475,28 @@ export default function ChartRoute() {
             {user?.rx_pilot && (
               <button
                 onClick={() => setExplainOpen(true)}
+                title="보호자에게 보여주는 한글 큰 글씨 화면"
                 style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
                   background: "#00B167",
                   color: "white",
                   border: "none",
                   borderRadius: 999,
-                  padding: "8px 18px",
-                  fontSize: 15,
-                  fontWeight: 700,
+                  padding: "12px 24px",
+                  fontSize: 18,
+                  fontWeight: 800,
                   cursor: "pointer",
+                  boxShadow: "0 4px 14px rgba(0, 177, 103, 0.45)",
                 }}
               >
-                환자 설명
+                {/* 모니터 아이콘: 화면을 돌려 보여준다는 뜻 */}
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="2" y="3" width="20" height="14" rx="2" />
+                  <path d="M8 21h8M12 17v4" />
+                </svg>
+                환자 설명 화면
               </button>
             )}
           </ChartTitleMain>
