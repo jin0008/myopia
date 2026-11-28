@@ -65,6 +65,7 @@ import {
 } from "../../api/static";
 import { MagnifyingGlass } from "../../components/magnifying_glass";
 import { AppDownloadQr } from "../../components/app_download_qr";
+import { PrimaryButton } from "../../components/button";
 import { Treatment } from "../../types/treatment";
 
 // Clinical "query" thresholds for axial length entries. Values outside the
@@ -473,21 +474,13 @@ export default function ChartRoute() {
             <span>{new Date().toLocaleDateString()}</span>
             <StudyButtons patientId={patientId!} />
             {user?.rx_pilot && (
-              <button
+              <PrimaryButton
                 onClick={() => setExplainOpen(true)}
-                style={{
-                  background: "#F97316", // 나머지 버튼이 다 초록이라 주황으로 갈라 보이게
-                  color: "white",
-                  border: "none",
-                  borderRadius: 999,
-                  padding: "8px 18px",
-                  fontSize: 15,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                }}
+                // 옆 '연구' 버튼과 같은 모양, 색만 주황 - 초록 버튼들 사이에서 눈에 띄게.
+                style={{ backgroundColor: "#F97316", fontWeight: 700 }}
               >
                 환자 설명
-              </button>
+              </PrimaryButton>
             )}
           </ChartTitleMain>
           <div style={{ display: "flex", flexDirection: "row", gap: "16px" }}>

@@ -72,7 +72,7 @@ export function StudyButtons({ patientId }: { patientId: string }) {
   const closeMenu = () => setAnchorEl(null);
 
   return (
-    <div style={{ marginTop: 8 }}>
+    <div>
       <PrimaryButton onClick={(e) => setAnchorEl(e.currentTarget)}>
         연구{enrollments.length > 0 ? ` (${enrollments.length})` : ""} ▾
       </PrimaryButton>
