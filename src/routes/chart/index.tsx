@@ -476,7 +476,7 @@ export default function ChartRoute() {
               <button
                 onClick={() => setExplainOpen(true)}
                 style={{
-                  background: "#00B167",
+                  background: "#F97316", // 나머지 버튼이 다 초록이라 주황으로 갈라 보이게
                   color: "white",
                   border: "none",
                   borderRadius: 999,
