@@ -1,5 +1,6 @@
 import { useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useLanguage } from "../../lib/language_context";
 import { getPatientDetail } from "../../api/patient";
 import { TreatmentListHeader, TreatmentCardDiv } from "./styles";
 
@@ -36,6 +37,8 @@ const eye = (sph: number | null, cyl: number | null, axis: number | null) =>
  * 어떤 안경을 언제부터 썼는지를 진행 그래프 옆에서 보려는 자리다.
  */
 export function PrescriptionList() {
+  const { language } = useLanguage();
+  const ko = language === "ko";
   const { patientId } = useParams<{ patientId: string }>();
   const patientQuery = useQuery({
     queryKey: ["patient", patientId],
@@ -47,7 +50,7 @@ export function PrescriptionList() {
   return (
     <div>
       <TreatmentListHeader>
-        <h1 style={{ fontWeight: "normal" }}>Glasses (entered by parent)</h1>
+        <h1 style={{ fontWeight: "normal" }}>{ko ? "안경처방전 (보호자입력)" : "Glasses (entered by parent)"}</h1>
       </TreatmentListHeader>
       {rows.length === 0
         ? "No Data"

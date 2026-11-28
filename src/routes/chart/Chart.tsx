@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useLanguage } from "../../lib/language_context";
 import autocolors from "chartjs-plugin-autocolors";
 import annotation from "chartjs-plugin-annotation";
 import {
@@ -21,6 +22,9 @@ import { Treatment } from "../../types/treatment";
 import { getTreatmentList } from "../../api/static";
 import theme from "../../theme";
 import { ChartContainer } from "./styles";
+
+// 범례에 쓰는 눈 이름.
+const SIDE_KO = { od: "우안", os: "좌안" } as const;
 
 ChartJS.register(
   CategoryScale,
@@ -65,6 +69,10 @@ export function Chart({
   onCanvasChange,
 }: ChartProps) {
   const isMobile = useIsMobile();
+  const { language } = useLanguage();
+  const ko = language === "ko";
+  // 범례의 눈 이름: KOR은 우안/좌안, ENG는 원래대로 od/os.
+  const sideName = (side: string) => (ko ? SIDE_KO[side as "od" | "os"] : side);
 
   const chartRef = useRef<ChartJS<"scatter"> | null>(null);
 
@@ -140,7 +148,9 @@ export function Chart({
   function parentSets(rows: Measurement[], yAxisID: string, tag: string) {
     if (rows.length === 0) return [];
     return ["od", "os"].map((side, index) => ({
-      label: `${side}${tag} (보호자 입력)`,
+      label: ko
+        ? `${sideName(side)}${tag ? " " + tag : ""} (보호자 입력)`
+        : `${side}${tag} (보호자 입력)`,
       data: toData(rows, side as "od" | "os"),
       elements: { point: { radius: 4 } },
       pointStyle: "triangle",
@@ -159,7 +169,7 @@ export function Chart({
       // Add AL data
       ["od", "os"].forEach((side, index) => {
         dataSets.push({
-          label: side + "AL",
+          label: ko ? `${sideName(side)} 안축장` : side + "AL",
           data: toData(sortedAxialLengthMeasurement, side as "od" | "os"),
           elements: {
             point: {
@@ -175,7 +185,7 @@ export function Chart({
       // Add RE data
       ["od", "os"].forEach((side, index) => {
         dataSets.push({
-          label: side + "RE",
+          label: ko ? `${sideName(side)} 굴절이상` : side + "RE",
           data: toData(sortedRefractiveErrorMeasurement, side as "od" | "os"),
           elements: {
             point: {
@@ -191,8 +201,8 @@ export function Chart({
       // 두 축을 함께 볼 때도 보호자 값을 그린다. 예전에는 이 가지에서
       // 그냥 돌아가, 축을 둘 다 켜면 보호자 안축장이 사라졌다.
       dataSets.push(
-        ...parentSets(sortedParentRecord, "y", "AL"),
-        ...parentSets(sortedParentRefractiveError, "y2", "RE"),
+        ...parentSets(sortedParentRecord, "y", ko ? "안축장" : "AL"),
+        ...parentSets(sortedParentRefractiveError, "y2", ko ? "굴절이상" : "RE"),
       );
       return dataSets;
     }
@@ -202,7 +212,7 @@ export function Chart({
       : sortedRefractiveErrorMeasurement;
 
     const hospital = ["od", "os"].map((side, index) => ({
-      label: side,
+      label: sideName(side),
       data: toData(measurement, side as "od" | "os"),
       elements: {
         point: {
@@ -230,6 +240,7 @@ export function Chart({
     sortedRefractiveErrorMeasurement,
     sortedParentRecord,
     sortedParentRefractiveError,
+    ko,
   ]);
 
   // 축 범위에는 보호자 값도 넣는다. 그리는 것과 재는 것이 다르면 점이
@@ -397,10 +408,14 @@ export function Chart({
           display: true,
           text:
             displayAxialLength && refractiveErrorType
-              ? `Axial Length and Refractive Error(${refractiveErrorType === "sph" ? "Sph" : "SE"})`
+              ? ko
+                ? `안축장 및 ${refractiveErrorType === "sph" ? "굴절이상(구면도수)" : "굴절이상(구면대응치)"}`
+                : `Axial Length and Refractive Error(${refractiveErrorType === "sph" ? "Sph" : "SE"})`
               : displayAxialLength
-                ? "Axial Length Percentiles"
-                : `Refractive Error(${refractiveErrorType === "sph" ? "Sph" : "SE"})`,
+                ? ko ? "근시성장곡선" : "Axial Length Percentiles"
+                : ko
+                  ? refractiveErrorType === "sph" ? "굴절이상(구면도수)" : "굴절이상(구면대응치)"
+                  : `Refractive Error(${refractiveErrorType === "sph" ? "Sph" : "SE"})`,
           color: "#333333",
           font: {
             size: 24,
@@ -423,7 +438,7 @@ export function Chart({
           },
           title: {
             display: true,
-            text: "Age (years)",
+            text: ko ? "나이(년)" : "Age (years)",
             font: {
               size: 12,
             },
@@ -458,8 +473,8 @@ export function Chart({
             display: true,
             text:
               !displayAxialLength && refractiveErrorType
-                ? "Refractive Error"
-                : "Axial Length (mm)",
+                ? ko ? "굴절이상" : "Refractive Error"
+                : ko ? "안축장 (mm)" : "Axial Length (mm)",
             font: {
               size: 16,
             },
@@ -479,7 +494,9 @@ export function Chart({
                 position: "right" as const,
                 title: {
                   display: true,
-                  text: `Refractive Error(${refractiveErrorType === "sph" ? "Sph" : "SE"})`,
+                  text: ko
+                    ? refractiveErrorType === "sph" ? "굴절이상(구면도수)" : "굴절이상(구면대응치)"
+                    : `Refractive Error(${refractiveErrorType === "sph" ? "Sph" : "SE"})`,
                   font: {
                     size: 16,
                   },
@@ -502,6 +519,7 @@ export function Chart({
       maxY,
       minY2,
       maxY2,
+      ko,
     ],
   );
 

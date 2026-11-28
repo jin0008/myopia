@@ -1,4 +1,5 @@
 import { useParams, useSearchParams } from "react-router";
+import { useLanguage } from "../../lib/language_context";
 import {
   QueryClient,
   useMutation,
@@ -206,6 +207,8 @@ export default function ChartRoute() {
   const [explainOpen, setExplainOpen] = useState(false);
   // 처방전과 같은 시범 계정(RX_PILOT_EMAILS)에만 먼저 연다.
   const { user } = useContext(UserContext);
+  const { language } = useLanguage();
+  const ko = language === "ko";
 
   const queryClient = useQueryClient();
   const kValueMutation = useMutation({
@@ -466,7 +469,7 @@ export default function ChartRoute() {
       <ContentDiv>
         <ChartTitleDiv>
           <ChartTitleMain>
-            <h1 style={{ fontWeight: "normal" }}>Eye growth chart</h1>
+            <h1 style={{ fontWeight: "normal" }}>{ko ? "근시경과곡선차트" : "Eye growth chart"}</h1>
             <span>{new Date().toLocaleDateString()}</span>
             <StudyButtons patientId={patientId!} />
             {user?.rx_pilot && (
@@ -492,13 +495,13 @@ export default function ChartRoute() {
               $active={viewMode === "default"}
               onClick={() => setViewMode("default")}
             >
-              Default
+              {ko ? "기본" : "Default"}
             </TextButton>
             <TextButton
               $active={viewMode === "list"}
               onClick={() => setViewMode("list")}
             >
-              List view
+              {ko ? "목록보기" : "List view"}
             </TextButton>
           </div>
         </ChartTitleDiv>
@@ -511,7 +514,7 @@ export default function ChartRoute() {
               gap: "8px",
             }}
           >
-            <span>reference data :</span>
+            <span>{ko ? "참조데이터 :" : "reference data :"}</span>
             <select
               value={referenceEthnicity}
               onChange={(e) => setReferenceEthnicity(e.target.value)}
@@ -584,7 +587,7 @@ export default function ChartRoute() {
                 setDisplayAxialLength((prev) => !prev);
               }}
             >
-              Axial length
+              {ko ? "안축장" : "Axial length"}
             </SmallTextButton>
             <SmallTextButton
               $active={refractiveErrorType === "sph"}
@@ -596,7 +599,7 @@ export default function ChartRoute() {
                 )
               }
             >
-              Refractive error(sph)
+              {ko ? "굴절이상(구면도수)" : "Refractive error(sph)"}
             </SmallTextButton>
             <SmallTextButton
               $active={refractiveErrorType === "se"}
@@ -608,7 +611,7 @@ export default function ChartRoute() {
                 )
               }
             >
-              Refractive error(SE)
+              {ko ? "굴절이상(구면대응치)" : "Refractive error(SE)"}
             </SmallTextButton>
           </div>
           <div style={{ flex: 1 }} />
@@ -641,7 +644,7 @@ export default function ChartRoute() {
                 });
             }}
           >
-            Download data
+            {ko ? "데이터 다운로드" : "Download data"}
           </SmallTextButton>
         </ReferenceRow>
         <ChartAndListWrapper>
