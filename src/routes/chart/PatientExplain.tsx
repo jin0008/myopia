@@ -11,6 +11,7 @@ import type { Treatment } from "../../types/treatment";
 import { ageKo, beforeAfter, lastChange, treatmentKo, ym, type Pt } from "../../lib/explain";
 import { percentileFor, type GrowthRow } from "./PercentileSummary";
 import { thresholdForAge } from "./RecentALGrowth";
+import { AppDownloadQr } from "../../components/app_download_qr";
 
 ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Filler, annotation);
 
@@ -386,6 +387,17 @@ export function PatientExplain({
     : null;
   const hasBA = !!ba && EYES.some(({ key }) => ba[key].before != null && ba[key].after != null);
 
+  // 설명을 듣고 바로 찍어 가게 - 같은 기록을 집에서 앱으로 다시 본다.
+  const qr = (
+    <Card>
+      <AppDownloadQr
+        size={132}
+        title="집에서도 마이오닥 앱으로 확인하세요"
+        description="휴대폰 카메라로 QR을 찍으면 아이폰은 App Store, 안드로이드는 Google Play로 연결됩니다."
+      />
+    </Card>
+  );
+
   return (
     <Overlay role="dialog" aria-modal="true" aria-label="환자 설명">
       <Inner>
@@ -399,10 +411,13 @@ export function PatientExplain({
         </Top>
 
         {allPts.length === 0 ? (
+          <>
           <Card>
             <CardTitle>아직 안축장 검사 기록이 없습니다</CardTitle>
             <Hint>검사를 하면 또래와 비교한 그래프가 여기에 그려집니다.</Hint>
           </Card>
+          <div style={{ marginTop: 20 }}>{qr}</div>
+          </>
         ) : (
           <Grid>
             <Card>
@@ -491,6 +506,7 @@ export function PatientExplain({
                   </Card>
                 );
               })}
+              {qr}
             </div>
           </Grid>
         )}
