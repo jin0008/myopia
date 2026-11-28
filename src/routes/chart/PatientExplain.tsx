@@ -390,7 +390,7 @@ export function PatientExplain({
     <Overlay role="dialog" aria-modal="true" aria-label="환자 설명">
       <Inner>
         <Top>
-          <H1>우리 아이 눈 성장 기록</H1>
+          <H1>근시성장곡선</H1>
           <Meta>
             {sex === "male" ? "남아" : "여아"} · 만 {ageKo(dateOfBirth)}
             {lastDate ? ` · 최근 검사 ${new Date(lastDate).toLocaleDateString("ko-KR")}` : ""}
