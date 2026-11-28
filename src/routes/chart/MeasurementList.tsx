@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import { useLanguage } from "../../lib/language_context";
 import { useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -46,6 +47,8 @@ export function MeasurementList({
   onDelete,
   mode,
 }: MeasurementListProps) {
+  const { language } = useLanguage();
+  const ko = language === "ko";
   const filteredMeasurement = useMemo(
     () => measurement.slice(0, mode === "default" ? 5 : undefined).reverse(),
     [measurement, mode],
@@ -59,8 +62,8 @@ export function MeasurementList({
     <>
       <GridDiv>
         <div></div>
-        <GridItemDiv>OD</GridItemDiv>
-        <GridItemDiv>OS</GridItemDiv>
+        <GridItemDiv>{ko ? "우안" : "OD"}</GridItemDiv>
+        <GridItemDiv>{ko ? "좌안" : "OS"}</GridItemDiv>
         <div></div>
         {filteredMeasurement.map((m) => (
           <React.Fragment key={m.id}>

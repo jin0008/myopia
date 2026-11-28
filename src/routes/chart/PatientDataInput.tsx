@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLanguage } from "../../lib/language_context";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getLatestPatientData,
@@ -239,6 +240,14 @@ export const MYOPIA_STATUS_LABELS: Record<MyopiaStatus, string> = {
   hyperopia: "Hyperopia",
 };
 
+// 화면 표시용. 위 영어 이름은 엑셀 내보내기(index.tsx)에 그대로 쓴다.
+const MYOPIA_STATUS_LABELS_KO: Record<MyopiaStatus, string> = {
+  myopia: "근시",
+  high_myopia: "고도근시",
+  emmetropia: "정시",
+  hyperopia: "원시",
+};
+
 type PatientDataFormState = {
   nearwork_activity: number | null;
   outdoor_activity: number | null;
@@ -294,6 +303,8 @@ interface PatientDataInputProps {
 }
 
 export function PatientDataInput({ patientId, edit }: PatientDataInputProps) {
+  const { language } = useLanguage();
+  const ko = language === "ko";
   const queryClient = useQueryClient();
   const patientDataQuery = useQuery({
     queryKey: ["patientData", patientId],
@@ -396,7 +407,7 @@ export function PatientDataInput({ patientId, edit }: PatientDataInputProps) {
             checked={value === null}
             onChange={() => onChange(null)}
           />
-          unknown
+          {ko ? "모름" : "unknown"}
         </RadioField>
       )}
     </RadioGroup>
@@ -405,7 +416,7 @@ export function PatientDataInput({ patientId, edit }: PatientDataInputProps) {
   const content = (
     <>
       <PatientDataField>
-        <PatientDataFieldLabel>Nearwork activity</PatientDataFieldLabel>
+        <PatientDataFieldLabel>{ko ? "근거리작업" : "Nearwork activity"}</PatientDataFieldLabel>
         <div style={{ padding: "0 24px" }}>
           <HoursSlider
             showUnknown={initialFormState.nearwork_activity === null}
@@ -421,7 +432,7 @@ export function PatientDataInput({ patientId, edit }: PatientDataInputProps) {
         <ActivityHistory rows={historyQuery.data?.nearwork_activity} />
       </PatientDataField>
       <PatientDataField>
-        <PatientDataFieldLabel>Outdoor activity</PatientDataFieldLabel>
+        <PatientDataFieldLabel>{ko ? "야외활동" : "Outdoor activity"}</PatientDataFieldLabel>
         <div style={{ padding: "0 24px" }}>
           <HoursSlider
             showUnknown={initialFormState.outdoor_activity === null}
@@ -437,11 +448,11 @@ export function PatientDataInput({ patientId, edit }: PatientDataInputProps) {
         <ActivityHistory rows={historyQuery.data?.outdoor_activity} />
       </PatientDataField>
       <PatientDataField>
-        <PatientDataFieldLabel>Mother myopia status</PatientDataFieldLabel>
+        <PatientDataFieldLabel>{ko ? "어머니 근시상태" : "Mother myopia status"}</PatientDataFieldLabel>
         <RadioFieldset
           value={formState.mother_myopia_status}
           options={myopiaStatuses}
-          labels={MYOPIA_STATUS_LABELS}
+          labels={ko ? MYOPIA_STATUS_LABELS_KO : MYOPIA_STATUS_LABELS}
           onChange={(v) =>
             setFormState((s) => ({
               ...s,
@@ -453,11 +464,11 @@ export function PatientDataInput({ patientId, edit }: PatientDataInputProps) {
         <SphLine sph={formState.mother_sph} />
       </PatientDataField>
       <PatientDataField>
-        <PatientDataFieldLabel>Father myopia status</PatientDataFieldLabel>
+        <PatientDataFieldLabel>{ko ? "아버지 근시상태" : "Father myopia status"}</PatientDataFieldLabel>
         <RadioFieldset
           value={formState.father_myopia_status}
           options={myopiaStatuses}
-          labels={MYOPIA_STATUS_LABELS}
+          labels={ko ? MYOPIA_STATUS_LABELS_KO : MYOPIA_STATUS_LABELS}
           onChange={(v) =>
             setFormState((s) => ({
               ...s,
@@ -474,7 +485,7 @@ export function PatientDataInput({ patientId, edit }: PatientDataInputProps) {
   return (
     <div>
       <PatientDataHeader>
-        <h1 style={{ fontWeight: "normal" }}>Patient data</h1>
+        <h1 style={{ fontWeight: "normal" }}>{ko ? "환자정보" : "Patient data"}</h1>
         {hasChanges && edit && (
           <PrimaryButton
             disabled={saveMutation.isPending}

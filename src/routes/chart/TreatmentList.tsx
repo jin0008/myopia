@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLanguage } from "../../lib/language_context";
 import { useParams } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -30,6 +31,8 @@ interface TreatmentListProps {
 }
 
 export function TreatmentList({ edit }: TreatmentListProps) {
+  const { language } = useLanguage();
+  const ko = language === "ko";
   const { patientId } = useParams<{ patientId: string }>();
   const queryClient = useQueryClient();
   const patientQuery = useQuery({
@@ -80,10 +83,10 @@ export function TreatmentList({ edit }: TreatmentListProps) {
   return (
     <div>
       <TreatmentListHeader>
-        <h1 style={{ fontWeight: "normal" }}>Treatments</h1>
+        <h1 style={{ fontWeight: "normal" }}>{ko ? "치료" : "Treatments"}</h1>
         {edit && (
           <PrimaryButton onClick={() => setIsDialogOpen(true)}>
-            Register
+            {ko ? "등록" : "Register"}
           </PrimaryButton>
         )}
       </TreatmentListHeader>
